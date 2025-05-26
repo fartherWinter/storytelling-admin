@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.report.mapper.ReportRecordMapper">
+
+    <resultMap id="ReportRecordResult" type="com.chennian.storytelling.bean.model.ReportRecord">
+        <id property="id" column="id"/>
+        <result property="reportName" column="report_name"/>
+        <result property="reportCode" column="report_code"/>
+        <result property="templateId" column="template_id"/>
+        <result property="reportParams" column="report_params"/>
+        <result property="reportData" column="report_data"/>
+        <result property="reportFile" column="report_file"/>
+        <result property="fileType" column="file_type"/>
+        <result property="status" column="status"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
+    </resultMap>
+
+    <sql id="selectReportRecordVo">
+        select id, report_name, report_code, template_id, report_params, report_data, report_file,
+               file_type, status, create_by, create_time, update_by, update_time, remark, del_flag
+        from report_record
+    </sql>
+
+    <select id="selectReportRecordList" parameterType="com.chennian.storytelling.bean.model.ReportRecord" resultMap="ReportRecordResult">
+        <include refid="selectReportRecordVo"/>
+        where del_flag = '0'
+        <if test="reportName != null and reportName != ''">
+            AND report_name like concat('%', #{reportName}, '%')
+        </if>
+        <if test="reportCode != null and reportCode != ''">
+            AND report_code = #{reportCode}
+        </if>
+        <if test="templateId != null">
+            AND template_id = #{templateId}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="createBy != null and createBy != ''">
+            AND create_by = #{createBy}
+        </if>
+        order by create_time desc
+    </select>
+
+    <select id="selectReportRecordById" parameterType="Long" resultMap="ReportRecordResult">
+        <include refid="selectReportRecordVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+
+    <insert id="insertReportRecord" parameterType="com.chennian.storytelling.bean.model.ReportRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into report_record (
+            <if test="reportName != null and reportName != ''">report_name,</if>
+            <if test="reportCode != null and reportCode != ''">report_code,</if>
+            <if test="templateId != null">template_id,</if>
+            <if test="reportParams != null and reportParams != ''">report_params,</if>
+            <if test="reportData != null and reportData != ''">report_data,</if>
+            <if test="reportFile != null and reportFile != ''">report_file,</if>
+            <if test="fileType != null and fileType != ''">file_type,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            del_flag
+        ) values (
+            <if test="reportName != null and reportName != ''">#{reportName},</if>
+            <if test="reportCode != null and reportCode != ''">#{reportCode},</if>
+            <if test="templateId != null">#{templateId},</if>
+            <if test="reportParams != null and reportParams != ''">#{reportParams},</if>
+            <if test="reportData != null and reportData != ''">#{reportData},</if>
+            <if test="reportFile != null and reportFile != ''">#{reportFile},</if>
+            <if test="fileType != null and fileType != ''">#{fileType},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            '0'
+        )
+    </insert>
+
+    <update id="updateReportRecord" parameterType="com.chennian.storytelling.bean.model.ReportRecord">
+        update report_record
+        <set>
+            <if test="reportName != null and reportName != ''">report_name = #{reportName},</if>
+            <if test="reportCode != null and reportCode != ''">report_code = #{reportCode},</if>
+            <if test="templateId != null">template_id = #{templateId},</if>
+            <if test="reportParams != null">report_params = #{reportParams},</if>
+            <if test="reportData != null">report_data = #{reportData},</if>
+            <if test="reportFile != null">report_file = #{reportFile},</if>
+            <if test="fileType != null and fileType != ''">file_type = #{fileType},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="delFlag != null and delFlag != ''">del_flag = #{delFlag},</if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteReportRecordById" parameterType="Long">
+        update report_record set del_flag = '1' where id = #{id}
+    </delete>
+
+    <delete id="deleteReportRecordByIds" parameterType="Long">
+        update report_record set del_flag = '1' where id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="cleanExpiredReports">
+        update report_record set del_flag = '1' 
+        where expire_time is not null and expire_time &lt; now() and del_flag = '0'
+    </update>
+
+</mapper>
