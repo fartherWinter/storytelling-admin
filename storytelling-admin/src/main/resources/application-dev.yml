@@ -46,6 +46,15 @@ spring:
           min-idle: 0
           #连接超时时间
       connect-timeout: 10s
+  mail:
+    host: smtp.163.com
+    port: 465
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 flowable:
   database-schema-update: true
   async-executor-activate: false
