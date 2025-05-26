@@ -1,0 +1,68 @@
+server:
+  port: 8100
+  servlet:
+    context-path: /api
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: th-gateway
+  datasource:
+    url: jdbc:mysql://0.0.0.0:3306/storytelling?allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+    username:
+    password:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 20
+      idle-timeout: 10000
+      auto-commit: true
+      connection-test-query: SELECT 1
+  cloud:
+    nacos:
+      discovery:
+        server-addr: http://
+        username: nacos
+        password: nacos
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: http://
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: storytelling-admin
+          uri: lb://storytelling-admin
+          predicates:
+            - Path=/sys/**
+        - id: storytelling-api
+          uri: lb://storytelling-api
+          predicates:
+            - Path=/mall/**
+        - id: storytelling-common
+          uri: lb://storytelling-common
+          predicates:
+            - Path=/common/**
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
+            allowedMethods: "*"
+            maxAge: 36000
+logging:
+  config: classpath:logback/logback-prod.xml
+  level:
+    com.baomidou.mybatisplus: debug
+
+
+
+
+
+
+
+
