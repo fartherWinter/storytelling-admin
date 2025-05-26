@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.AccountsPayableMapper">
+    
+    <!-- 获取应付账款总额 -->
+    <select id="getPayablesTotalAmount" resultType="java.lang.Double">
+        SELECT SUM(amount) 
+        FROM erp_accounts_payable
+        WHERE status = 'unpaid'
+    </select>
+    
+    <!-- 获取应付账款账龄分布 -->
+    <select id="getAgingDistribution" resultType="com.chennian.storytelling.vo.AgingDistribution">
+        SELECT 
+            CASE 
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 30 THEN '30天以内'
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 60 THEN '31-60天'
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 90 THEN '61-90天'
+                ELSE '90天以上'
+            END AS agingPeriod,
+            SUM(amount) AS amount
+        FROM erp_accounts_payable
+        WHERE status = 'unpaid'
+        GROUP BY agingPeriod
+        ORDER BY 
+            CASE agingPeriod
+                WHEN '30天以内' THEN 1
+                WHEN '31-60天' THEN 2
+                WHEN '61-90天' THEN 3
+                WHEN '90天以上' THEN 4
+            END
+    </select>
+    
+    <!-- 获取供应商应付账款分布 -->
+    <select id="getSupplierDistribution" resultType="com.chennian.storytelling.vo.SupplierDistribution">
+        SELECT 
+            s.supplier_name as supplierName,
+            SUM(ap.amount) AS amount
+        FROM 
+            erp_accounts_payable ap
+            JOIN erp_suppliers s ON ap.supplier_id = s.supplier_id
+        WHERE 
+            ap.status = 'unpaid'
+        GROUP BY 
+            s.supplier_id, s.supplier_name
+        ORDER BY 
+            amount DESC
+        LIMIT 5
+    </select>
+    
+    <!-- 获取付款计划 -->
+    <select id="getPaymentPlan" resultType="com.chennian.storytelling.vo.PaymentPlan">
+        SELECT 
+            CASE 
+                WHEN due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN '本周到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND DATE_ADD(CURDATE(), INTERVAL 14 DAY) THEN '下周到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 14 DAY) AND DATE_ADD(CURDATE(), INTERVAL 21 DAY) THEN '两周后到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 21 DAY) AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN '一个月后到期'
+            END AS paymentPeriod,
+            SUM(amount) AS amount
+        FROM 
+            erp_accounts_payable
+        WHERE 
+            status = 'unpaid'
+            AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY 
+            paymentPeriod
+        ORDER BY 
+            CASE paymentPeriod
+                WHEN '本周到期' THEN 1
+                WHEN '下周到期' THEN 2
+                WHEN '两周后到期' THEN 3
+                WHEN '一个月后到期' THEN 4
+            END
+    </select>
+    
+    <!-- 获取应付账款统计指标 -->
+    <select id="getPayablesMetrics" resultType="com.chennian.storytelling.vo.PayablesSummaryVO$PayablesMetricsVO">
+        SELECT 
+            (SELECT AVG(DATEDIFF(payment_date, invoice_date)) FROM erp_accounts_payable WHERE status = 'paid') AS averagePaymentDays,
+            (SELECT COUNT(DISTINCT supplier_id) FROM erp_accounts_payable WHERE status = 'unpaid') AS supplierCount,
+            (SELECT SUM(amount) FROM erp_accounts_payable WHERE status = 'unpaid' AND MONTH(invoice_date) = MONTH(CURDATE()) AND YEAR(invoice_date) = YEAR(CURDATE())) AS currentMonthPayable,
+            (SELECT SUM(amount) FROM erp_accounts_payable WHERE status = 'paid' AND MONTH(payment_date) = MONTH(CURDATE()) AND YEAR(payment_date) = YEAR(CURDATE())) AS currentMonthPaid
+    </select>
+    
+    <!-- 记录应付账款付款 -->
+    <update id="recordPayment">
+        UPDATE erp_accounts_payable
+        SET 
+            status = 'paid',
+            payment_date = NOW(),
+            update_time = NOW()
+        WHERE 
+            supplier_id = #{supplierId}
+            AND invoice_no = #{invoiceNo}
+            AND amount = #{amount}
+            AND status = 'unpaid'
+    </update>
+    
+    <!-- 获取应付账款账龄分析数据 -->
+    <select id="getPayablesAgingData" resultType="com.chennian.storytelling.vo.PayablesAgingVO">
+        SELECT 
+            s.supplier_name AS supplierName,
+            s.supplier_code AS supplierCode,
+            SUM(ap.amount) AS totalAmount,
+            SUM(CASE WHEN DATEDIFF(NOW(), ap.invoice_date) &lt;= 30 THEN ap.amount ELSE 0 END) AS within30Days,
+            SUM(CASE WHEN DATEDIFF(NOW(), ap.invoice_date) BETWEEN 31 AND 60 THEN ap.amount ELSE 0 END) AS days31To60,
+            SUM(CASE WHEN DATEDIFF(NOW(), ap.invoice_date) BETWEEN 61 AND 90 THEN ap.amount ELSE 0 END) AS days61To90,
+            SUM(CASE WHEN DATEDIFF(NOW(), ap.invoice_date) > 90 THEN ap.amount ELSE 0 END) AS over90Days,
+            s.contact_person AS contactPerson,
+            s.contact_phone AS contactPhone
+        FROM 
+            erp_accounts_payable ap
+            JOIN suppliers s ON ap.supplier_id = s.supplier_id
+        WHERE 
+            ap.status = 'unpaid'
+        GROUP BY 
+            s.supplier_id, s.supplier_name, s.supplier_code, s.contact_person, s.contact_phone
+        ORDER BY 
+            totalAmount DESC
+    </select>
+    
+    <!-- 获取供应商付款信息 -->
+    <select id="getSupplierPaymentData" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO">
+        SELECT 
+            s.supplier_name AS supplierName,
+            s.supplier_code AS supplierCode,
+            SUM(CASE WHEN ap.status = 'unpaid' THEN ap.amount ELSE 0 END) AS totalAmount,
+            SUM(CASE WHEN ap.status = 'paid' THEN ap.amount ELSE 0 END) AS paidAmount,
+            s.payment_terms AS paymentTerms,
+            s.credit_limit AS creditLimit,
+            (s.credit_limit - SUM(CASE WHEN ap.status = 'unpaid' THEN ap.amount ELSE 0 END)) AS remainingCreditLimit
+        FROM 
+            erp_suppliers s
+            LEFT JOIN erp_accounts_payable ap ON s.supplier_id = ap.supplier_id
+        WHERE 
+            s.supplier_id = #{supplierId}
+        GROUP BY 
+            s.supplier_id, s.supplier_name, s.supplier_code, s.payment_terms, s.credit_limit
+    </select>
+    
+    <!-- 获取供应商最近付款记录 -->
+    <select id="getSupplierRecentPayments" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO$PaymentRecord">
+        SELECT 
+            invoice_no AS invoiceNo,
+            DATE_FORMAT(payment_date, '%Y-%m-%d') AS date,
+            amount
+        FROM 
+            erp_accounts_payable
+        WHERE 
+            supplier_id = #{supplierId}
+            AND status = 'paid'
+        ORDER BY 
+            payment_date DESC
+        LIMIT 5
+    </select>
+    
+    <!-- 获取供应商待付发票 -->
+    <select id="getSupplierPendingInvoices" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO$PendingInvoice">
+        SELECT 
+            invoice_no AS invoiceNo,
+            DATE_FORMAT(invoice_date, '%Y-%m-%d') AS date,
+            amount,
+            DATE_FORMAT(due_date, '%Y-%m-%d') AS dueDate
+        FROM 
+            erp_accounts_payable
+        WHERE 
+            supplier_id = #{supplierId}
+            AND status = 'unpaid'
+        ORDER BY 
+            due_date ASC
+    </select>
+
+</mapper>

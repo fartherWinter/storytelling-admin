@@ -1,0 +1,32 @@
+# Spring Mail Configuration
+spring:
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: your-email@example.com
+    password: your-email-password
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+    # 发件人邮箱地址，如果未在代码中单独设置MimeMessageHelper.setFrom()，则会使用此配置
+    # from: your-sender-email@example.com 
+    # 默认编码
+    default-encoding: UTF-8
+
+# RabbitMQ Configuration
+# (此处可以保留或添加您项目中已有的RabbitMQ配置)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# 应用端口配置
+server:
+  port: 8081 # storytelling-service 的端口
+
+# 应用名称
+spring:
+  application:
+    name: storytelling-service

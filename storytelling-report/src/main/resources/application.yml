@@ -1,0 +1,58 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /report
+
+spring:
+  application:
+    name: storytelling-report
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:13306/storytelling?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+    username: root
+    password: 12345678
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+# MyBatis Plus配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  type-aliases-package: com.chennian.storytelling.bean.model
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: delFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 日志配置
+logging:
+  level:
+    com.chennian.storytelling: debug
+    org.springframework: warn
+
+# 报表配置
+report:
+  # 报表存储路径
+  storage-path: /data/reports
+  # 报表模板路径
+  template-path: /templates/reports
+  # 支持的导出格式
+  export-formats:
+    - xlsx
+    - pdf
+    - csv
+    - html
+  # 数据可视化配置
+  visualization:
+    enabled: true
+    chart-types:
+      - line
+      - bar
+      - pie
+      - scatter
+      - radar

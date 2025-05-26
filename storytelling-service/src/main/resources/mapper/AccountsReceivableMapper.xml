@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.AccountsReceivableMapper">
+    
+    <!-- 获取应收账款总额 -->
+    <select id="getReceivablesTotalAmount" resultType="java.lang.Double">
+        SELECT SUM(amount) 
+        FROM erp_accounts_receivable
+        WHERE status = 'unpaid'
+    </select>
+    
+    <!-- 获取账龄分布 -->
+    <select id="getAgingDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 30 THEN '30天以内'
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 60 THEN '31-60天'
+                WHEN DATEDIFF(NOW(), invoice_date) &lt;= 90 THEN '61-90天'
+                ELSE '90天以上'
+            END AS agingPeriod,
+            SUM(amount) AS amount
+        FROM erp_accounts_receivable
+        WHERE status = 'unpaid'
+        GROUP BY agingPeriod
+        ORDER BY 
+            CASE agingPeriod
+                WHEN '30天以内' THEN 1
+                WHEN '31-60天' THEN 2
+                WHEN '61-90天' THEN 3
+                WHEN '90天以上' THEN 4
+            END
+    </select>
+    
+    <!-- 获取客户分布 -->
+    <select id="getCustomerDistribution" resultType="java.util.Map">
+        SELECT 
+            c.customer_name as customerName,
+            SUM(ar.amount) AS amount
+        FROM 
+            erp_accounts_receivable ar
+            JOIN customers c ON ar.customer_id = c.customer_id
+        WHERE 
+            ar.status = 'unpaid'
+        GROUP BY 
+            c.customer_id, c.customer_name
+        ORDER BY 
+            amount DESC
+        LIMIT 5
+    </select>
+    
+    <!-- 获取收款计划 -->
+    <select id="getCollectionPlan" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN '本周到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND DATE_ADD(CURDATE(), INTERVAL 14 DAY) THEN '下周到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 14 DAY) AND DATE_ADD(CURDATE(), INTERVAL 21 DAY) THEN '两周后到期'
+                WHEN due_date BETWEEN DATE_ADD(CURDATE(), INTERVAL 21 DAY) AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) THEN '一个月后到期'
+            END AS collectionPeriod,
+            SUM(amount) AS amount
+        FROM 
+            erp_accounts_receivable
+        WHERE 
+            status = 'unpaid'
+            AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY 
+            collectionPeriod
+        ORDER BY 
+            CASE collectionPeriod
+                WHEN '本周到期' THEN 1
+                WHEN '下周到期' THEN 2
+                WHEN '两周后到期' THEN 3
+                WHEN '一个月后到期' THEN 4
+            END
+    </select>
+    
+    <!-- 获取应收账款统计指标 -->
+    <select id="getReceivablesMetrics" resultType="java.util.Map">
+        SELECT 
+            (SELECT AVG(DATEDIFF(collection_date, invoice_date)) FROM accounts_receivable WHERE status = 'paid') AS averageCollectionDays,
+            (SELECT COUNT(DISTINCT customer_id) FROM accounts_receivable WHERE status = 'unpaid') AS customerCount,
+            (SELECT SUM(amount) FROM accounts_receivable WHERE status = 'unpaid' AND MONTH(invoice_date) = MONTH(CURDATE()) AND YEAR(invoice_date) = YEAR(CURDATE())) AS currentMonthReceivable,
+            (SELECT SUM(amount) FROM accounts_receivable WHERE status = 'paid' AND MONTH(collection_date) = MONTH(CURDATE()) AND YEAR(collection_date) = YEAR(CURDATE())) AS currentMonthReceived
+    </select>
+    
+    <!-- 获取应收账款账龄分析数据 -->
+    <select id="getReceivablesAgingData" resultType="java.util.Map">
+        SELECT 
+            c.customer_name AS customerName,
+            c.customer_code AS customerCode,
+            SUM(ar.amount) AS totalAmount,
+            SUM(CASE WHEN DATEDIFF(NOW(), ar.invoice_date) &lt;= 30 THEN ar.amount ELSE 0 END) AS within30Days,
+            SUM(CASE WHEN DATEDIFF(NOW(), ar.invoice_date) BETWEEN 31 AND 60 THEN ar.amount ELSE 0 END) AS days31To60,
+            SUM(CASE WHEN DATEDIFF(NOW(), ar.invoice_date) BETWEEN 61 AND 90 THEN ar.amount ELSE 0 END) AS days61To90,
+            SUM(CASE WHEN DATEDIFF(NOW(), ar.invoice_date) > 90 THEN ar.amount ELSE 0 END) AS over90Days,
+            c.contact_person AS contactPerson,
+            c.contact_phone AS contactPhone
+        FROM 
+            erp_accounts_receivable ar
+            JOIN customers c ON ar.customer_id = c.customer_id
+        WHERE 
+            ar.status = 'unpaid'
+        GROUP BY 
+            c.customer_id, c.customer_name, c.customer_code, c.contact_person, c.contact_phone
+        ORDER BY 
+            totalAmount DESC
+    </select>
+    
+    <!-- 获取客户付款信息 -->
+    <select id="getCustomerCreditData" resultType="java.util.Map">
+        SELECT 
+            c.customer_name AS customerName,
+            c.customer_code AS customerCode,
+            SUM(CASE WHEN ar.status = 'unpaid' THEN ar.amount ELSE 0 END) AS totalAmount,
+            SUM(CASE WHEN ar.status = 'paid' THEN ar.amount ELSE 0 END) AS receivedAmount,
+            c.credit_limit AS creditLimit,
+            (c.credit_limit - SUM(CASE WHEN ar.status = 'unpaid' THEN ar.amount ELSE 0 END)) AS remainingCreditLimit,
+            c.credit_rating AS creditRating,
+            c.payment_terms AS paymentTerms
+        FROM 
+            erp_customers c
+            LEFT JOIN erp_accounts_receivable ar ON c.customer_id = ar.customer_id
+        WHERE 
+            c.customer_id = #{customerId}
+        GROUP BY 
+            c.customer_id, c.customer_name, c.customer_code, c.credit_limit, c.credit_rating, c.payment_terms
+    </select>
+    
+    <!-- 获取客户最近收款记录 -->
+    <select id="getCustomerRecentCollections" resultType="java.util.Map">
+        SELECT 
+            invoice_no AS invoiceNo,
+            DATE_FORMAT(collection_date, '%Y-%m-%d') AS date,
+            amount
+        FROM 
+            erp_accounts_receivable
+        WHERE 
+            customer_id = #{customerId}
+            AND status = 'paid'
+        ORDER BY 
+            collection_date DESC
+        LIMIT 5
+    </select>
+    
+    <!-- 获取客户待收发票 -->
+    <select id="getCustomerPendingInvoices" resultType="java.util.Map">
+        SELECT 
+            invoice_no AS invoiceNo,
+            DATE_FORMAT(invoice_date, '%Y-%m-%d') AS date,
+            amount,
+            DATE_FORMAT(due_date, '%Y-%m-%d') AS dueDate
+        FROM 
+            erp_accounts_receivable
+        WHERE 
+            customer_id = #{customerId}
+            AND status = 'unpaid'
+        ORDER BY 
+            due_date ASC
+    </select>
+    
+    <!-- 记录收款 -->
+    <update id="recordCollection">
+        UPDATE erp_accounts_receivable
+        SET 
+            status = 'paid',
+            collection_date = NOW(),
+            update_time = NOW()
+        WHERE 
+            customer_id = #{customerId}
+            AND invoice_no = #{invoiceNo}
+            AND amount = #{amount}
+            AND status = 'unpaid'
+    </update>
+
+</mapper>

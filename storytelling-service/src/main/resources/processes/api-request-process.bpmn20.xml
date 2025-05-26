@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.flowable.org/processdef">
+
+    <!-- 单个API请求流程 -->
+    <process id="apiRequestProcess" name="API请求流程" isExecutable="true">
+        <documentation>处理单个API请求并记录用户信息</documentation>
+        
+        <startEvent id="startEvent" name="开始"/>
+        
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="apiRequestTask"/>
+        
+        <serviceTask id="apiRequestTask" name="执行API请求"
+                     flowable:class="com.chennian.storytelling.workflow.delegate.ApiRequestDelegate">
+            <documentation>执行API请求并记录用户信息</documentation>
+        </serviceTask>
+        
+        <sequenceFlow id="flow2" sourceRef="apiRequestTask" targetRef="checkApiResponseGateway"/>
+        
+        <exclusiveGateway id="checkApiResponseGateway" name="检查API响应"/>
+        
+        <sequenceFlow id="flow3" sourceRef="checkApiResponseGateway" targetRef="apiRequestSuccessEndEvent">
+            <conditionExpression xsi:type="tFormalExpression">${apiRequestSuccess == true}</conditionExpression>
+        </sequenceFlow>
+        
+        <sequenceFlow id="flow4" sourceRef="checkApiResponseGateway" targetRef="apiRequestFailedEndEvent">
+            <conditionExpression xsi:type="tFormalExpression">${apiRequestSuccess == false}</conditionExpression>
+        </sequenceFlow>
+        
+        <endEvent id="apiRequestSuccessEndEvent" name="API请求成功"/>
+        
+        <endEvent id="apiRequestFailedEndEvent" name="API请求失败"/>
+    </process>
+    
+</definitions>
