@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.AdvancedFundManagementMapper">
+    
+    <!-- 获取资金池状态 -->
+    <select id="getCashPoolStatus" resultType="com.chennian.storytelling.vo.CashPoolStatusVO">
+        SELECT 
+            cp.pool_id,
+            cp.pool_name,
+            cp.currency,
+            cp.create_date,
+            cp.status,
+            cpb.total_balance,
+            cpb.available_balance,
+            cpb.frozen_amount,
+            cpb.overdraft_limit,
+            cpb.used_overdraft
+        FROM erp_cash_pool cp
+        LEFT JOIN erp_cash_pool_balance cpb ON cp.pool_id = cpb.pool_id
+        WHERE cp.pool_id = #{poolId}
+    </select>
+    
+    <!-- 获取子账户信息 -->
+    <select id="getSubAccounts" resultType="com.chennian.storytelling.vo.CashPoolStatusVO$SubAccount">
+        SELECT 
+            sub_account_id as subAccountId,
+            sub_account_name as subAccountName,
+            balance,
+            account_limit as limit
+        FROM erp_cash_pool_sub_account
+        WHERE pool_id = #{poolId}
+    </select>
+    
+    <!-- 获取近期交易记录 -->
+    <select id="getRecentTransactions" resultType="com.chennian.storytelling.vo.CashPoolStatusVO$RecentTransactions">
+        SELECT 
+            COUNT(*) as totalTransactions,
+            SUM(amount) as totalAmount,
+            MAX(amount) as maxTransaction,
+            MAX(amount) as maxTransaction,
+            MAX(transaction_date) as latestTransactionDate
+        FROM erp_cash_pool_transaction
+        WHERE pool_id = #{poolId}
+        AND transaction_date &gt;= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+    </select>
+    
+    <!-- 资金池内部调拨 -->
+    <update id="allocateCashPoolFunds">
+        INSERT INTO erp_cash_pool_transaction (
+            pool_id, 
+            from_sub_account, 
+            to_sub_account, 
+            amount, 
+            remarks, 
+            transaction_date, 
+            transaction_type
+        ) VALUES (
+            (SELECT pool_id FROM erp_cash_pool_sub_account WHERE sub_account_id = #{fromSubAccount}),
+            #{fromSubAccount},
+            #{toSubAccount},
+            #{amount},
+            #{remarks},
+            NOW(),
+            'INTERNAL_TRANSFER'
+        );
+        
+        UPDATE erp_cash_pool_sub_account 
+        SET balance = balance - #{amount} 
+        WHERE sub_account_id = #{fromSubAccount};
+        
+        UPDATE erp_cash_pool_sub_account 
+        SET balance = balance + #{amount} 
+        WHERE sub_account_id = #{toSubAccount};
+    </update>
+    
+    <!-- 获取外汇风险敞口 -->
+    <select id="getForeignExchangeExposure" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO">
+        SELECT 
+            fe.currency,
+            fe.as_of_date as asOfDate,
+            fe.base_currency as baseCurrency,
+            fe.exchange_rate as exchangeRate,
+            fes.asset_exposure as assetExposure,
+            fes.liability_exposure as liabilityExposure,
+            fes.net_exposure as netExposure,
+            fes.hedged_amount as hedgedAmount,
+            fes.unhedged_exposure as unhedgedExposure
+        FROM erp_fx_exposure fe
+        LEFT JOIN erp_fx_exposure_summary fes ON fe.exposure_id = fes.exposure_id
+        WHERE fe.currency = #{currency}
+        AND fe.as_of_date = #{asOfDate}
+    </select>
+    
+    <!-- 获取外汇敞口明细 -->
+    <select id="getExposureDetails" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO$ExposureDetails">
+        SELECT 
+            ar.amount as "accountsReceivable.amount",
+            ar.maturity_distribution as "accountsReceivable.maturityDistribution",
+            ap.amount as "accountsPayable.amount",
+            ap.maturity_distribution as "accountsPayable.maturityDistribution",
+            bd.amount as "bankDeposits.amount",
+            bl.amount as "bankLoans.amount",
+            bl.maturity_distribution as "bankLoans.maturityDistribution"
+        FROM erp_fx_exposure fe
+        LEFT JOIN erp_fx_accounts_receivable ar ON fe.exposure_id = ar.exposure_id
+        LEFT JOIN erp_fx_accounts_payable ap ON fe.exposure_id = ap.exposure_id
+        LEFT JOIN erp_fx_bank_deposits bd ON fe.exposure_id = bd.exposure_id
+        LEFT JOIN erp_fx_bank_loans bl ON fe.exposure_id = bl.exposure_id
+        WHERE fe.currency = #{currency}
+        AND fe.as_of_date = #{asOfDate}
+    </select>
+    
+    <!-- 获取风险分析 -->
+    <select id="getRiskAnalysis" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO$RiskAnalysis">
+        SELECT 
+            rate_up_5pct_impact as rateUp5pctImpact,
+            rate_down_5pct_impact as rateDown5pctImpact,
+            rate_up_10pct_impact as rateUp10pctImpact,
+            rate_down_10pct_impact as rateDown10pctImpact,
+            risk_rating as riskRating
+        FROM erp_fx_risk_analysis
+        WHERE exposure_id = (SELECT exposure_id FROM erp_fx_exposure WHERE currency = #{currency} AND as_of_date = #{asOfDate})
+    </select>
+    
+    <!-- 执行外汇对冲操作 -->
+    <insert id="executeFxHedging">
+        INSERT INTO erp_fx_hedging (
+            currency,
+            amount,
+            hedge_type,
+            rate,
+            hedge_date,
+            status
+        ) VALUES (
+            #{currency},
+            #{amount},
+            #{hedgeType},
+            #{rate},
+            NOW(),
+            'ACTIVE'
+        )
+    </insert>
+    
+    <!-- 获取投资组合状态 -->
+    <select id="getInvestmentPortfolioStatus" resultType="com.chennian.storytelling.vo.InvestmentPortfolioStatusVO">
+        SELECT 
+            ip.portfolio_id as "basicInfo.portfolioId",
+            ip.portfolio_name as "basicInfo.portfolioName",
+            ip.create_date as "basicInfo.createDate",
+            ip.currency as "basicInfo.currency",
+            ip.risk_level as "basicInfo.riskLevel",
+            ips.initial_investment as "portfolioSummary.initialInvestment",
+            ips.current_market_value as "portfolioSummary.currentMarketValue",
+            ips.total_return as "portfolioSummary.totalReturn",
+            ips.return_rate as "portfolioSummary.returnRate",
+            ips.annualized_return_rate as "portfolioSummary.annualizedReturnRate",
+            aa.money_market as "assetAllocation.moneyMarket",
+            aa.bonds as "assetAllocation.bonds",
+            aa.stocks as "assetAllocation.stocks",
+            aa.alternatives as "assetAllocation.alternatives",
+            mm.bank_deposits as "investmentDetails.moneyMarket.bankDeposits",
+            mm.money_market_funds as "investmentDetails.moneyMarket.moneyMarketFunds",
+            b.government_bonds as "investmentDetails.bonds.governmentBonds",
+            b.corporate_bonds as "investmentDetails.bonds.corporateBonds",
+            s.blue_chips as "investmentDetails.stocks.blueChips",
+            s.index_funds as "investmentDetails.stocks.indexFunds",
+            a.real_estate_funds as "investmentDetails.alternatives.realEstateFunds",
+            a.private_equity as "investmentDetails.alternatives.privateEquity",
+            pa.sharpe_ratio as "performanceAnalysis.sharpeRatio",
+            pa.max_drawdown as "performanceAnalysis.maxDrawdown",
+            pa.volatility as "performanceAnalysis.volatility",
+            pa.beta as "performanceAnalysis.beta"
+        FROM erp_investment_portfolio ip
+        LEFT JOIN erp_investment_portfolio_summary ips ON ip.portfolio_id = ips.portfolio_id
+        LEFT JOIN erp_investment_asset_allocation aa ON ip.portfolio_id = aa.portfolio_id
+        LEFT JOIN erp_investment_money_market mm ON ip.portfolio_id = mm.portfolio_id
+        LEFT JOIN erp_investment_bonds b ON ip.portfolio_id = b.portfolio_id
+        LEFT JOIN erp_investment_stocks s ON ip.portfolio_id = s.portfolio_id
+        LEFT JOIN erp_investment_alternatives a ON ip.portfolio_id = a.portfolio_id
+        LEFT JOIN erp_investment_performance_analysis pa ON ip.portfolio_id = pa.portfolio_id
+        WHERE ip.portfolio_id = #{portfolioId}
+    </select>
+    
+    <!-- 执行投资交易 -->
+    <insert id="executeInvestmentTransaction">
+        INSERT INTO erp_investment_transaction (
+            portfolio_id,
+            instrument_id,
+            trade_type,
+            amount,
+            price,
+            transaction_date,
+            status
+        ) VALUES (
+            #{portfolioId},
+            #{instrumentId},
+            #{tradeType},
+            #{amount},
+            #{price},
+            NOW(),
+            'COMPLETED'
+        )
+    </insert>
+    
+    <!-- 获取子账户余额 -->
+    <select id="getSubAccountBalance" resultType="double">
+        SELECT balance
+        FROM erp_cash_pool_sub_account
+        WHERE sub_account_id = #{subAccountId}
+    </select>
+    
+    <!-- 获取投资工具持仓 -->
+    <select id="getInstrumentHolding" resultType="double">
+        SELECT SUM(amount) as holding
+        FROM erp_investment_holding
+        WHERE portfolio_id = #{portfolioId}
+        AND instrument_id = #{instrumentId}
+    </select>
+    
+    <!-- 获取投资组合可用资金 -->
+    <select id="getPortfolioAvailableFunds" resultType="double">
+        SELECT available_funds
+        FROM erp_investment_portfolio_funds
+        WHERE portfolio_id = #{portfolioId}
+    </select>
+    
+</mapper>

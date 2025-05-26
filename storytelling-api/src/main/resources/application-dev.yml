@@ -1,0 +1,96 @@
+server:
+  port: 8085
+#  servlet:
+#    context-path: /test
+spring:
+  application:
+    name: storytelling-spi-cn
+  config:
+    import: nacos:mall-shardingsphere?group=DEFAULT_GROUP
+
+  cloud:
+    nacos:
+      discovery:
+        #服务注册地址
+        server-addr:
+  datasource:
+    url: jdbc:mysql://0.0.0.0:3306/storytelling?allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+    username: root
+    password: 12345678
+    driverClassName: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 20
+      idle-timeout: 10000
+      auto-commit: true
+      connection-test-query: SELECT 1
+  cache:
+    type: redis
+    redis:
+      cache-null-values: true
+  data:
+    redis:
+      host: 0.0.0.0
+      port: 16379
+      database: 0
+      lettuce:
+        pool:
+          #最大连接数
+          max-active: 2000
+          #最大阻塞等待时间(负数表示没限制)
+          max-wait: -1ms
+          #最大空闲
+          max-idle: 10
+          #最小空闲
+          min-idle: 0
+          #连接超时时间
+      connect-timeout: 10s
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    # 消息确认配置
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    # 消费者配置
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+        concurrency: 5
+        max-concurrency: 10
+        # 重试配置
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          multiplier: 1.0
+          max-interval: 10000
+#sa-token:
+#  token-name: token
+#  timeout: 36000
+#  token-style: random-32
+#  is-concurrent: false
+#  auto-renew: true
+#  activity-timeout: 1800
+wxpay:
+  mch-id:
+  mch-serial-no:
+  private-key-path:
+  api-v3-key:
+  appid:
+  domain:
+  notify-domain:
+file:
+  dataPath: C:\Users\chennian\Desktop\qrcode
+  environment: dev
+  domain: http:// #二维码数据存储路径
+  path: \
+logging:
+  config: classpath:logback/logback-dev.xml
+  level:
+    com.baomidou.mybatisplus: debug

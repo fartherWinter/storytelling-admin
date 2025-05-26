@@ -1,0 +1,100 @@
+server:
+  port: 8100
+  servlet:
+    context-path: /api
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: storytelling-gateway
+  config:
+    import: nacos:springclouddemo2023x.yaml?group=DEFAULT_GROUP
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:13306/storytelling?sslMode=DISABLED&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 12345678
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 20
+      idle-timeout: 10000
+      auto-commit: true
+      connection-test-query: SELECT 1
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        prefix: ${spring.application.name}
+        namespace: public
+        group: DEFAULT_GROUP
+        file-extension: yaml  # 配置格式
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: storytelling-admin
+          uri: http://localhost:8085
+          predicates:
+            - Path=/sys/**
+#          filters:
+#            - name: MovieRealName
+##            - name: BlackList
+##            - name: RequestTime
+        - id: storytelling-api
+          uri: http://localhost:8085
+          predicates:
+            - Path=/app/**
+        - id: storytelling-common
+          uri: http://localhost:8085
+          predicates:
+            - Path=/common/**
+        - id: storytelling-excel
+          uri: http://localhost:8085
+          predicates:
+            - Path=/excel/**
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]': # 匹配所有路径
+            allowed-origin-patterns: "http://localhost:3001" # 允许的源（支持通配符）
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS  # 必须包含 OPTIONS
+            allowed-headers: "*"    # 允许所有请求头
+            exposed-headers: # 暴露给前端的响应头
+              - Authorization
+              - Content-Disposition
+            allow-credentials: true # 允许携带凭证
+            max-age: 3600           # 预检请求缓存时间（秒）
+      enabled: true
+  data:
+    redis:
+      port: 16379
+      host: 0.0.0.0
+      database: 0
+
+nacos:
+  data-id: route-console-gateway.json
+  group-id: DEFAULT_GROUP
+  timeout: 5000
+logging:
+  config: classpath:logback/logback-dev.xml
+  level:
+    com.baomidou.mybatisplus: debug
+
+
+
+

@@ -1,0 +1,87 @@
+server:
+  port: 8085
+#  servlet:
+#    context-path: /test
+spring:
+  application:
+    name: storytelling-admin
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:13306/storytelling?sslMode=DISABLED&serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 12345678
+    hikari:
+      minimum-idle: 0
+      maximum-pool-size: 20
+      idle-timeout: 10000
+      auto-commit: true
+      connection-test-query: SELECT 1
+  cloud:
+    nacos:
+      discovery:
+        #服务注册地址
+        server-addr: 127.0.0.1:8848
+#        username: nacos
+#        password: nacos
+#        namespace: public
+#        group: DEFAULT_GROUP
+  cache:
+    type: redis
+    redis:
+      cache-null-values: true
+  data:
+    redis:
+      host: 0.0.0.0
+      port: 16379
+      database: 0
+      lettuce:
+        pool:
+          #最大连接数
+          max-active: 2000
+          #最大阻塞等待时间(负数表示没限制)
+          max-wait: -1ms
+          #最大空闲
+          max-idle: 10
+          #最小空闲
+          min-idle: 0
+          #连接超时时间
+      connect-timeout: 10s
+flowable:
+  database-schema-update: true
+  async-executor-activate: false
+fileManageConfig:
+  ## 图片管理
+  picConfig:
+    ## 本地存储
+    localStorage:
+      ## 访问地址
+      host: 127.0.0.1
+      ## 默认图片上传路径
+      savePathConfig: E:/
+      ## 上传默认目录
+      defaultPath: default
+    ## 腾讯云配置
+    tencentCloud:
+      ##
+      url: https://
+      ## 访问地址
+      host: https://
+      ## 开发者拥有的项目身份识别 ID，用于身份认证 （需要修改）
+      secretId:
+      ## 开发者拥有的项目身份密钥 （需要修改）
+      secretKey:
+      ## 域名信息
+      regionName: ap-shanghai
+      ## 存储桶名称 （需要修改）
+      bucketName: image-
+      ## 上传默认路径
+      defaultPath: default
+file:
+  dataPath: C:\Users\chen\Desktop\qrcode
+  environment: dev
+  domain: http:// #二维码数据存储路径
+  path: \
+logging:
+  config: classpath:logback/logback-dev.xml
+  level:
+    com.baomidou.mybatisplus: debug
