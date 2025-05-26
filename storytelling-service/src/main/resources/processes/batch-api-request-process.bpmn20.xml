@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             typeLanguage="http://www.w3.org/2001/XMLSchema"
+             expressionLanguage="http://www.w3.org/1999/XPath"
+             targetNamespace="http://www.flowable.org/processdef">
+
+    <!-- 批量API请求流程 -->
+    <process id="batchApiRequestProcess" name="批量API请求流程" isExecutable="true">
+        <documentation>处理多个API请求并记录用户信息</documentation>
+        
+        <startEvent id="startEvent" name="开始"/>
+        
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="validateRequestsTask"/>
+        
+        <scriptTask id="validateRequestsTask" name="验证请求参数" scriptFormat="groovy">
+            <script>
+                // 验证API请求列表是否有效
+                def apiRequests = execution.getVariable('apiRequests')
+                if (apiRequests == null || apiRequests.isEmpty()) {
+                    execution.setVariable('requestsValid', false)
+                    execution.setVariable('batchErrorMessage', '未提供有效的API请求列表')
+                } else {
+                    execution.setVariable('requestsValid', true)
+                    execution.setVariable('requestCount', apiRequests.size())
+                }
+            </script>
+        </scriptTask>
+        
+        <sequenceFlow id="flow2" sourceRef="validateRequestsTask" targetRef="checkRequestsGateway"/>
+        
+        <exclusiveGateway id="checkRequestsGateway" name="检查请求参数"/>
+        
+        <sequenceFlow id="flow3" sourceRef="checkRequestsGateway" targetRef="batchApiRequestTask">
+            <conditionExpression xsi:type="tFormalExpression">${requestsValid == true}</conditionExpression>
+        </sequenceFlow>
+        
+        <sequenceFlow id="flow4" sourceRef="checkRequestsGateway" targetRef="invalidRequestsEndEvent">
+            <conditionExpression xsi:type="tFormalExpression">${requestsValid == false}</conditionExpression>
+        </sequenceFlow>
+        
+        <serviceTask id="batchApiRequestTask" name="执行批量API请求"
+                     flowable:class="com.chennian.storytelling.workflow.delegate.BatchApiRequestDelegate">
+            <documentation>执行批量API请求并记录用户信息</documentation>
+        </serviceTask>
+        
+        <sequenceFlow id="flow5" sourceRef="batchApiRequestTask" targetRef="checkBatchResponseGateway"/>
+        
+        <exclusiveGateway id="checkBatchResponseGateway" name="检查批量请求响应"/>
+        
+        <sequenceFlow id="flow6" sourceRef="checkBatchResponseGateway" targetRef="batchRequestSuccessEndEvent">
+            <conditionExpression xsi:type="tFormalExpression">${batchRequestSuccess == true}</conditionExpression>
+        </sequenceFlow>
+        
+        <sequenceFlow id="flow7" sourceRef="checkBatchResponseGateway" targetRef="batchRequestFailedEndEvent">
+            <conditionExpression xsi:type="tFormalExpression">${batchRequestSuccess == false}</conditionExpression>
+        </sequenceFlow>
+        
+        <endEvent id="batchRequestSuccessEndEvent" name="批量请求成功"/>
+        
+        <endEvent id="batchRequestFailedEndEvent" name="批量请求失败"/>
+        
+        <endEvent id="invalidRequestsEndEvent" name="无效请求参数"/>
+    </process>
+    
+</definitions>

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.CostAccountingMapper">
+    
+    <!-- 获取成本中心基本信息 -->
+    <select id="getCostCenterBasicInfo" resultType="java.util.Map">
+        SELECT 
+            cc.cost_center_id AS costCenterId,
+            cc.cost_center_code AS costCenterCode,
+            cc.cost_center_name AS costCenterName,
+            cc.department_id AS departmentId,
+            d.department_name AS departmentName,
+            cc.manager_id AS managerId,
+            e.employee_name AS managerName,
+            cc.create_date AS createDate,
+            cc.status
+        FROM 
+            erp_cost_center cc
+            LEFT JOIN erp_department d ON cc.department_id = d.department_id
+            LEFT JOIN erp_employee e ON cc.manager_id = e.employee_id
+        WHERE 
+            cc.cost_center_id = #{costCenterId}
+            AND cc.period = #{period}
+    </select>
+    
+    <!-- 获取成本中心成本汇总 -->
+    <select id="getCostCenterSummary" resultType="java.util.Map">
+        SELECT 
+            SUM(amount) AS totalCost,
+            SUM(CASE WHEN cost_type = 'DIRECT' THEN amount ELSE 0 END) AS directCost,
+            SUM(CASE WHEN cost_type = 'INDIRECT' THEN amount ELSE 0 END) AS indirectCost,
+            SUM(CASE WHEN cost_category = 'LABOR' THEN amount ELSE 0 END) AS laborCost,
+            SUM(CASE WHEN cost_category = 'MATERIAL' THEN amount ELSE 0 END) AS materialCost,
+            SUM(CASE WHEN cost_category = 'OVERHEAD' THEN amount ELSE 0 END) AS overheadCost,
+            SUM(CASE WHEN cost_category = 'OTHER' THEN amount ELSE 0 END) AS otherCost
+        FROM 
+            erp_cost_center_cost
+        WHERE 
+            cost_center_id = #{costCenterId}
+            AND period = #{period}
+    </select>
+    
+    <!-- 获取成本中心成本明细 -->
+    <select id="getCostCenterDetails" resultType="java.util.Map">
+        SELECT 
+            cost_item_id AS costItemId,
+            cost_item_name AS costItemName,
+            cost_type AS costType,
+            cost_category AS costCategory,
+            amount,
+            budget_amount AS budgetAmount,
+            (amount - budget_amount) AS variance,
+            CASE WHEN budget_amount &gt; 0 THEN (amount - budget_amount) / budget_amount * 100 ELSE 0 END AS variancePercentage
+        FROM 
+           erp_cost_center_cost_detail
+        WHERE 
+            cost_center_id = #{costCenterId}
+            AND period = #{period}
+        ORDER BY 
+            cost_category, cost_type, amount DESC
+    </select>
+    
+    <!-- 获取成本中心成本分析 -->
+    <select id="getCostCenterAnalysis" resultType="java.util.Map">
+        SELECT 
+            cc.cost_center_id AS costCenterId,
+            cc.cost_center_name AS costCenterName,
+            cca.total_cost AS totalCost,
+            cca.previous_period_cost AS previousPeriodCost,
+            cca.cost_variance AS costVariance,
+            cca.cost_variance_percentage AS costVariancePercentage,
+            cca.ytd_cost AS ytdCost,
+            cca.annual_budget AS annualBudget,
+            cca.budget_utilization_percentage AS budgetUtilizationPercentage,
+            cca.cost_per_unit AS costPerUnit,
+            cca.efficiency_index AS efficiencyIndex
+        FROM 
+            erp_cost_center cc
+            JOIN erp_cost_center_analysis cca ON cc.cost_center_id = cca.cost_center_id
+        WHERE 
+            cc.cost_center_id = #{costCenterId}
+            AND cca.period = #{period}
+    </select>
+    
+    <!-- 获取产品基本信息 -->
+    <select id="getProductBasicInfo" resultType="java.util.Map">
+        SELECT 
+            p.product_id AS productId,
+            p.product_code AS productCode,
+            p.product_name AS productName,
+            p.product_category AS productCategory,
+            p.unit_of_measure AS unitOfMeasure,
+            p.status,
+            p.launch_date AS launchDate
+        FROM 
+            erp_product p
+        WHERE 
+            p.product_id = #{productId}
+    </select>
+    
+    <!-- 获取产品成本汇总 -->
+    <select id="getProductCostSummary" resultType="java.util.Map">
+        SELECT 
+            SUM(amount) AS totalCost,
+            SUM(CASE WHEN cost_type = 'DIRECT_MATERIAL' THEN amount ELSE 0 END) AS directMaterialCost,
+            SUM(CASE WHEN cost_type = 'DIRECT_LABOR' THEN amount ELSE 0 END) AS directLaborCost,
+            SUM(CASE WHEN cost_type = 'MANUFACTURING_OVERHEAD' THEN amount ELSE 0 END) AS manufacturingOverheadCost,
+            SUM(CASE WHEN cost_type = 'NON_MANUFACTURING_COST' THEN amount ELSE 0 END) AS nonManufacturingCost,
+            pc.standard_cost AS standardCost,
+            pc.actual_cost AS actualCost,
+            pc.cost_variance AS costVariance,
+            pc.cost_variance_percentage AS costVariancePercentage
+        FROM 
+            erp_product_cost pc
+            JOIN erp_product_cost_detail pcd ON pc.product_cost_id = pcd.product_cost_id
+        WHERE 
+            pc.product_id = #{productId}
+            AND pc.period = #{period}
+        GROUP BY 
+            pc.product_cost_id, pc.standard_cost, pc.actual_cost, pc.cost_variance, pc.cost_variance_percentage
+    </select>
+    
+    <!-- 获取产品成本构成 -->
+    <select id="getProductCostComposition" resultType="java.util.Map">
+        SELECT 
+            cost_type AS costType,
+            cost_item AS costItem,
+            amount,
+            percentage,
+            standard_amount AS standardAmount,
+            (amount - standard_amount) AS variance,
+            CASE WHEN standard_amount &gt; 0 THEN (amount - standard_amount) / standard_amount * 100 ELSE 0 END AS variancePercentage
+        FROM 
+            erp_product_cost_composition
+        WHERE 
+            product_id = #{productId}
+            AND period = #{period}
+        ORDER BY 
+            cost_type, amount DESC
+    </select>
+    
+    <!-- 获取产品成本趋势 -->
+    <select id="getProductCostTrend" resultType="java.util.Map">
+        SELECT 
+            period,
+            total_cost AS totalCost,
+            direct_material_cost AS directMaterialCost,
+            direct_labor_cost AS directLaborCost,
+            manufacturing_overhead_cost AS manufacturingOverheadCost,
+            unit_cost AS unitCost,
+            production_volume AS productionVolume
+        FROM 
+           erp_product_cost_trend
+        WHERE 
+            product_id = #{productId}
+            AND period &lt;= #{period}
+        ORDER BY 
+            period DESC
+        LIMIT 12
+    </select>
+    
+    <!-- 获取产品成本优化建议 -->
+    <select id="getProductCostOptimization" resultType="java.util.Map">
+        SELECT 
+            optimization_id AS optimizationId,
+            area,
+            suggestion,
+            potential_saving AS potentialSaving,
+            implementation_difficulty AS implementationDifficulty,
+            priority
+        FROM 
+            erp_product_cost_optimization
+        WHERE 
+            product_id = #{productId}
+            AND period = #{period}
+        ORDER BY 
+            priority ASC
+    </select>
+    
+    <!-- 获取活动成本池 -->
+    <select id="getActivityCostPool" resultType="java.util.Map">
+        SELECT 
+            activity_id AS activityId,
+            activity_name AS activityName,
+            cost_amount AS costAmount
+        FROM 
+            erp_activity_cost_pool
+        WHERE 
+            period = #{period}
+        ORDER BY 
+            cost_amount DESC
+    </select>
+    
+    <!-- 获取成本动因 -->
+    <select id="getCostDrivers" resultType="java.util.Map">
+        SELECT 
+            driver_id AS driverId,
+            driver_name AS driverName,
+            driver_unit AS driverUnit,
+            driver_quantity AS driverQuantity
+        FROM 
+            erp_cost_driver
+        WHERE 
+            period = #{period}
+    </select>
+    
+    <!-- 获取单位成本动因率 -->
+    <select id="getUnitCostDriverRate" resultType="java.util.Map">
+        SELECT 
+            acp.activity_id AS activityId,
+            acp.activity_name AS activityName,
+            cd.driver_id AS driverId,
+            cd.driver_name AS driverName,
+            (acp.cost_amount / cd.driver_quantity) AS rate
+        FROM 
+            erp_activity_cost_pool acp
+            JOIN erp_cost_driver cd ON acp.driver_id = cd.driver_id
+        WHERE 
+            acp.period = #{period}
+            AND cd.period = #{period}
+    </select>
+    
+    <!-- 获取产品ABC成本分析 -->
+    <select id="getProductABC" resultType="java.util.Map">
+        SELECT 
+            p.product_id AS productId,
+            p.product_name AS productName,
+            pa.activity_id AS activityId,
+            a.activity_name AS activityName,
+            pa.driver_quantity AS driverQuantity,
+            pa.activity_cost AS activityCost,
+            pa.traditional_cost AS traditionalCost,
+            (pa.activity_cost - pa.traditional_cost) AS costDifference,
+            CASE WHEN pa.traditional_cost > 0 THEN (pa.activity_cost - pa.traditional_cost) / pa.traditional_cost * 100 ELSE 0 END AS costDifferencePercentage
+        FROM 
+            erp_product_activity pa
+            JOIN erp_product p ON pa.product_id = p.product_id
+            JOIN erp_activity a ON pa.activity_id = a.activity_id
+        WHERE 
+            pa.period = #{period}
+        ORDER BY 
+            p.product_id, pa.activity_cost DESC
+    </select>
+    
+    <!-- 获取活动价值分析 -->
+    <select id="getActivityValueAnalysis" resultType="java.util.Map">
+        SELECT 
+            a.activity_id AS activityId,
+            a.activity_name AS activityName,
+            ava.cost_amount AS costAmount,
+            ava.value_added_percentage AS valueAddedPercentage,
+            ava.non_value_added_percentage AS nonValueAddedPercentage,
+            ava.value_classification AS valueClassification,
+            ava.improvement_potential AS improvementPotential
+        FROM 
+            erp_activity a
+            JOIN erp_activity_value_analysis ava ON a.activity_id = ava.activity_id
+        WHERE 
+            ava.period = #{period}
+        ORDER BY 
+            ava.value_added_percentage DESC
+    </select>
+    
+</mapper>

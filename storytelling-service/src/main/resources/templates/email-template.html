@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮件模板</title>
+    <style>
+        body {
+            font-family: Arial, 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #dddddd;
+        }
+        .header img {
+            max-width: 150px;
+        }
+        .content {
+            padding: 20px 0;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .content h1 {
+            color: #333333;
+        }
+        .content p {
+            margin-bottom: 10px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #dddddd;
+            font-size: 12px;
+            color: #777777;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <!-- 请替换为您的Logo图片链接 -->
+            <img src="https://via.placeholder.com/150" alt="公司Logo">
+        </div>
+        <div class="content">
+            <h1>欢迎您，{{userName}}！</h1>
+            <p>这里是邮件内容的占位符。您可以根据需要自定义这部分信息。</p>
+            <p>例如，您可以包含：</p>
+            <ul>
+                <li>个性化的问候语。</li>
+                <li>重要的更新或通知。</li>
+                <li>相关资源的链接。</li>
+            </ul>
+            <p>感谢您成为我们社群中重要的一员。</p>
+            <!-- 操作按钮示例 -->
+            <a href="{{actionUrl}}" class="button">立即行动</a>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} 您的公司名称。保留所有权利。</p>
+            <p>
+                <a href="{{unsubscribeUrl}}">取消订阅</a> | 
+                <a href="{{privacyPolicyUrl}}">隐私政策</a>
+            </p>
+            <p>您的公司地址，城市，国家</p>
+        </div>
+    </div>
+</body>
+</html>
