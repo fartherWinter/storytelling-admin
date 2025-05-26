@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.ReportMapper">
+
+    <resultMap id="ReportResultMap" type="com.chennian.storytelling.bean.dto.ReportDTO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="username" column="username"/>
+        <result property="type" column="type"/>
+        <result property="reportDate" column="report_date"/>
+        <result property="weekStartDate" column="week_start_date"/>
+        <result property="weekEndDate" column="week_end_date"/>
+        <result property="content" column="content"/>
+        <result property="summary" column="summary"/>
+        <result property="plan" column="plan"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insertReport" parameterType="com.chennian.storytelling.bean.dto.ReportDTO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO report (user_id, username, type, report_date, week_start_date, week_end_date, content, summary, plan, create_time, update_time)
+        VALUES (#{userId}, #{username}, #{type}, #{reportDate}, #{weekStartDate}, #{weekEndDate}, #{content}, #{summary}, #{plan}, NOW(), NOW())
+    </insert>
+
+    <update id="updateReport" parameterType="com.chennian.storytelling.bean.dto.ReportDTO">
+        UPDATE report
+        SET
+            username = #{username},
+            type = #{type},
+            report_date = #{reportDate},
+            week_start_date = #{weekStartDate},
+            week_end_date = #{weekEndDate},
+            content = #{content},
+            summary = #{summary},
+            plan = #{plan},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteReportById">
+        DELETE FROM report WHERE id = #{id}
+    </delete>
+
+    <select id="selectReportById" resultMap="ReportResultMap">
+        SELECT * FROM report WHERE id = #{id}
+    </select>
+
+    <select id="listReportsByUserId" resultMap="ReportResultMap">
+        SELECT * FROM report WHERE user_id = #{userId} AND type = #{type} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectDailyReportByUserIdAndDate" resultMap="ReportResultMap">
+        SELECT * FROM report WHERE user_id = #{userId} AND type = 'daily' AND report_date = #{reportDate}
+    </select>
+
+    <select id="selectWeeklyReportByUserIdAndDateRange" resultMap="ReportResultMap">
+        SELECT * FROM report WHERE user_id = #{userId} AND type = 'weekly' AND week_start_date = #{weekStartDate}
+    </select>
+
+</mapper>
