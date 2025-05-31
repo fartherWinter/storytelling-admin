@@ -45,7 +45,7 @@
         </div>
         <div class="chat-panel">
           <h3>{{ $t('conference.chat') }}</h3>
-          <div class="chat-messages" ref="chatMessages">
+          <div class="chat-messages" ref="chatMessagesContainer">
             <div v-for="(message, index) in chatMessages" :key="index" class="chat-message" :class="{ 'is-local': message.senderId === localPeerId }">
               <div class="message-sender">{{ message.senderName }}</div>
               <div class="message-content">{{ message.content }}</div>
@@ -131,7 +131,7 @@ export default {
     const isScreenSharing = ref(false)
     const chatMessages = ref([])
     const chatInput = ref('')
-    const chatMessages = ref(null)
+    const chatMessagesContainer = ref(null)
     
     // WebRTC相关变量
     let socket = null
@@ -555,9 +555,9 @@ export default {
     
     // 滚动聊天到底部
     const scrollChatToBottom = () => {
-      if (chatMessages.value) {
+      if (chatMessagesContainer.value) {
         setTimeout(() => {
-          chatMessages.value.scrollTop = chatMessages.value.scrollHeight
+          chatMessagesContainer.value.scrollTop = chatMessagesContainer.value.scrollHeight
         }, 50)
       }
     }

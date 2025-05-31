@@ -54,7 +54,7 @@
         </el-row>
         
         <el-form-item>
-          <el-button type="primary" @click="generateReport">生成报表</el-button>
+          <el-button type="primary" @click="handleGenerateReport">生成报表</el-button>
           <el-button @click="resetParams">重置</el-button>
         </el-form-item>
       </el-form>
@@ -213,7 +213,7 @@ const resetParams = () => {
 }
 
 // 生成报表
-const generateReport = async () => {
+const handleGenerateReport = async () => {
   if (props.previewMode) {
     generateSampleData()
     return
@@ -221,7 +221,7 @@ const generateReport = async () => {
   
   loading.value = true
   try {
-    const res = await generateReport({
+    const res = await generateReport({ // This still calls the imported API function
       templateId: props.templateData.id,
       reportName: props.templateData.templateName,
       reportFormat: exportFormat.value,

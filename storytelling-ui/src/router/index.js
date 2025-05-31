@@ -14,24 +14,27 @@ const routes = [
     component: () => import('@/views/ErpLogin.vue'),
     meta: { title: '登录', hidden: true }
   },
-  {    path: '/',
+  {
+    path: '/',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/dashboard/index',
+    name: 'Dashboard',
+    meta: { title: '仪表盘', icon: 'dashboard' },
     children: [
       {
-        path: 'dashboard',
-        name: 'Dashboard',
+        path: 'dashboard/index',
+        name: 'DashboardIndex',
         component: () => import('@/views/dashboard/index.vue'),
-        meta: { title: '首页', icon: 'dashboard' }
+        meta: { title: '首页概览', icon: 'home' }
       },
       {
-        path: 'data-visualization',
+        path: 'dashboard/data-visualization',
         name: 'DataVisualization',
         component: () => import('@/views/dashboard/DataVisualization.vue'),
         meta: { title: '数据可视化', icon: 'chart' }
       },
       {
-        path: 'enhanced-dashboard',
+        path: 'dashboard/enhanced',
         name: 'EnhancedDashboard',
         component: () => import('@/views/dashboard/EnhancedDashboard.vue'),
         meta: { title: '增强型仪表盘', icon: 'dashboard' }
@@ -103,77 +106,60 @@ const routes = [
     ]
   },
   
-  // AI分析预测功能
+  // 报表中心
   {
-    path: '/ai-analysis',
+    path: '/report',
     component: Layout,
-    redirect: '/ai-analysis/prediction',
-    name: 'AIAnalysis',
-    meta: { title: 'AI分析预测', icon: 'ai' },
+    redirect: '/report/center',
+    name: 'Report',
+    meta: { title: '报表中心', icon: 'document' },
     children: [
       {
-        path: 'prediction',
-        name: 'AIPrediction',
-        component: () => import('@/views/ai/Prediction.vue'),
-        meta: { title: '预测分析', icon: 'chart' }
+        path: 'center',
+        name: 'ReportCenter',
+        component: () => import('@/views/report/ReportCenter.vue'),
+        meta: { title: '报表管理', icon: 'folder' }
       },
       {
-        path: 'insights',
-        name: 'AIInsights',
-        component: () => import('@/views/ai/Insights.vue'),
-        meta: { title: '智能洞察', icon: 'bulb' }
+        path: 'designer',
+        name: 'ReportDesigner',
+        component: () => import('@/views/report/ReportDesigner.vue'),
+        meta: { title: '报表设计', icon: 'edit' }
       },
       {
-        path: 'recommendation',
-        name: 'AIRecommendation',
-        component: () => import('@/views/ai/Recommendation.vue'),
-        meta: { title: '智能推荐', icon: 'star' }
+        path: 'preview',
+        name: 'ReportPreview',
+        component: () => import('@/views/report/ReportPreview.vue'),
+        meta: { title: '报表预览', icon: 'view' }
       }
     ]
   },
   
-  // 移动端适配
+  // 系统设置
   {
-    path: '/mobile',
+    path: '/system',
     component: Layout,
-    redirect: '/mobile/dashboard',
-    name: 'Mobile',
-    meta: { title: '移动端管理', icon: 'mobile' },
-    children: [
-      {
-        path: 'dashboard',
-        name: 'MobileDashboard',
-        component: () => import('@/views/mobile/Dashboard.vue'),
-        meta: { title: '移动端概览', icon: 'dashboard' }
-      },
-      {
-        path: 'settings',
-        name: 'MobileSettings',
-        component: () => import('@/views/mobile/Settings.vue'),
-        meta: { title: '移动端设置', icon: 'setting' }
-      }
-    ]
-  },
-  
-  // 多语言支持
-  {
-    path: '/language',
-    component: Layout,
-    redirect: '/language/settings',
-    name: 'Language',
-    meta: { title: '多语言支持', icon: 'language' },
+    redirect: '/system/settings',
+    name: 'System',
+    meta: { title: '系统设置', icon: 'setting' },
     children: [
       {
         path: 'settings',
-        name: 'LanguageSettings',
-        component: () => import('@/views/language/Settings.vue'),
-        meta: { title: '语言设置', icon: 'setting' }
+        name: 'SystemSettings',
+        component: () => import('@/views/system/Settings.vue'),
+        meta: { title: '基础设置', icon: 'setting' }
       },
       {
-        path: 'translation',
-        name: 'Translation',
-        component: () => import('@/views/language/Translation.vue'),
-        meta: { title: '翻译管理', icon: 'translate' }
+        path: 'users',
+        name: 'UserManagement',
+        component: () => import('@/views/system/UserManagement.vue'),
+        meta: { title: '用户管理', icon: 'user' }
+      },
+      {
+        path: 'roles',
+        name: 'RoleManagement',
+        component: () => import('@/views/system/RoleManagement.vue'),
+        meta: { title: '角色管理', icon: 'peoples' }
       }
     ]
   },
@@ -190,9 +176,11 @@ const router = createRouter({
   routes
 })
 
+import { getToken } from '@/utils/auth'
+
 // 路由守卫，未登录跳转到登录页
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('erp_token')
+  const token = getToken()
   if (to.path !== '/login' && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
