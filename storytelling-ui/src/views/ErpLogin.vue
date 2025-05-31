@@ -31,7 +31,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import service from '../utils/request'
+import service from '@/utils/request'
+import { setToken } from '@/utils/auth'
 
 const router = useRouter()
 const loginForm = ref({ username: '', password: '', code: '', uuid: '' })
@@ -64,12 +65,12 @@ function handleLogin() {
         code: loginForm.value.code,
         uuid: loginForm.value.uuid
       }).then(res => {
-        if (res.data && res.data.code === 200) {
-          localStorage.setItem('erp_token', res.data.data.token)
+        if (res.code === '200') {
+          setToken(res.data.token)
           ElMessage.success('登录成功')
           router.push('/')
         } else {
-          ElMessage.error(res.data.msg || '用户名、密码或验证码错误')
+          ElMessage.error(res.msg || '用户名、密码或验证码错误')
           getCaptcha()
         }
       }).catch(() => {

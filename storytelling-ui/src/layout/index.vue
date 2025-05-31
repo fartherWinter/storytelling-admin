@@ -65,6 +65,8 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { removeToken } from '@/utils/auth'
+import { ElMessageBox } from 'element-plus'
 import SidebarItem from './components/SidebarItem.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import AppMain from './components/AppMain.vue'
@@ -93,7 +95,7 @@ const activeMenu = computed(() => {
 // 路由列表
 const routes = computed(() => {
   return router.options.routes.filter(route => {
-    return !route.hidden
+    return !route.hidden && !route.meta?.hidden && route.path !== '/login'
   })
 })
 
@@ -102,8 +104,16 @@ const userName = ref('管理员')
 
 // 退出登录
 const logout = () => {
-  // 实际项目中需要调用登出接口，清除token等操作
-  router.push('/login')
+  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    removeToken()
+    router.push('/login')
+  }).catch(() => {
+    // 用户取消退出
+  })
 }
 </script>
 

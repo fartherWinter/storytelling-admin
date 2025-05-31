@@ -3,7 +3,7 @@
  */
 
 // Token在localStorage中的键名
-const TokenKey = 'Admin-Token'
+const TokenKey = 'erp_token'
 
 /**
  * 获取token
