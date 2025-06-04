@@ -193,6 +193,23 @@ public class ServerResponseEntity<T> implements Serializable {
         return serverResponseEntity;
     }
 
+    public static <T> ServerResponseEntity<T> fail(int code, String msg) {
+        log.error(msg);
+        ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
+        serverResponseEntity.setMsg(msg);
+        serverResponseEntity.setCode(String.valueOf(code));
+        return serverResponseEntity;
+    }
+
+    public static <T> ServerResponseEntity<T> fail(int code, String msg, T data) {
+        log.error(msg);
+        ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
+        serverResponseEntity.setMsg(msg);
+        serverResponseEntity.setCode(String.valueOf(code));
+        serverResponseEntity.setData(data);
+        return serverResponseEntity;
+    }
+
     @Override
     public String toString() {
         return "ServerResponseEntity{" +
