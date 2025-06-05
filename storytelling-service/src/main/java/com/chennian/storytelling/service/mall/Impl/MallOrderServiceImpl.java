@@ -7,6 +7,7 @@ import com.chennian.storytelling.bean.model.mall.MallOrder;
 import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.dao.MallOrderMapper;
 import com.chennian.storytelling.service.mall.MallOrderService;
+import com.chennian.storytelling.common.enums.MallOrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,7 +110,7 @@ public class MallOrderServiceImpl extends ServiceImpl<MallOrderMapper, MallOrder
     public int cancelOrder(Long orderId) {
         MallOrder mallOrder = new MallOrder();
         mallOrder.setId(orderId);
-        mallOrder.setStatus(4); // 已关闭
+        mallOrder.setStatus(MallOrderStatus.CLOSED.getCode()); // 已关闭
         mallOrder.setUpdateTime(LocalDateTime.now());
         return mallOrderMapper.updateById(mallOrder);
     }
@@ -122,7 +123,7 @@ public class MallOrderServiceImpl extends ServiceImpl<MallOrderMapper, MallOrder
     public int payOrder(Long orderId, Integer payType) {
         MallOrder mallOrder = new MallOrder();
         mallOrder.setId(orderId);
-        mallOrder.setStatus(1); // 待发货
+        mallOrder.setStatus(MallOrderStatus.PENDING_DELIVERY.getCode()); // 待发货
         mallOrder.setPayType(payType);
         mallOrder.setPaymentTime(LocalDateTime.now());
         mallOrder.setUpdateTime(LocalDateTime.now());
@@ -137,7 +138,7 @@ public class MallOrderServiceImpl extends ServiceImpl<MallOrderMapper, MallOrder
     public Boolean deliverOrder(Long orderId) {
         MallOrder mallOrder = new MallOrder();
         mallOrder.setId(orderId);
-        mallOrder.setStatus(2); // 已发货
+        mallOrder.setStatus(MallOrderStatus.DELIVERED.getCode()); // 已发货
         mallOrder.setDeliveryTime(LocalDateTime.now());
         mallOrder.setUpdateTime(LocalDateTime.now());
         return mallOrderMapper.updateById(mallOrder) > 0;
@@ -151,7 +152,7 @@ public class MallOrderServiceImpl extends ServiceImpl<MallOrderMapper, MallOrder
     public Boolean confirmReceive(Long orderId) {
         MallOrder mallOrder = new MallOrder();
         mallOrder.setId(orderId);
-        mallOrder.setStatus(3); // 已完成
+        mallOrder.setStatus(MallOrderStatus.COMPLETED.getCode()); // 已完成
         mallOrder.setReceiveTime(LocalDateTime.now());
         mallOrder.setUpdateTime(LocalDateTime.now());
         return mallOrderMapper.updateById(mallOrder)>0;
