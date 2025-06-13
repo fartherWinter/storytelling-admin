@@ -1,8 +1,8 @@
 package com.chennian.storytelling.dao;
 
-import com.chennian.storytelling.vo.CashPoolStatusVO;
-import com.chennian.storytelling.vo.ForeignExchangeExposureVO;
-import com.chennian.storytelling.vo.InvestmentPortfolioStatusVO;
+import com.chennian.storytelling.bean.vo.CashPoolStatusVO;
+import com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO;
+import com.chennian.storytelling.bean.vo.InvestmentPortfolioStatusVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

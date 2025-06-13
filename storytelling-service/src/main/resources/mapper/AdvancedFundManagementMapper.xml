@@ -3,7 +3,7 @@
 <mapper namespace="com.chennian.storytelling.dao.AdvancedFundManagementMapper">
     
     <!-- 获取资金池状态 -->
-    <select id="getCashPoolStatus" resultType="com.chennian.storytelling.vo.CashPoolStatusVO">
+    <select id="getCashPoolStatus" resultType="com.chennian.storytelling.bean.vo.CashPoolStatusVO">
         SELECT 
             cp.pool_id,
             cp.pool_name,
@@ -21,7 +21,7 @@
     </select>
     
     <!-- 获取子账户信息 -->
-    <select id="getSubAccounts" resultType="com.chennian.storytelling.vo.CashPoolStatusVO$SubAccount">
+    <select id="getSubAccounts" resultType="com.chennian.storytelling.bean.vo.CashPoolStatusVO$SubAccount">
         SELECT 
             sub_account_id as subAccountId,
             sub_account_name as subAccountName,
@@ -32,7 +32,7 @@
     </select>
     
     <!-- 获取近期交易记录 -->
-    <select id="getRecentTransactions" resultType="com.chennian.storytelling.vo.CashPoolStatusVO$RecentTransactions">
+    <select id="getRecentTransactions" resultType="com.chennian.storytelling.bean.vo.CashPoolStatusVO$RecentTransactions">
         SELECT 
             COUNT(*) as totalTransactions,
             SUM(amount) as totalAmount,
@@ -74,7 +74,7 @@
     </update>
     
     <!-- 获取外汇风险敞口 -->
-    <select id="getForeignExchangeExposure" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO">
+    <select id="getForeignExchangeExposure" resultType="com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO">
         SELECT 
             fe.currency,
             fe.as_of_date as asOfDate,
@@ -92,7 +92,7 @@
     </select>
     
     <!-- 获取外汇敞口明细 -->
-    <select id="getExposureDetails" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO$ExposureDetails">
+    <select id="getExposureDetails" resultType="com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO$ExposureDetails">
         SELECT 
             ar.amount as "accountsReceivable.amount",
             ar.maturity_distribution as "accountsReceivable.maturityDistribution",
@@ -111,7 +111,7 @@
     </select>
     
     <!-- 获取风险分析 -->
-    <select id="getRiskAnalysis" resultType="com.chennian.storytelling.vo.ForeignExchangeExposureVO$RiskAnalysis">
+    <select id="getRiskAnalysis" resultType="com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO$RiskAnalysis">
         SELECT 
             rate_up_5pct_impact as rateUp5pctImpact,
             rate_down_5pct_impact as rateDown5pctImpact,
@@ -142,7 +142,7 @@
     </insert>
     
     <!-- 获取投资组合状态 -->
-    <select id="getInvestmentPortfolioStatus" resultType="com.chennian.storytelling.vo.InvestmentPortfolioStatusVO">
+    <select id="getInvestmentPortfolioStatus" resultType="com.chennian.storytelling.bean.vo.InvestmentPortfolioStatusVO">
         SELECT 
             ip.portfolio_id as "basicInfo.portfolioId",
             ip.portfolio_name as "basicInfo.portfolioName",

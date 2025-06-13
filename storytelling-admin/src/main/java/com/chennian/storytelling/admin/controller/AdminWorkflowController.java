@@ -7,7 +7,7 @@ import com.chennian.storytelling.common.enums.OperatorType;
 import com.chennian.security.admin.util.SecurityUtils;
 import com.chennian.storytelling.bean.model.SysUser;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
-import com.chennian.storytelling.workflow.domain.ProcessDefinitionDTO;
+import com.chennian.storytelling.bean.dto.ProcessDefinitionDTO;
 import com.chennian.storytelling.service.WorkflowService;
 import com.chennian.storytelling.workflow.utils.AdminWorkflowUtils;
 import io.swagger.v3.oas.annotations.Operation;

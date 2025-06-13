@@ -2,9 +2,9 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.AdvancedFundManagementMapper;
 import com.chennian.storytelling.service.AdvancedFundManagementService;
-import com.chennian.storytelling.vo.CashPoolStatusVO;
-import com.chennian.storytelling.vo.ForeignExchangeExposureVO;
-import com.chennian.storytelling.vo.InvestmentPortfolioStatusVO;
+import com.chennian.storytelling.bean.vo.CashPoolStatusVO;
+import com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO;
+import com.chennian.storytelling.bean.vo.InvestmentPortfolioStatusVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
