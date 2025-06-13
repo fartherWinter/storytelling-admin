@@ -2,9 +2,9 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.AccountsReceivableMapper;
 import com.chennian.storytelling.service.AccountsReceivableService;
-import com.chennian.storytelling.vo.CustomerCreditInfoVO;
-import com.chennian.storytelling.vo.ReceivablesAgingVO;
-import com.chennian.storytelling.vo.ReceivablesSummaryVO;
+import com.chennian.storytelling.bean.vo.CustomerCreditInfoVO;
+import com.chennian.storytelling.bean.vo.ReceivablesAgingVO;
+import com.chennian.storytelling.bean.vo.ReceivablesSummaryVO;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

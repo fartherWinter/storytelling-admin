@@ -2,7 +2,7 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.AccountsPayableMapper;
 import com.chennian.storytelling.service.AccountsPayableService;
-import com.chennian.storytelling.vo.*;
+import com.chennian.storytelling.bean.vo.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

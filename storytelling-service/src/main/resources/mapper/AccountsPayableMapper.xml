@@ -10,7 +10,7 @@
     </select>
     
     <!-- 获取应付账款账龄分布 -->
-    <select id="getAgingDistribution" resultType="com.chennian.storytelling.vo.AgingDistribution">
+    <select id="getAgingDistribution" resultType="com.chennian.storytelling.bean.vo.AgingDistribution">
         SELECT 
             CASE 
                 WHEN DATEDIFF(NOW(), invoice_date) &lt;= 30 THEN '30天以内'
@@ -32,7 +32,7 @@
     </select>
     
     <!-- 获取供应商应付账款分布 -->
-    <select id="getSupplierDistribution" resultType="com.chennian.storytelling.vo.SupplierDistribution">
+    <select id="getSupplierDistribution" resultType="com.chennian.storytelling.bean.vo.SupplierDistribution">
         SELECT 
             s.supplier_name as supplierName,
             SUM(ap.amount) AS amount
@@ -49,7 +49,7 @@
     </select>
     
     <!-- 获取付款计划 -->
-    <select id="getPaymentPlan" resultType="com.chennian.storytelling.vo.PaymentPlan">
+    <select id="getPaymentPlan" resultType="com.chennian.storytelling.bean.vo.PaymentPlan">
         SELECT 
             CASE 
                 WHEN due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN '本周到期'
@@ -75,7 +75,7 @@
     </select>
     
     <!-- 获取应付账款统计指标 -->
-    <select id="getPayablesMetrics" resultType="com.chennian.storytelling.vo.PayablesSummaryVO$PayablesMetricsVO">
+    <select id="getPayablesMetrics" resultType="com.chennian.storytelling.bean.vo.PayablesSummaryVO$PayablesMetricsVO">
         SELECT 
             (SELECT AVG(DATEDIFF(payment_date, invoice_date)) FROM erp_accounts_payable WHERE status = 'paid') AS averagePaymentDays,
             (SELECT COUNT(DISTINCT supplier_id) FROM erp_accounts_payable WHERE status = 'unpaid') AS supplierCount,
@@ -98,7 +98,7 @@
     </update>
     
     <!-- 获取应付账款账龄分析数据 -->
-    <select id="getPayablesAgingData" resultType="com.chennian.storytelling.vo.PayablesAgingVO">
+    <select id="getPayablesAgingData" resultType="com.chennian.storytelling.bean.vo.PayablesAgingVO">
         SELECT 
             s.supplier_name AS supplierName,
             s.supplier_code AS supplierCode,
@@ -121,7 +121,7 @@
     </select>
     
     <!-- 获取供应商付款信息 -->
-    <select id="getSupplierPaymentData" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO">
+    <select id="getSupplierPaymentData" resultType="com.chennian.storytelling.bean.vo.SupplierPaymentInfoVO">
         SELECT 
             s.supplier_name AS supplierName,
             s.supplier_code AS supplierCode,
@@ -140,7 +140,7 @@
     </select>
     
     <!-- 获取供应商最近付款记录 -->
-    <select id="getSupplierRecentPayments" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO$PaymentRecord">
+    <select id="getSupplierRecentPayments" resultType="com.chennian.storytelling.bean.vo.SupplierPaymentInfoVO$PaymentRecord">
         SELECT 
             invoice_no AS invoiceNo,
             DATE_FORMAT(payment_date, '%Y-%m-%d') AS date,
@@ -156,7 +156,7 @@
     </select>
     
     <!-- 获取供应商待付发票 -->
-    <select id="getSupplierPendingInvoices" resultType="com.chennian.storytelling.vo.SupplierPaymentInfoVO$PendingInvoice">
+    <select id="getSupplierPendingInvoices" resultType="com.chennian.storytelling.bean.vo.SupplierPaymentInfoVO$PendingInvoice">
         SELECT 
             invoice_no AS invoiceNo,
             DATE_FORMAT(invoice_date, '%Y-%m-%d') AS date,

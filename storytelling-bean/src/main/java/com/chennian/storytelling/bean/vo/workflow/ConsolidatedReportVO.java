@@ -1,4 +1,4 @@
-package com.chennian.storytelling.vo;
+package com.chennian.storytelling.bean.vo.workflow;
 
 import lombok.Data;
 

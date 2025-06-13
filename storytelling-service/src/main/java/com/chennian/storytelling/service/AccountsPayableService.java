@@ -1,8 +1,8 @@
 package com.chennian.storytelling.service;
 
-import com.chennian.storytelling.vo.PayablesAgingVO;
-import com.chennian.storytelling.vo.PayablesSummaryVO;
-import com.chennian.storytelling.vo.SupplierPaymentInfoVO;
+import com.chennian.storytelling.bean.vo.PayablesAgingVO;
+import com.chennian.storytelling.bean.vo.PayablesSummaryVO;
+import com.chennian.storytelling.bean.vo.SupplierPaymentInfoVO;
 import java.util.List;
 import java.util.Map;
 

@@ -1,8 +1,8 @@
 package com.chennian.storytelling.service;
 
-import com.chennian.storytelling.vo.CustomerCreditInfoVO;
-import com.chennian.storytelling.vo.ReceivablesAgingVO;
-import com.chennian.storytelling.vo.ReceivablesSummaryVO;
+import com.chennian.storytelling.bean.vo.CustomerCreditInfoVO;
+import com.chennian.storytelling.bean.vo.ReceivablesAgingVO;
+import com.chennian.storytelling.bean.vo.ReceivablesSummaryVO;
 
 import java.util.List;
 

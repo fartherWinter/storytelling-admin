@@ -1,6 +1,6 @@
 package com.chennian.storytelling.dao;
 
-import com.chennian.storytelling.vo.*;
+import com.chennian.storytelling.bean.vo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
