@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetMaintenanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.asset.AssetMaintenance">
+        <id column="id" property="id" />
+        <result column="asset_id" property="assetId" />
+        <result column="asset_no" property="assetNo" />
+        <result column="asset_name" property="assetName" />
+        <result column="maintenance_type" property="maintenanceType" />
+        <result column="maintenance_date" property="maintenanceDate" />
+        <result column="maintenance_content" property="maintenanceContent" />
+        <result column="fault_description" property="faultDescription" />
+        <result column="maintenance_result" property="maintenanceResult" />
+        <result column="maintenance_cost" property="maintenanceCost" />
+        <result column="maintenance_personnel" property="maintenancePersonnel" />
+        <result column="maintenance_unit" property="maintenanceUnit" />
+        <result column="next_maintenance_date" property="nextMaintenanceDate" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, asset_id, asset_no, asset_name, maintenance_type, maintenance_date, 
+        maintenance_content, fault_description, maintenance_result, maintenance_cost,
+        maintenance_personnel, maintenance_unit, next_maintenance_date, status, 
+        remark, create_time, update_time, create_by, update_by
+    </sql>
+
+    <!-- 根据资产ID查询维护记录 -->
+    <select id="selectByAssetId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE asset_id = #{assetId}
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- 根据维护类型查询维护记录 -->
+    <select id="selectByMaintenanceType" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE maintenance_type = #{maintenanceType}
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- 根据维护日期范围查询维护记录 -->
+    <select id="selectByMaintenanceDateRange" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE maintenance_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- 根据维护状态查询维护记录 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE status = #{status}
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- 查询即将到期的维护任务 -->
+    <select id="selectUpcomingMaintenance" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE next_maintenance_date IS NOT NULL
+        AND DATEDIFF(DAY, GETDATE(), next_maintenance_date) <= #{days}
+        AND DATEDIFF(DAY, GETDATE(), next_maintenance_date) >= 0
+        AND status IN (1, 3)
+        ORDER BY next_maintenance_date ASC
+    </select>
+
+    <!-- 查询维护统计信息 -->
+    <select id="selectMaintenanceStatistics" resultType="map">
+        SELECT 
+            CASE 
+                WHEN maintenance_type = 1 THEN '保养'
+                WHEN maintenance_type = 2 THEN '维修'
+                WHEN maintenance_type = 3 THEN '检查'
+                WHEN maintenance_type = 4 THEN '升级'
+                ELSE '其他'
+            END as maintenance_type,
+            COUNT(*) as maintenance_count,
+            SUM(maintenance_cost) as total_cost,
+            AVG(maintenance_cost) as avg_cost
+        FROM asset_maintenance
+        WHERE maintenance_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY maintenance_type
+        ORDER BY maintenance_count DESC
+    </select>
+
+    <!-- 查询维护费用统计 -->
+    <select id="selectMaintenanceCostStatistics" resultType="map">
+        SELECT 
+            ac.category_name as asset_category,
+            COUNT(am.id) as maintenance_count,
+            SUM(am.maintenance_cost) as total_cost,
+            AVG(am.maintenance_cost) as avg_cost,
+            MAX(am.maintenance_cost) as max_cost,
+            MIN(am.maintenance_cost) as min_cost
+        FROM asset_maintenance am
+        LEFT JOIN asset_info ai ON am.asset_id = ai.id
+        LEFT JOIN asset_category ac ON ai.category_id = ac.id
+        WHERE am.maintenance_date BETWEEN #{startDate} AND #{endDate}
+        AND am.maintenance_cost > 0
+        GROUP BY ac.category_name
+        ORDER BY total_cost DESC
+    </select>
+
+    <!-- 根据维护人员查询维护记录 -->
+    <select id="selectByMaintenancePersonnel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_maintenance
+        WHERE maintenance_personnel = #{maintenancePersonnel}
+        ORDER BY maintenance_date DESC
+    </select>
+
+</mapper>

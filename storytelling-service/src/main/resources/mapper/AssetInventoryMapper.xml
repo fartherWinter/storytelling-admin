@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetInventoryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.asset.AssetInventory">
+        <id column="id" property="id" />
+        <result column="inventory_batch_no" property="inventoryBatchNo" />
+        <result column="asset_id" property="assetId" />
+        <result column="asset_no" property="assetNo" />
+        <result column="asset_name" property="assetName" />
+        <result column="book_quantity" property="bookQuantity" />
+        <result column="actual_quantity" property="actualQuantity" />
+        <result column="difference_quantity" property="differenceQuantity" />
+        <result column="book_value" property="bookValue" />
+        <result column="actual_value" property="actualValue" />
+        <result column="difference_value" property="differenceValue" />
+        <result column="inventory_date" property="inventoryDate" />
+        <result column="inventory_personnel" property="inventoryPersonnel" />
+        <result column="inventory_result" property="inventoryResult" />
+        <result column="difference_reason" property="differenceReason" />
+        <result column="handle_method" property="handleMethod" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, inventory_batch_no, asset_id, asset_no, asset_name, book_quantity, actual_quantity, 
+        difference_quantity, book_value, actual_value, difference_value, inventory_date, 
+        inventory_personnel, inventory_result, difference_reason, handle_method, status, 
+        remark, create_time, update_time, create_by, update_by
+    </sql>
+
+    <!-- 根据盘点批次号查询盘点记录 -->
+    <select id="selectByInventoryBatchNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE inventory_batch_no = #{inventoryBatchNo}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 根据资产ID查询盘点记录 -->
+    <select id="selectByAssetId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE asset_id = #{assetId}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 根据盘点日期范围查询盘点记录 -->
+    <select id="selectByInventoryDateRange" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE inventory_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 根据盘点结果查询盘点记录 -->
+    <select id="selectByInventoryResult" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE inventory_result = #{inventoryResult}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 根据盘点状态查询盘点记录 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE status = #{status}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 查询盘点统计信息 -->
+    <select id="selectInventoryStatistics" resultType="java.util.Map">
+        SELECT 
+            inventory_result,
+            CASE 
+                WHEN inventory_result = 1 THEN '盘盈'
+                WHEN inventory_result = 2 THEN '盘亏'
+                WHEN inventory_result = 3 THEN '账实相符'
+                ELSE '未知'
+            END AS result_name,
+            COUNT(*) AS count,
+            SUM(CASE WHEN difference_value > 0 THEN difference_value ELSE 0 END) AS profit_value,
+            SUM(CASE WHEN difference_value < 0 THEN ABS(difference_value) ELSE 0 END) AS loss_value,
+            SUM(ABS(difference_value)) AS total_difference_value
+        FROM asset_inventory
+        WHERE inventory_batch_no = #{inventoryBatchNo}
+        GROUP BY inventory_result
+        ORDER BY inventory_result
+    </select>
+
+    <!-- 查询盘点差异统计 -->
+    <select id="selectInventoryDifferenceStatistics" resultType="java.util.Map">
+        SELECT 
+            ac.category_name AS asset_category,
+            COUNT(ai.id) AS total_count,
+            SUM(CASE WHEN ai.inventory_result = 1 THEN 1 ELSE 0 END) AS profit_count,
+            SUM(CASE WHEN ai.inventory_result = 2 THEN 1 ELSE 0 END) AS loss_count,
+            SUM(CASE WHEN ai.inventory_result = 3 THEN 1 ELSE 0 END) AS match_count,
+            SUM(CASE WHEN ai.difference_value > 0 THEN ai.difference_value ELSE 0 END) AS profit_value,
+            SUM(CASE WHEN ai.difference_value < 0 THEN ABS(ai.difference_value) ELSE 0 END) AS loss_value,
+            SUM(ABS(ai.difference_value)) AS total_difference_value,
+            ROUND(SUM(CASE WHEN ai.inventory_result = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(ai.id), 2) AS accuracy_rate
+        FROM asset_inventory ai
+        LEFT JOIN asset_info asi ON ai.asset_id = asi.id
+        LEFT JOIN asset_category ac ON asi.category_id = ac.id
+        WHERE ai.inventory_date BETWEEN #{startDate} AND #{endDate}
+        GROUP BY ac.id, ac.category_name
+        ORDER BY total_difference_value DESC
+    </select>
+
+    <!-- 根据盘点人员查询盘点记录 -->
+    <select id="selectByInventoryPersonnel" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_inventory
+        WHERE inventory_personnel = #{inventoryPersonnel}
+        ORDER BY inventory_date DESC, id DESC
+    </select>
+
+    <!-- 查询最新的盘点批次号 -->
+    <select id="selectLatestInventoryBatchNo" resultType="java.lang.String">
+        SELECT inventory_batch_no
+        FROM asset_inventory
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+</mapper>

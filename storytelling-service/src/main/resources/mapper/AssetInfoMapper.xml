@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.asset.AssetInfo">
+        <id column="id" property="id" />
+        <result column="asset_no" property="assetNo" />
+        <result column="asset_name" property="assetName" />
+        <result column="category_id" property="categoryId" />
+        <result column="category_name" property="categoryName" />
+        <result column="model" property="model" />
+        <result column="specification" property="specification" />
+        <result column="brand" property="brand" />
+        <result column="supplier_id" property="supplierId" />
+        <result column="supplier_name" property="supplierName" />
+        <result column="purchase_date" property="purchaseDate" />
+        <result column="purchase_price" property="purchasePrice" />
+        <result column="current_value" property="currentValue" />
+        <result column="depreciation_method" property="depreciationMethod" />
+        <result column="useful_life" property="usefulLife" />
+        <result column="residual_rate" property="residualRate" />
+        <result column="accumulated_depreciation" property="accumulatedDepreciation" />
+        <result column="location" property="location" />
+        <result column="department_id" property="departmentId" />
+        <result column="department_name" property="departmentName" />
+        <result column="responsible_person_id" property="responsiblePersonId" />
+        <result column="responsible_person_name" property="responsiblePersonName" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, asset_no, asset_name, category_id, category_name, model, specification, brand,
+        supplier_id, supplier_name, purchase_date, purchase_price, current_value, 
+        depreciation_method, useful_life, residual_rate, accumulated_depreciation, location,
+        department_id, department_name, responsible_person_id, responsible_person_name, 
+        status, remark, create_time, update_time, create_by, update_by
+    </sql>
+
+    <!-- 根据资产编号查询资产 -->
+    <select id="selectByAssetNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE asset_no = #{assetNo}
+    </select>
+
+    <!-- 根据类别ID查询资产列表 -->
+    <select id="selectByCategoryId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE category_id = #{categoryId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据部门ID查询资产列表 -->
+    <select id="selectByDepartmentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE department_id = #{departmentId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据责任人ID查询资产列表 -->
+    <select id="selectByResponsiblePersonId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE responsible_person_id = #{responsiblePersonId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据资产状态查询资产列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询即将到期的资产（根据使用年限） -->
+    <select id="selectExpiringAssets" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE status = 1
+        AND DATEDIFF(MONTH, purchase_date, DATEADD(YEAR, useful_life, purchase_date)) <= #{months}
+        AND DATEDIFF(MONTH, purchase_date, DATEADD(YEAR, useful_life, purchase_date)) > 0
+        ORDER BY purchase_date ASC
+    </select>
+
+    <!-- 查询资产统计信息 -->
+    <select id="selectAssetStatistics" resultType="map">
+        SELECT 
+            ac.category_name,
+            COUNT(ai.id) as asset_count,
+            SUM(ai.purchase_price) as total_purchase_price,
+            SUM(ai.current_value) as total_current_value,
+            AVG(ai.current_value) as avg_current_value
+        FROM asset_info ai
+        LEFT JOIN asset_category ac ON ai.category_id = ac.id
+        WHERE ai.status IN (1, 2, 3)
+        GROUP BY ac.category_name
+        ORDER BY asset_count DESC
+    </select>
+
+    <!-- 查询资产价值统计 -->
+    <select id="selectAssetValueStatistics" resultType="map">
+        SELECT 
+            ai.department_name,
+            COUNT(ai.id) as asset_count,
+            SUM(ai.purchase_price) as total_purchase_price,
+            SUM(ai.current_value) as total_current_value,
+            SUM(ai.accumulated_depreciation) as total_depreciation
+        FROM asset_info ai
+        WHERE ai.status IN (1, 2, 3)
+        AND ai.department_name IS NOT NULL
+        GROUP BY ai.department_name
+        ORDER BY total_current_value DESC
+    </select>
+
+    <!-- 根据购买日期范围查询资产 -->
+    <select id="selectByPurchaseDateRange" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE purchase_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY purchase_date DESC
+    </select>
+
+    <!-- 查询需要折旧的资产 -->
+    <select id="selectAssetsForDepreciation" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM asset_info
+        WHERE status = 1
+        AND depreciation_method IS NOT NULL
+        AND useful_life > 0
+        AND current_value > 0
+        ORDER BY purchase_date ASC
+    </select>
+
+    <!-- 批量更新资产折旧信息 -->
+    <update id="batchUpdateDepreciation">
+        <foreach collection="assets" item="asset" separator=";">
+            UPDATE asset_info
+            SET 
+                current_value = #{asset.currentValue},
+                accumulated_depreciation = #{asset.accumulatedDepreciation},
+                update_time = GETDATE(),
+                update_by = #{asset.updateBy}
+            WHERE id = #{asset.id}
+        </foreach>
+    </update>
+
+</mapper>
