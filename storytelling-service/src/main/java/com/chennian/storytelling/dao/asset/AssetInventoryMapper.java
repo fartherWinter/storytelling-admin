@@ -2,6 +2,7 @@ package com.chennian.storytelling.dao.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chennian.storytelling.bean.model.asset.AssetInventory;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -65,6 +66,7 @@ public interface AssetInventoryMapper extends BaseMapper<AssetInventory> {
      * @param inventoryBatchNo 盘点批次号
      * @return 统计信息
      */
+    @MapKey("inventory_result")
     List<Map<String, Object>> selectInventoryStatistics(@Param("inventoryBatchNo") String inventoryBatchNo);
 
     /**
@@ -74,6 +76,7 @@ public interface AssetInventoryMapper extends BaseMapper<AssetInventory> {
      * @param endDate 结束日期
      * @return 差异统计
      */
+    @MapKey("asset_category")
     List<Map<String, Object>> selectInventoryDifferenceStatistics(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
     /**

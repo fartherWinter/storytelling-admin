@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chennian.storytelling.bean.model.asset.AssetDepreciation;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -47,6 +48,7 @@ public interface AssetDepreciationMapper extends BaseMapper<AssetDepreciation> {
     /**
      * 查询折旧统计信息
      */
+    @MapKey("depreciation_month")
     List<Map<String, Object>> selectDepreciationStatistics(@Param("startMonth") String startMonth, @Param("endMonth") String endMonth);
 
     /**
@@ -62,5 +64,6 @@ public interface AssetDepreciationMapper extends BaseMapper<AssetDepreciation> {
     /**
      * 查询需要计算折旧的资产
      */
+    @MapKey("asset_id")
     List<Map<String, Object>> selectAssetsForDepreciation(@Param("depreciationMonth") String depreciationMonth);
 }

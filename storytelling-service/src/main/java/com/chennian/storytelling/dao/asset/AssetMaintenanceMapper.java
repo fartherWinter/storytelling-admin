@@ -2,6 +2,7 @@ package com.chennian.storytelling.dao.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chennian.storytelling.bean.model.asset.AssetMaintenance;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -66,6 +67,7 @@ public interface AssetMaintenanceMapper extends BaseMapper<AssetMaintenance> {
      * @param endDate 结束日期
      * @return 统计信息
      */
+    @MapKey("maintenance_type")
     List<Map<String, Object>> selectMaintenanceStatistics(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
     /**
@@ -75,6 +77,7 @@ public interface AssetMaintenanceMapper extends BaseMapper<AssetMaintenance> {
      * @param endDate 结束日期
      * @return 费用统计
      */
+    @MapKey("asset_category")
     List<Map<String, Object>> selectMaintenanceCostStatistics(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
     /**

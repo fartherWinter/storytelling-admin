@@ -2,6 +2,7 @@ package com.chennian.storytelling.dao.asset;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chennian.storytelling.bean.model.asset.AssetInfo;
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -71,6 +72,7 @@ public interface AssetInfoMapper extends BaseMapper<AssetInfo> {
      * 
      * @return 统计信息
      */
+    @MapKey("category_name")
     List<Map<String, Object>> selectAssetStatistics();
 
     /**
@@ -78,6 +80,7 @@ public interface AssetInfoMapper extends BaseMapper<AssetInfo> {
      * 
      * @return 价值统计
      */
+    @MapKey("department_name")
     List<Map<String, Object>> selectAssetValueStatistics();
 
     /**
