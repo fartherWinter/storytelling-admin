@@ -231,7 +231,7 @@
             pa.activity_cost AS activityCost,
             pa.traditional_cost AS traditionalCost,
             (pa.activity_cost - pa.traditional_cost) AS costDifference,
-            CASE WHEN pa.traditional_cost > 0 THEN (pa.activity_cost - pa.traditional_cost) / pa.traditional_cost * 100 ELSE 0 END AS costDifferencePercentage
+            CASE WHEN pa.traditional_cost &gt; 0 THEN (pa.activity_cost - pa.traditional_cost) / pa.traditional_cost * 100 ELSE 0 END AS costDifferencePercentage
         FROM 
             erp_product_activity pa
             JOIN erp_product p ON pa.product_id = p.product_id

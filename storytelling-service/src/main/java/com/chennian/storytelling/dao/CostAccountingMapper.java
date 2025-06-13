@@ -1,5 +1,6 @@
 package com.chennian.storytelling.dao;
 
+import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,6 +20,7 @@ public interface CostAccountingMapper {
      * @param costCenterId 成本中心ID
      * @return 成本中心基本信息
      */
+    @MapKey("id")
     Map<String, Object> getCostCenterBasicInfo(@Param("period") String period, @Param("costCenterId") Long costCenterId);
     
     /**
@@ -27,6 +29,7 @@ public interface CostAccountingMapper {
      * @param costCenterId 成本中心ID
      * @return 成本中心成本汇总
      */
+    @MapKey("id")
     Map<String, Object> getCostCenterSummary(@Param("period") String period, @Param("costCenterId") Long costCenterId);
     
     /**
@@ -35,6 +38,7 @@ public interface CostAccountingMapper {
      * @param costCenterId 成本中心ID
      * @return 成本中心成本明细
      */
+    @MapKey("id")
     Map<String, Object> getCostCenterDetails(@Param("period") String period, @Param("costCenterId") Long costCenterId);
     
     /**
@@ -43,6 +47,7 @@ public interface CostAccountingMapper {
      * @param costCenterId 成本中心ID
      * @return 成本中心成本分析
      */
+    @MapKey("id")
     Map<String, Object> getCostCenterAnalysis(@Param("period") String period, @Param("costCenterId") Long costCenterId);
     
     /**
@@ -51,6 +56,7 @@ public interface CostAccountingMapper {
      * @param productId 产品ID
      * @return 产品基本信息
      */
+    @MapKey("id")
     Map<String, Object> getProductBasicInfo(@Param("period") String period, @Param("productId") Long productId);
     
     /**
@@ -59,6 +65,7 @@ public interface CostAccountingMapper {
      * @param productId 产品ID
      * @return 产品成本汇总
      */
+    @MapKey("id")
     Map<String, Object> getProductCostSummary(@Param("period") String period, @Param("productId") Long productId);
     
     /**
@@ -67,6 +74,7 @@ public interface CostAccountingMapper {
      * @param productId 产品ID
      * @return 产品成本构成
      */
+    @MapKey("id")
     Map<String, Object> getProductCostComposition(@Param("period") String period, @Param("productId") Long productId);
     
     /**
@@ -75,6 +83,7 @@ public interface CostAccountingMapper {
      * @param productId 产品ID
      * @return 产品成本趋势
      */
+    @MapKey("id")
     Map<String, Object> getProductCostTrend(@Param("period") String period, @Param("productId") Long productId);
     
     /**
@@ -83,6 +92,7 @@ public interface CostAccountingMapper {
      * @param productId 产品ID
      * @return 产品成本优化建议
      */
+    @MapKey("id")
     Map<String, Object> getProductCostOptimization(@Param("period") String period, @Param("productId") Long productId);
     
     /**
@@ -90,6 +100,7 @@ public interface CostAccountingMapper {
      * @param period 期间
      * @return 活动成本池
      */
+    @MapKey("activity_name")
     Map<String, Double> getActivityCostPool(@Param("period") String period);
     
     /**
@@ -97,6 +108,7 @@ public interface CostAccountingMapper {
      * @param period 期间
      * @return 成本动因
      */
+    @MapKey("driver_name")
     Map<String, Integer> getCostDrivers(@Param("period") String period);
     
     /**
@@ -104,6 +116,7 @@ public interface CostAccountingMapper {
      * @param period 期间
      * @return 单位成本动因率
      */
+    @MapKey("driver_name")
     Map<String, Double> getUnitCostDriverRate(@Param("period") String period);
     
     /**
@@ -111,6 +124,7 @@ public interface CostAccountingMapper {
      * @param period 期间
      * @return 产品ABC成本分析
      */
+    @MapKey("product_id")
     Map<String, Map<String, Object>> getProductABC(@Param("period") String period);
     
     /**
@@ -118,5 +132,6 @@ public interface CostAccountingMapper {
      * @param period 期间
      * @return 活动价值分析
      */
+    @MapKey("id")
     Map<String, Object> getActivityValueAnalysis(@Param("period") String period);
 }
