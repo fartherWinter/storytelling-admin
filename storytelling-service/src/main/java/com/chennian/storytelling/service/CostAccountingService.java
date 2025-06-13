@@ -1,8 +1,8 @@
 package com.chennian.storytelling.service;
 
-import com.chennian.storytelling.vo.ActivityBasedCostAnalysisVO;
-import com.chennian.storytelling.vo.CostCenterAnalysisVO;
-import com.chennian.storytelling.vo.ProductCostAnalysisVO;
+import com.chennian.storytelling.bean.vo.ActivityBasedCostAnalysisVO;
+import com.chennian.storytelling.bean.vo.CostCenterAnalysisVO;
+import com.chennian.storytelling.bean.vo.ProductCostAnalysisVO;
 
 /**
  * 成本会计服务接口

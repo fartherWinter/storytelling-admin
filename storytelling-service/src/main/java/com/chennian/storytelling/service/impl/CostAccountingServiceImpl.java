@@ -2,13 +2,13 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.CostAccountingMapper;
 import com.chennian.storytelling.service.CostAccountingService;
-import com.chennian.storytelling.vo.ActivityBasedCostAnalysisVO;
-import com.chennian.storytelling.vo.CostCenterAnalysisVO;
-import com.chennian.storytelling.vo.CostComposition;
-import com.chennian.storytelling.vo.CostOptimization;
-import com.chennian.storytelling.vo.CostSummary;
-import com.chennian.storytelling.vo.CostTrend;
-import com.chennian.storytelling.vo.ProductCostAnalysisVO;
+import com.chennian.storytelling.bean.vo.ActivityBasedCostAnalysisVO;
+import com.chennian.storytelling.bean.vo.CostCenterAnalysisVO;
+import com.chennian.storytelling.bean.vo.CostComposition;
+import com.chennian.storytelling.bean.vo.CostOptimization;
+import com.chennian.storytelling.bean.vo.CostSummary;
+import com.chennian.storytelling.bean.vo.CostTrend;
+import com.chennian.storytelling.bean.vo.ProductCostAnalysisVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
