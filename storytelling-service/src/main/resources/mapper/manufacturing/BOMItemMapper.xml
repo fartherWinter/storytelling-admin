@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.BOMItemMapper">
+
+    <!-- BOM明细结果映射 -->
+    <resultMap id="BomItemResultMap" type="com.chennian.storytelling.bean.model.manufacturing.BOMItem">
+        <id column="bom_item_id" property="bomItemId"/>
+        <result column="bom_id" property="bomId"/>
+        <result column="material_id" property="materialId"/>
+        <result column="material_code" property="materialCode"/>
+        <result column="material_name" property="materialName"/>
+        <result column="material_spec" property="materialSpec"/>
+        <result column="material_unit" property="materialUnit"/>
+        <result column="material_type" property="materialType"/>
+        <result column="required_quantity" property="requiredQuantity"/>
+        <result column="base_usage" property="baseUsage"/>
+        <result column="loss_rate" property="lossRate"/>
+        <result column="actual_usage" property="actualUsage"/>
+        <result column="substitute_material_id" property="substituteMaterialId"/>
+        <result column="substitute_material_code" property="substituteMaterialCode"/>
+        <result column="substitute_material_name" property="substituteMaterialName"/>
+        <result column="substitute_ratio" property="substituteRatio"/>
+        <result column="is_key_material" property="isKeyMaterial"/>
+        <result column="is_optional" property="isOptional"/>
+        <result column="process_code" property="processCode"/>
+        <result column="process_name" property="processName"/>
+        <result column="process_sequence" property="processSequence"/>
+        <result column="feeding_time" property="feedingTime"/>
+        <result column="feeding_method" property="feedingMethod"/>
+        <result column="storage_location" property="storageLocation"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="purchase_cycle" property="purchaseCycle"/>
+        <result column="min_stock" property="minStock"/>
+        <result column="max_stock" property="maxStock"/>
+        <result column="safety_stock" property="safetyStock"/>
+        <result column="standard_cost" property="standardCost"/>
+        <result column="current_cost" property="currentCost"/>
+        <result column="effective_date" property="effectiveDate"/>
+        <result column="expiry_date" property="expiryDate"/>
+        <result column="remark" property="remark"/>
+        <result column="create_by" property="createBy"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_by" property="updateBy"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 根据BOM ID查询明细列表 -->
+    <select id="selectByBomId" resultMap="BomItemResultMap">
+        SELECT bom_item_id, bom_id, material_id, material_code, material_name, material_spec, material_unit,
+               material_type, required_quantity, base_usage, loss_rate, actual_usage,
+               substitute_material_id, substitute_material_code, substitute_material_name, substitute_ratio,
+               is_key_material, is_optional, process_code, process_name, process_sequence,
+               feeding_time, feeding_method, storage_location, supplier_id, supplier_name,
+               purchase_cycle, min_stock, max_stock, safety_stock, standard_cost, current_cost,
+               effective_date, expiry_date, remark, create_by, create_time, update_by, update_time
+        FROM bom_item 
+        WHERE bom_id = #{bomId}
+        ORDER BY bom_item_id
+    </select>
+    
+    <!-- 根据物料ID查询BOM明细列表 -->
+    <select id="selectByMaterialId" resultMap="BomItemResultMap">
+        SELECT bom_item_id, bom_id, material_id, material_code, material_name, material_spec, material_unit,
+               material_type, required_quantity, base_usage, loss_rate, actual_usage,
+               substitute_material_id, substitute_material_code, substitute_material_name, substitute_ratio,
+               is_key_material, is_optional, process_code, process_name, process_sequence,
+               feeding_time, feeding_method, storage_location, supplier_id, supplier_name,
+               purchase_cycle, min_stock, max_stock, safety_stock, standard_cost, current_cost,
+               effective_date, expiry_date, remark, create_by, create_time, update_by, update_time
+        FROM bom_item 
+        WHERE material_id = #{materialId}
+        ORDER BY bom_id, bom_item_id
+    </select>
+    
+    <!-- 根据物料类型查询BOM明细列表 -->
+    <select id="selectByMaterialType" resultMap="BomItemResultMap">
+        SELECT bi.bom_item_id, bi.bom_id, bi.material_id, bi.material_code, bi.material_name, bi.material_spec, bi.material_unit,
+               bi.material_type, bi.required_quantity, bi.base_usage, bi.loss_rate, bi.actual_usage,
+               bi.substitute_material_id, bi.substitute_material_code, bi.substitute_material_name, bi.substitute_ratio,
+               bi.is_key_material, bi.is_optional, bi.process_code, bi.process_name, bi.process_sequence,
+               bi.feeding_time, bi.feeding_method, bi.storage_location, bi.supplier_id, bi.supplier_name,
+               bi.purchase_cycle, bi.min_stock, bi.max_stock, bi.safety_stock, bi.standard_cost, bi.current_cost,
+               bi.effective_date, bi.expiry_date, bi.remark, bi.create_by, bi.create_time, bi.update_by, bi.update_time
+        FROM bom_item bi
+        WHERE bi.material_type = #{materialType}
+        ORDER BY bi.bom_id, bi.bom_item_id
+    </select>
+    
+    <!-- 根据工序查询BOM明细列表 -->
+    <select id="selectByProcess" resultMap="BomItemResultMap">
+        SELECT bom_item_id, bom_id, material_id, material_code, material_name, material_spec, material_unit,
+               material_type, required_quantity, base_usage, loss_rate, actual_usage,
+               substitute_material_id, substitute_material_code, substitute_material_name, substitute_ratio,
+               is_key_material, is_optional, process_code, process_name, process_sequence,
+               feeding_time, feeding_method, storage_location, supplier_id, supplier_name,
+               purchase_cycle, min_stock, max_stock, safety_stock, standard_cost, current_cost,
+               effective_date, expiry_date, remark, create_by, create_time, update_by, update_time
+        FROM bom_item 
+        WHERE process_code = #{processCode}
+        ORDER BY bom_id, bom_item_id
+    </select>
+    
+    <!-- 查询关键物料列表 -->
+    <select id="selectKeyMaterials" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit,
+            SUM(bi.quantity) as totalQuantity,
+            COUNT(DISTINCT bi.bom_id) as bomCount,
+            AVG(bi.unit_cost) as avgUnitCost,
+            SUM(bi.quantity * bi.unit_cost) as totalCost,
+            CASE 
+                WHEN SUM(bi.quantity) &gt; 1000 OR COUNT(DISTINCT bi.bom_id) &gt; 10 THEN 'HIGH'
+                WHEN SUM(bi.quantity) &gt; 500 OR COUNT(DISTINCT bi.bom_id) &gt; 5 THEN 'MEDIUM'
+                ELSE 'LOW'
+            END as importance
+        FROM bom_item bi
+        INNER JOIN material m ON bi.material_id = m.id
+        INNER JOIN bom b ON bi.bom_id = b.id
+        WHERE b.status = 'ACTIVE'
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit
+        HAVING SUM(bi.quantity) &gt; 100 OR COUNT(DISTINCT bi.bom_id) &gt; 3
+        ORDER BY totalCost DESC, totalQuantity DESC
+    </select>
+    
+    <!-- 查询可选物料列表 -->
+    <select id="selectOptionalMaterials" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit,
+            bi.quantity,
+            bi.unit_cost,
+            bi.is_optional,
+            bi.substitute_material_id,
+            sm.material_name as substituteMaterialName,
+            bi.remark
+        FROM bom_item bi
+        INNER JOIN material m ON bi.material_id = m.id
+        LEFT JOIN material sm ON bi.substitute_material_id = sm.id
+        WHERE bi.bom_id = #{bomId}
+        AND (bi.is_optional = 1 OR bi.substitute_material_id IS NOT NULL)
+        ORDER BY bi.id
+    </select>
+    
+    <!-- 查询BOM明细统计信息 -->
+    <select id="selectBomItemStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalItems,
+            COUNT(DISTINCT material_id) as uniqueMaterials,
+            SUM(quantity) as totalQuantity,
+            SUM(quantity * unit_cost) as totalCost,
+            AVG(unit_cost) as avgUnitCost,
+            MAX(unit_cost) as maxUnitCost,
+            MIN(unit_cost) as minUnitCost,
+            COUNT(CASE WHEN is_optional = 1 THEN 1 END) as optionalItems,
+            COUNT(CASE WHEN substitute_material_id IS NOT NULL THEN 1 END) as substitutableItems
+        FROM bom_item
+        WHERE bom_id = #{bomId}
+    </select>
+    
+    <!-- 查询物料用量统计 -->
+    <select id="selectMaterialUsageStatistics" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit,
+            COUNT(bi.id) as usageCount,
+            SUM(bi.quantity) as totalUsage,
+            AVG(bi.quantity) as avgUsage,
+            MAX(bi.quantity) as maxUsage,
+            MIN(bi.quantity) as minUsage,
+            SUM(bi.quantity * bi.unit_cost) as totalValue,
+            COUNT(DISTINCT bi.bom_id) as bomCount
+        FROM material m
+        INNER JOIN bom_item bi ON m.id = bi.material_id
+        INNER JOIN bom b ON bi.bom_id = b.id
+        WHERE 1=1
+        <if test="materialId != null">
+            AND m.id = #{materialId}
+        </if>
+        <if test="materialType != null and materialType != ''">
+            AND m.material_type = #{materialType}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND b.create_time >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND b.create_time &lt;= #{endDate}
+        </if>
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit
+        ORDER BY totalValue DESC, totalUsage DESC
+    </select>
+
+    <!-- 根据BOM ID删除明细 -->
+    <delete id="deleteByBomId" parameterType="long">
+        DELETE FROM bom_item WHERE bom_id = #{bomId}
+    </delete>
+
+    <!-- 获取物料消耗统计 -->
+    <select id="selectMaterialConsumption" resultType="map">
+        SELECT 
+            bi.material_id as material_id,
+            bi.material_name,
+            SUM(bi.quantity * po.actual_quantity) as total_consumption,
+            AVG(bi.unit_cost) as avg_unit_cost,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost) as total_cost,
+            COUNT(DISTINCT po.id) as order_count
+        FROM bom_item bi
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="materialId != null">
+            AND bi.material_id = #{materialId}
+        </if>
+        GROUP BY bi.material_id, bi.material_name
+        ORDER BY total_consumption DESC
+    </select>
+
+    <!-- 获取废料统计数据 -->
+    <select id="selectWasteStatistics" resultType="map">
+        SELECT 
+            bi.material_id,
+            bi.material_name,
+            SUM(wr.waste_quantity) as total_waste,
+            SUM(wr.waste_quantity * bi.unit_cost) as waste_cost,
+            AVG(wr.waste_quantity / bi.quantity * 100) as waste_rate
+        FROM bom_item bi
+        JOIN waste_record wr ON bi.material_id = wr.material_id
+        WHERE wr.record_date BETWEEN #{startDate} AND #{endDate}
+        <if test="productId != null">
+            AND wr.product_id = #{productId}
+        </if>
+        GROUP BY bi.material_id, bi.material_name
+        ORDER BY total_waste DESC
+    </select>
+
+    <!-- 获取库存周转分析 -->
+    <select id="selectInventoryTurnover" resultType="map">
+        SELECT 
+            bi.material_id as material_id,
+            bi.material_name,
+            AVG(inv.stock_quantity) as avg_inventory,
+            SUM(bi.quantity * po.actual_quantity) as total_consumption,
+            CASE 
+                WHEN AVG(inv.stock_quantity) &gt; 0 
+                THEN SUM(bi.quantity * po.actual_quantity) / AVG(inv.stock_quantity)
+                ELSE 0 
+            END as turnover_rate,
+            AVG(inv.stock_quantity * bi.unit_cost) as avg_inventory_value
+        FROM bom_item bi
+        JOIN inventory inv ON bi.material_id = inv.material_id
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="productId != null">
+            AND po.product_id = #{productId}
+        </if>
+        GROUP BY bi.material_id, bi.material_name
+        ORDER BY turnover_rate DESC
+    </select>
+
+    <!-- 获取供应商绩效分析 -->
+    <select id="selectSupplierPerformance" resultType="map">
+        SELECT 
+            bi.supplier_id as supplier_id,
+            bi.supplier_name,
+            COUNT(DISTINCT po.id) as order_count,
+            AVG(po.delivery_days) as avg_delivery_days,
+            AVG(qr.quality_score) as avg_quality_score,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost) as total_amount,
+            AVG(bi.unit_cost) as avg_unit_cost
+        FROM bom_item bi
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        LEFT JOIN quality_record qr ON bi.material_id = qr.material_id AND po.id = qr.order_id
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="supplierId != null">
+            AND bi.supplier_id = #{supplierId}
+        </if>
+        GROUP BY bi.supplier_id, bi.supplier_name
+        ORDER BY total_amount DESC
+    </select>
+
+    <!-- 获取成本分析数据 -->
+    <select id="selectCostStatistics" resultType="map">
+        SELECT 
+            DATE_FORMAT(po.start_date, '%Y-%m') as month,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost) as material_cost,
+            SUM(wo.labor_cost) as labor_cost,
+            SUM(eq.operation_cost) as equipment_cost,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost + wo.labor_cost + eq.operation_cost) as total_cost,
+            COUNT(DISTINCT po.id) as order_count
+        FROM bom_item bi
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        LEFT JOIN work_order wo ON po.id = wo.production_order_id
+        LEFT JOIN equipment_cost eq ON wo.equipment_id = eq.equipment_id AND DATE(wo.start_time) = eq.cost_date
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="productId != null">
+            AND po.product_id = #{productId}
+        </if>
+        GROUP BY DATE_FORMAT(po.start_date, '%Y-%m')
+        ORDER BY month
+    </select>
+
+    <!-- 获取库存优化数据 -->
+    <select id="selectInventoryOptimizationData" resultType="map">
+        SELECT 
+            bi.material_id,
+            bi.material_name,
+            AVG(inv.stock_quantity) as avg_stock,
+            MIN(inv.stock_quantity) as min_stock,
+            MAX(inv.stock_quantity) as max_stock,
+            AVG(bi.quantity * po.planned_quantity) as avg_demand,
+            bi.lead_time,
+            AVG(inv.stock_quantity * bi.unit_cost) as avg_inventory_cost,
+            CASE 
+                WHEN AVG(bi.quantity * po.planned_quantity) &gt; 0 
+                THEN AVG(inv.stock_quantity) / AVG(bi.quantity * po.planned_quantity) * 30
+                ELSE 0 
+            END as days_of_supply
+        FROM bom_item bi
+        JOIN inventory inv ON bi.material_id = inv.material_id
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        WHERE po.plan_date BETWEEN #{startDate} AND #{endDate}
+        <if test="productId != null">
+            AND po.product_id = #{productId}
+        </if>
+        GROUP BY bi.material_id, bi.material_name, bi.lead_time
+        ORDER BY avg_inventory_cost DESC
+    </select>
+
+    <!-- 获取成本分析数据（按部门） -->
+    <select id="selectCostAnalysisData" resultType="map">
+        SELECT 
+            d.department_name,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost) as material_cost,
+            SUM(wo.labor_cost) as labor_cost,
+            SUM(eq.operation_cost) as equipment_cost,
+            SUM(oh.overhead_cost) as overhead_cost,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost + wo.labor_cost + eq.operation_cost + oh.overhead_cost) as total_cost,
+            COUNT(DISTINCT po.id) as order_count,
+            AVG(po.actual_quantity) as avg_quantity
+        FROM bom_item bi
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        JOIN work_order wo ON po.id = wo.production_order_id
+        JOIN department d ON wo.department_id = d.id
+        LEFT JOIN equipment_cost eq ON wo.equipment_id = eq.equipment_id AND DATE(wo.start_time) = eq.cost_date
+        LEFT JOIN overhead_cost oh ON d.id = oh.department_id AND DATE(wo.start_time) = oh.cost_date
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="departmentId != null">
+            AND d.id = #{departmentId}
+        </if>
+        GROUP BY d.id, d.department_name
+        ORDER BY total_cost DESC
+    </select>
+
+    <!-- 获取供应链数据 -->
+    <select id="selectSupplyChainData" resultType="map">
+        SELECT 
+            bi.supplier_id,
+            bi.supplier_name,
+            COUNT(DISTINCT bi.material_id) as material_count,
+            SUM(bi.quantity * po.actual_quantity) as total_supply,
+            AVG(bi.lead_time) as avg_lead_time,
+            SUM(CASE WHEN po.delivery_date &gt; po.planned_delivery_date THEN 1 ELSE 0 END) as delayed_orders,
+            COUNT(DISTINCT po.id) as total_orders,
+            AVG(qr.quality_score) as avg_quality_score,
+            SUM(bi.quantity * po.actual_quantity * bi.unit_cost) as total_value
+        FROM bom_item bi
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN production_order po ON b.product_id = po.product_id
+        LEFT JOIN quality_record qr ON bi.material_id = qr.material_id AND po.id = qr.order_id
+        WHERE po.start_date BETWEEN #{startDate} AND #{endDate}
+        <if test="supplierId != null">
+            AND bi.supplier_id = #{supplierId}
+        </if>
+        GROUP BY bi.supplier_id, bi.supplier_name
+        ORDER BY total_value DESC
+    </select>
+
+    <!-- 查询物料成本统计 -->
+    <select id="selectMaterialCostStatistics" resultType="map">
+        SELECT 
+            bi.bom_id,
+            COUNT(*) as material_count,
+            SUM(CAST(bi.standard_cost AS DECIMAL(10,2))) as total_standard_cost,
+            SUM(CAST(bi.current_cost AS DECIMAL(10,2))) as total_current_cost,
+            AVG(CAST(bi.standard_cost AS DECIMAL(10,2))) as avg_standard_cost,
+            AVG(CAST(bi.current_cost AS DECIMAL(10,2))) as avg_current_cost,
+            MAX(CAST(bi.standard_cost AS DECIMAL(10,2))) as max_standard_cost,
+            MIN(CAST(bi.standard_cost AS DECIMAL(10,2))) as min_standard_cost
+        FROM bom_item bi
+        WHERE bi.bom_id = #{bomId}
+        AND bi.deleted = 0
+        GROUP BY bi.bom_id
+    </select>
+
+    <!-- 更新物料用量 -->
+    <update id="updateMaterialUsage">
+        UPDATE bom_item 
+        SET 
+            required_quantity = #{requiredQuantity},
+            actual_usage = #{actualUsage},
+            update_time = NOW()
+        WHERE bom_item_id = #{bomItemId}
+    </update>
+
+    <!-- 更新物料成本 -->
+    <update id="updateMaterialCost">
+        UPDATE bom_item 
+        SET 
+            standard_cost = #{standardCost},
+            current_cost = #{currentCost},
+            update_time = NOW()
+        WHERE bom_item_id = #{bomItemId}
+    </update>
+
+    <!-- 查询替代物料列表 -->
+    <select id="selectSubstituteMaterials" resultMap="BomItemResultMap">
+        SELECT 
+            bi.id,
+            bi.bom_id,
+            bi.material_id,
+            bi.material_code,
+            bi.material_name,
+            bi.material_type,
+            bi.required_quantity,
+            bi.unit,
+            bi.standard_cost,
+            bi.current_cost,
+            bi.supplier_id,
+            bi.supplier_name,
+            bi.process_code,
+            bi.process_name,
+            bi.is_key_material,
+            bi.is_optional,
+            bi.substitute_material_id,
+            bi.substitute_ratio,
+            bi.remark,
+            bi.create_time,
+            bi.update_time
+        FROM bom_item bi
+        WHERE bi.substitute_material_id = #{materialId}
+        AND bi.deleted = 0
+        ORDER BY bi.substitute_ratio DESC
+    </select>
+
+    <!-- 查询物料库存需求 -->
+    <select id="selectMaterialStockRequirement" resultType="map">
+        SELECT 
+            bi.material_id as material_id,
+            bi.material_code,
+            bi.material_name,
+            bi.required_quantity,
+            bi.unit,
+            (CAST(bi.required_quantity AS DECIMAL(10,2)) * #{productionQuantity}) as total_required_quantity,
+            COALESCE(inv.current_stock, 0) as current_stock,
+            CASE 
+                WHEN COALESCE(inv.current_stock, 0) &gt;= (CAST(bi.required_quantity AS DECIMAL(10,2)) * #{productionQuantity})
+                THEN 0
+                ELSE (CAST(bi.required_quantity AS DECIMAL(10,2)) * #{productionQuantity}) - COALESCE(inv.current_stock, 0)
+            END as shortage_quantity,
+            bi.supplier_id,
+            bi.supplier_name
+        FROM bom_item bi
+        LEFT JOIN inventory inv ON bi.material_id = inv.material_id
+        WHERE bi.bom_id = #{bomId}
+        AND bi.deleted = 0
+        ORDER BY shortage_quantity DESC, bi.is_key_material DESC
+    </select>
+
+</mapper>

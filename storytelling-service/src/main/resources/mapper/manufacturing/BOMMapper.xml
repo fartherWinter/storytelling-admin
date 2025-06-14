@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.BOMMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.manufacturing.Bom">
+        <id column="bom_id" property="bomId" />
+        <result column="bom_code" property="bomCode" />
+        <result column="bom_name" property="bomName" />
+        <result column="bom_version" property="bomVersion" />
+        <result column="bom_type" property="bomType" />
+        <result column="bom_status" property="bomStatus" />
+        <result column="product_id" property="productId" />
+        <result column="product_code" property="productCode" />
+        <result column="product_name" property="productName" />
+        <result column="product_spec" property="productSpec" />
+        <result column="product_unit" property="productUnit" />
+        <result column="base_quantity" property="baseQuantity" />
+        <result column="batch_size" property="batchSize" />
+        <result column="loss_rate" property="lossRate" />
+        <result column="routing_id" property="routingId" />
+        <result column="routing_name" property="routingName" />
+        <result column="line_id" property="lineId" />
+        <result column="line_name" property="lineName" />
+        <result column="workshop_id" property="workshopId" />
+        <result column="workshop_name" property="workshopName" />
+        <result column="design_dept_id" property="designDeptId" />
+        <result column="design_dept_name" property="designDeptName" />
+        <result column="designer_id" property="designerId" />
+        <result column="designer_name" property="designerName" />
+        <result column="process_dept_id" property="processDeptId" />
+        <result column="process_dept_name" property="processDeptName" />
+        <result column="process_engineer_id" property="processEngineerId" />
+        <result column="process_engineer_name" property="processEngineerName" />
+        <result column="reviewer_id" property="reviewerId" />
+        <result column="reviewer_name" property="reviewerName" />
+        <result column="review_time" property="reviewTime" />
+        <result column="publisher_id" property="publisherId" />
+        <result column="publisher_name" property="publisherName" />
+        <result column="publish_time" property="publishTime" />
+        <result column="effective_date" property="effectiveDate" />
+        <result column="expiry_date" property="expiryDate" />
+        <result column="version" property="version" />
+        <result column="remark" property="remark" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 更新BOM状态 -->
+    <update id="updateBomStatus">
+        UPDATE bom
+        SET bom_status = #{status},
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+    </update>
+    
+    <!-- 审核BOM -->
+    <update id="approveBom">
+        UPDATE bom
+        SET bom_status = 1,
+            reviewer_id = #{reviewerId},
+            reviewer_name = #{reviewerName},
+            review_time = #{reviewTime},
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+    </update>
+    
+    <!-- 发布BOM -->
+    <update id="publishBom">
+        UPDATE bom
+        SET bom_status = 2,
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+    </update>
+    
+    <!-- 冻结BOM -->
+    <update id="freezeBom">
+        UPDATE bom
+        SET bom_status = 3,
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+    </update>
+    
+    <!-- 作废BOM -->
+    <update id="obsoleteBom">
+        UPDATE bom
+        SET bom_status = 4,
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+    </update>
+    
+    <!-- 查询BOM版本历史 -->
+    <select id="selectBomVersionHistory" resultMap="BaseResultMap">
+        SELECT bom_id, bom_code, bom_name, bom_version, bom_type, bom_status, 
+               product_id, product_code, product_name, product_spec, product_unit,
+               base_quantity, batch_size, loss_rate, routing_id, routing_name,
+               line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name,
+               designer_id, designer_name, process_dept_id, process_dept_name,
+               process_engineer_id, process_engineer_name, reviewer_id, reviewer_name, review_time,
+               publisher_id, publisher_name, publish_time, effective_date, expiry_date,
+               version, remark, create_by, create_time, update_by, update_time
+        FROM bom
+        WHERE product_id = #{productId}
+        AND bom_code = #{bomCode}
+        ORDER BY bom_version DESC, create_time DESC
+    </select>
+    
+    <!-- 查询最新版本BOM -->
+    <select id="selectLatestBomVersion" resultMap="BaseResultMap">
+        SELECT bom_id, bom_code, bom_name, bom_version, bom_type, bom_status, 
+               product_id, product_code, product_name, product_spec, product_unit,
+               base_quantity, batch_size, loss_rate, routing_id, routing_name,
+               line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name,
+               designer_id, designer_name, process_dept_id, process_dept_name,
+               process_engineer_id, process_engineer_name, reviewer_id, reviewer_name, review_time,
+               publisher_id, publisher_name, publish_time, effective_date, expiry_date,
+               version, remark, create_by, create_time, update_by, update_time
+        FROM bom
+        WHERE product_id = #{productId}
+        AND bom_code = #{bomCode}
+        ORDER BY bom_version DESC, create_time DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 查询有效BOM列表 -->
+    <select id="selectEffectiveBoms" resultMap="BaseResultMap">
+        SELECT bom_id, bom_code, bom_name, bom_version, bom_type, bom_status, 
+               product_id, product_code, product_name, product_spec, product_unit,
+               base_quantity, batch_size, loss_rate, routing_id, routing_name,
+               line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name,
+               designer_id, designer_name, process_dept_id, process_dept_name,
+               process_engineer_id, process_engineer_name, reviewer_id, reviewer_name, review_time,
+               publisher_id, publisher_name, publish_time, effective_date, expiry_date,
+               version, remark, create_by, create_time, update_by, update_time
+        FROM bom
+        WHERE product_id = #{productId}
+        AND bom_status IN (1, 2)
+        AND (effective_date IS NULL OR effective_date &lt;= #{effectiveDate})
+        AND (expiry_date IS NULL OR expiry_date &gt;= #{effectiveDate})
+        ORDER BY bom_version DESC
+    </select>
+    
+    <!-- 查询产品创新数据 -->
+    <select id="selectProductInnovationData" resultType="java.util.Map">
+        SELECT 
+            p.id as productId,
+            p.name as productName,
+            COUNT(DISTINCT b.id) as bomVersionCount,
+            COUNT(DISTINCT bi.material_id) as uniqueMaterialCount,
+            AVG(b.version) as avgVersion,
+            MAX(b.version) as latestVersion,
+            COUNT(CASE WHEN b.create_time BETWEEN #{startDate} AND #{endDate} THEN 1 END) as newVersionsInPeriod,
+            SUM(bi.quantity * m.unit_price) as totalMaterialCost,
+            COUNT(DISTINCT m.material_type) as materialTypeCount,
+            AVG(CASE WHEN b.status = 2 THEN 1 ELSE 0 END) as publishRate
+        FROM product p
+        LEFT JOIN bom b ON p.id = b.product_id
+        LEFT JOIN bom_item bi ON b.id = bi.bom_id
+        LEFT JOIN material m ON bi.material_id = m.id
+        WHERE 1=1
+        <if test="productId != null">
+            AND p.id = #{productId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND b.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND b.create_time &lt;= #{endDate}
+        </if>
+        GROUP BY p.id, p.name
+        ORDER BY newVersionsInPeriod DESC, totalMaterialCost DESC
+    </select>
+    
+    <!-- 根据产品ID查询BOM列表 -->
+    <select id="selectByProductId" resultMap="BaseResultMap">
+        SELECT * FROM bom 
+        WHERE product_id = #{productId}
+        ORDER BY version DESC
+    </select>
+    
+    <!-- 根据状态查询BOM列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM bom 
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 根据类型查询BOM列表 -->
+    <select id="selectByBomType" resultMap="BaseResultMap">
+        SELECT * FROM bom
+        WHERE bom_type = #{bomType}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 查询BOM统计信息 -->
+    <select id="selectBomStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalBoms,
+            COUNT(CASE WHEN bom_status = 0 THEN 1 END) as draftCount,
+            COUNT(CASE WHEN bom_status = 1 THEN 1 END) as auditedCount,
+            COUNT(CASE WHEN bom_status = 2 THEN 1 END) as publishedCount,
+            COUNT(CASE WHEN bom_status = 3 THEN 1 END) as frozenCount,
+            COUNT(DISTINCT product_id) as productCount,
+            AVG((SELECT COUNT(*) FROM bom_item bi WHERE bi.bom_id = b.bom_id)) as avgItemsPerBom,
+            AVG((SELECT SUM(bi.required_quantity * bi.current_cost) FROM bom_item bi WHERE bi.bom_id = b.bom_id)) as avgBomCost
+        FROM bom b
+        WHERE 1=1
+        <if test="productId != null">
+            AND b.product_id = #{productId}
+        </if>
+        <if test="status != null">
+            AND b.bom_status = #{status}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND b.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND b.create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- 获取物料消耗统计数据 -->
+    <select id="selectMaterialConsumptionData" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit as unit,
+            SUM(bi.quantity * wo.completed_quantity) as totalConsumption,
+            SUM(bi.quantity * wo.completed_quantity * m.unit_price) as totalCost,
+            COUNT(DISTINCT wo.id) as usedInWorkOrders,
+            COUNT(DISTINCT p.id) as usedInProducts
+        FROM bom b
+        JOIN bom_item bi ON b.id = bi.bom_id
+        JOIN material m ON bi.material_id = m.id
+        JOIN product p ON b.product_id = p.id
+        JOIN production_order po ON p.id = po.product_id
+        JOIN work_order wo ON po.id = wo.production_order_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="materialId != null">
+            AND m.id = #{materialId}
+        </if>
+        <if test="materialType != null and materialType != ''">
+            AND m.material_type = #{materialType}
+        </if>
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit
+        ORDER BY totalConsumption DESC
+    </select>
+
+    <!-- 获取废料统计数据 -->
+    <select id="selectWasteStatisticsData" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit as unit,
+            SUM(wr.waste_quantity) as totalWaste,
+            SUM(wr.waste_quantity * m.unit_price) as totalWasteCost,
+            ROUND(SUM(wr.waste_quantity) / NULLIF(SUM(bi.quantity * wo.completed_quantity), 0) * 100, 2) as wasteRate,
+            COUNT(DISTINCT wo.id) as workOrderCount,
+            COUNT(DISTINCT p.id) as productCount
+        FROM waste_record wr
+        JOIN material m ON wr.material_id = m.id
+        JOIN work_order wo ON wr.work_order_id = wo.id
+        JOIN production_order po ON wo.production_order_id = po.id
+        JOIN product p ON po.product_id = p.id
+        JOIN bom b ON p.id = b.product_id
+        JOIN bom_item bi ON b.id = bi.bom_id AND bi.material_id = m.id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wr.record_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wr.record_date &lt;= #{endDate}
+        </if>
+        <if test="materialId != null">
+            AND m.id = #{materialId}
+        </if>
+        <if test="materialType != null and materialType != ''">
+            AND m.material_type = #{materialType}
+        </if>
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit
+        ORDER BY totalWaste DESC
+    </select>
+
+    <!-- 获取库存周转分析数据 -->
+    <select id="selectInventoryTurnoverData" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit as unit,
+            AVG(i.quantity) as avgInventory,
+            SUM(bi.quantity * wo.completed_quantity) as totalConsumption,
+            ROUND(SUM(bi.quantity * wo.completed_quantity) / NULLIF(AVG(i.quantity), 0), 2) as turnoverRate,
+            ROUND(30 / NULLIF(SUM(bi.quantity * wo.completed_quantity) / NULLIF(AVG(i.quantity), 0), 0), 2) as daysOfSupply,
+            MAX(i.quantity) as maxInventory,
+            MIN(i.quantity) as minInventory,
+            ROUND(AVG(i.quantity) * m.unit_price, 2) as avgInventoryValue
+        FROM inventory i
+        JOIN material m ON i.material_id = m.id
+        JOIN bom_item bi ON m.id = bi.material_id
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN product p ON b.product_id = p.id
+        JOIN production_order po ON p.id = po.product_id
+        JOIN work_order wo ON po.id = wo.production_order_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="materialId != null">
+            AND m.id = #{materialId}
+        </if>
+        <if test="materialType != null and materialType != ''">
+            AND m.material_type = #{materialType}
+        </if>
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit, m.unit_price
+        ORDER BY turnoverRate DESC
+    </select>
+
+    <!-- 获取供应商绩效分析数据 -->
+    <select id="selectSupplierPerformanceData" resultType="java.util.Map">
+        SELECT 
+            s.id as supplierId,
+            s.supplier_name as supplierName,
+            COUNT(DISTINCT m.id) as materialCount,
+            COUNT(DISTINCT po.id) as purchaseOrderCount,
+            SUM(pod.quantity) as totalOrderedQuantity,
+            SUM(pod.received_quantity) as totalReceivedQuantity,
+            ROUND(SUM(pod.received_quantity) * 100.0 / NULLIF(SUM(pod.quantity), 0), 2) as fulfillmentRate,
+            AVG(CASE WHEN po.expected_date IS NOT NULL AND po.delivery_date IS NOT NULL 
+                THEN DATEDIFF(po.delivery_date, po.expected_date) 
+                ELSE NULL END) as avgDeliveryDelay,
+            COUNT(CASE WHEN po.expected_date IS NOT NULL AND po.delivery_date IS NOT NULL AND po.delivery_date &lt;= po.expected_date THEN 1 END) as onTimeDeliveries,
+            ROUND(COUNT(CASE WHEN po.expected_date IS NOT NULL AND po.delivery_date IS NOT NULL AND po.delivery_date &lt;= po.expected_date THEN 1 END) * 100.0 / 
+                  NULLIF(COUNT(CASE WHEN po.expected_date IS NOT NULL AND po.delivery_date IS NOT NULL THEN 1 END), 0), 2) as onTimeDeliveryRate,
+            AVG(CASE WHEN qc.pass_rate IS NOT NULL THEN qc.pass_rate ELSE 0 END) as avgQualityRate
+        FROM supplier s
+        JOIN material m ON s.id = m.supplier_id
+        JOIN purchase_order po ON s.id = po.supplier_id
+        JOIN purchase_order_detail pod ON po.id = pod.purchase_order_id AND pod.material_id = m.id
+        LEFT JOIN quality_check qc ON pod.id = qc.purchase_order_detail_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.order_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.order_date &lt;= #{endDate}
+        </if>
+        <if test="supplierId != null">
+            AND s.id = #{supplierId}
+        </if>
+        GROUP BY s.id, s.supplier_name
+        ORDER BY fulfillmentRate DESC, onTimeDeliveryRate DESC
+    </select>
+
+    <!-- 获取成本分析数据 -->
+    <select id="selectCostAnalysisData" resultType="java.util.Map">
+        SELECT 
+            p.id as productId,
+            p.name as productName,
+            COUNT(DISTINCT b.id) as bomVersions,
+            SUM(bi.quantity * m.unit_price) as materialCostPerUnit,
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE NULL END) as avgProductionHours,
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) * 50 
+                ELSE NULL END) as avgLaborCost,
+            SUM(CASE WHEN mr.maintenance_cost IS NOT NULL THEN mr.maintenance_cost ELSE 0 END) / COUNT(DISTINCT po.id) as avgMaintenanceCost,
+            SUM(wr.waste_quantity * m.unit_price) / COUNT(DISTINCT po.id) as avgWasteCost,
+            SUM(bi.quantity * m.unit_price) + 
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) * 50 
+                ELSE 0 END) + 
+            SUM(CASE WHEN mr.maintenance_cost IS NOT NULL THEN mr.maintenance_cost ELSE 0 END) / COUNT(DISTINCT po.id) + 
+            SUM(wr.waste_quantity * m.unit_price) / COUNT(DISTINCT po.id) as totalCostPerUnit
+        FROM product p
+        JOIN bom b ON p.id = b.product_id
+        JOIN bom_item bi ON b.id = bi.bom_id
+        JOIN material m ON bi.material_id = m.id
+        JOIN production_order po ON p.id = po.product_id
+        JOIN work_order wo ON po.id = wo.production_order_id
+        LEFT JOIN equipment e ON wo.equipment_id = e.id
+        LEFT JOIN maintenance_record mr ON e.id = mr.equipment_id
+        LEFT JOIN waste_record wr ON wo.id = wr.work_order_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date &lt;= #{endDate}
+        </if>
+        <if test="productId != null">
+            AND p.id = #{productId}
+        </if>
+        GROUP BY p.id, p.name
+        ORDER BY totalCostPerUnit DESC
+    </select>
+
+    <!-- 获取库存优化数据 -->
+    <select id="selectInventoryOptimizationData" resultType="java.util.Map">
+        SELECT 
+            m.id as materialId,
+            m.material_code as materialCode,
+            m.material_name as materialName,
+            m.material_type as materialType,
+            m.unit as unit,
+            i.quantity as currentInventory,
+            i.quantity * m.unit_price as currentInventoryValue,
+            AVG(bi.quantity * po.planned_quantity) as avgMonthlyDemand,
+            ROUND(i.quantity / NULLIF(AVG(bi.quantity * po.planned_quantity), 0) * 30, 2) as daysOfSupply,
+            m.min_stock as minStock,
+            m.max_stock as maxStock,
+            CASE 
+                WHEN i.quantity &lt; m.min_stock THEN 'BELOW_MIN'
+                WHEN i.quantity &gt; m.max_stock THEN 'ABOVE_MAX'
+                ELSE 'OPTIMAL'
+            END as stockStatus,
+            CASE 
+                WHEN i.quantity &lt; m.min_stock THEN m.min_stock - i.quantity
+                WHEN i.quantity &gt; m.max_stock THEN 0
+                ELSE 0
+            END as suggestedOrderQuantity,
+            CASE 
+                WHEN i.quantity &gt; m.max_stock THEN i.quantity - m.max_stock
+                ELSE 0
+            END as excessInventory
+        FROM material m
+        JOIN inventory i ON m.id = i.material_id
+        JOIN bom_item bi ON m.id = bi.material_id
+        JOIN bom b ON bi.bom_id = b.id
+        JOIN product p ON b.product_id = p.id
+        JOIN production_order po ON p.id = po.product_id
+        WHERE 1=1
+        <if test="materialId != null">
+            AND m.id = #{materialId}
+        </if>
+        <if test="materialType != null and materialType != ''">
+            AND m.material_type = #{materialType}
+        </if>
+        GROUP BY m.id, m.material_code, m.material_name, m.material_type, m.unit, i.quantity, m.unit_price, m.min_stock, m.max_stock
+        ORDER BY 
+            CASE 
+                WHEN i.quantity &lt; m.min_stock THEN 1
+                WHEN i.quantity &gt; m.max_stock THEN 2
+                ELSE 3
+            END,
+            daysOfSupply
+    </select>
+
+</mapper>
