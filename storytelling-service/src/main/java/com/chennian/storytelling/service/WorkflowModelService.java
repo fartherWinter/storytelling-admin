@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.chennian.storytelling.common.utils.PageParam;
-import com.chennian.storytelling.workflow.domain.WorkflowModelDTO;
+import com.chennian.storytelling.bean.dto.WorkflowModelDTO;
 
 /**
  * 工作流模型服务接口

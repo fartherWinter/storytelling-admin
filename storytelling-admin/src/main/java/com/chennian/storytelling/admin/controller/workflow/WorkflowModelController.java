@@ -26,7 +26,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.chennian.storytelling.common.redis.RedisCache;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.common.utils.PageParam;
-import com.chennian.storytelling.workflow.domain.WorkflowModelDTO;
+import com.chennian.storytelling.bean.dto.WorkflowModelDTO;
 import com.chennian.storytelling.service.WorkflowModelService;
 
 import io.swagger.v3.oas.annotations.Operation;

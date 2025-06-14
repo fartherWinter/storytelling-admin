@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chennian.storytelling.workflow.domain.WorkflowModelDTO;
+import com.chennian.storytelling.bean.dto.WorkflowModelDTO;
 import com.chennian.storytelling.service.WorkflowModelService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

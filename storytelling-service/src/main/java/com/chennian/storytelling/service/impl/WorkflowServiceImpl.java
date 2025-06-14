@@ -2,10 +2,16 @@ package com.chennian.storytelling.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.chennian.storytelling.bean.dto.*;
 import org.flowable.bpmn.model.BpmnModel;
 import org.flowable.engine.HistoryService;
 import org.flowable.engine.ProcessEngine;
@@ -19,6 +25,7 @@ import org.flowable.engine.repository.ProcessDefinition;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.task.api.Task;
+import org.flowable.task.api.history.HistoricTaskInstance;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -230,5 +237,397 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Transactional(rollbackFor = Exception.class)
     public void terminateProcessInstance(String processInstanceId, String reason) {
         runtimeService.deleteProcessInstance(processInstanceId, reason);
+    }
+
+    @Override
+    public WorkflowStatisticsDTO getWorkflowStatistics(LocalDateTime startTime, LocalDateTime endTime) {
+        WorkflowStatisticsDTO statistics = new WorkflowStatisticsDTO(startTime, endTime);
+        
+        Date start = startTime != null ? Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()) : null;
+        Date end = endTime != null ? Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant()) : null;
+        
+        // 统计流程实例
+        long totalProcessInstances = historyService.createHistoricProcessInstanceQuery()
+                .startedAfter(start)
+                .startedBefore(end)
+                .count();
+        statistics.setTotalProcessInstances(totalProcessInstances);
+        
+        long runningProcessInstances = runtimeService.createProcessInstanceQuery().count();
+        statistics.setRunningProcessInstances(runningProcessInstances);
+        
+        long completedProcessInstances = historyService.createHistoricProcessInstanceQuery()
+                .finished()
+                .startedAfter(start)
+                .startedBefore(end)
+                .count();
+        statistics.setCompletedProcessInstances(completedProcessInstances);
+        
+        // 统计任务
+        long totalTasks = historyService.createHistoricTaskInstanceQuery()
+                .taskCreatedAfter(start)
+                .taskCreatedBefore(end)
+                .count();
+        statistics.setTotalTasks(totalTasks);
+        
+        long pendingTasks = taskService.createTaskQuery().count();
+        statistics.setPendingTasks(pendingTasks);
+        
+        long completedTasks = historyService.createHistoricTaskInstanceQuery()
+                .finished()
+                .taskCreatedAfter(start)
+                .taskCreatedBefore(end)
+                .count();
+        statistics.setCompletedTasks(completedTasks);
+        
+        // 计算完成率
+        if (totalProcessInstances > 0) {
+            statistics.setCompletionRate((double) completedProcessInstances / totalProcessInstances * 100);
+        }
+        
+        if (totalTasks > 0) {
+            statistics.setTaskCompletionRate((double) completedTasks / totalTasks * 100);
+        }
+        
+        // 按流程定义分组统计
+        List<HistoricProcessInstance> processInstances = historyService.createHistoricProcessInstanceQuery()
+                .startedAfter(start)
+                .startedBefore(end)
+                .list();
+        
+        Map<String, Long> processDefinitionStats = processInstances.stream()
+                .collect(Collectors.groupingBy(
+                    HistoricProcessInstance::getProcessDefinitionKey,
+                    Collectors.counting()
+                ));
+        statistics.setProcessDefinitionStats(processDefinitionStats);
+        
+        return statistics;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowBatchOperationDTO.BatchOperationResult batchOperateTasks(WorkflowBatchOperationDTO batchOperation) {
+        List<String> taskIds = batchOperation.getTaskIds();
+        WorkflowBatchOperationDTO.BatchOperationResult result = new WorkflowBatchOperationDTO.BatchOperationResult(taskIds.size());
+        Map<String, String> failureDetails = new HashMap<>();
+        
+        for (String taskId : taskIds) {
+            try {
+                switch (batchOperation.getOperationType()) {
+                    case APPROVE:
+                        approveTask(taskId, batchOperation.getComment());
+                        break;
+                    case REJECT:
+                        rejectTask(taskId, batchOperation.getComment());
+                        break;
+                    case COMPLETE:
+                        completeTask(taskId, batchOperation.getVariables(), batchOperation.getComment());
+                        break;
+                    case ASSIGN:
+                        taskService.setAssignee(taskId, batchOperation.getAssignee());
+                        break;
+                    case CLAIM:
+                        claimTask(taskId, batchOperation.getOperator());
+                        break;
+                    default:
+                        throw new IllegalArgumentException("不支持的操作类型: " + batchOperation.getOperationType());
+                }
+                result.incrementSuccess();
+            } catch (Exception e) {
+                result.incrementFailure();
+                failureDetails.put(taskId, e.getMessage());
+            }
+        }
+        
+        result.setFailureDetails(failureDetails);
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public WorkflowBatchOperationDTO.BatchOperationResult batchOperateProcessInstances(WorkflowBatchOperationDTO batchOperation) {
+        List<String> processInstanceIds = batchOperation.getProcessInstanceIds();
+        WorkflowBatchOperationDTO.BatchOperationResult result = new WorkflowBatchOperationDTO.BatchOperationResult(processInstanceIds.size());
+        Map<String, String> failureDetails = new HashMap<>();
+        
+        for (String processInstanceId : processInstanceIds) {
+            try {
+                switch (batchOperation.getOperationType()) {
+                    case TERMINATE:
+                        terminateProcessInstance(processInstanceId, batchOperation.getComment());
+                        break;
+                    default:
+                        throw new IllegalArgumentException("不支持的流程实例操作类型: " + batchOperation.getOperationType());
+                }
+                result.incrementSuccess();
+            } catch (Exception e) {
+                result.incrementFailure();
+                failureDetails.put(processInstanceId, e.getMessage());
+            }
+        }
+        
+        result.setFailureDetails(failureDetails);
+        return result;
+    }
+
+    @Override
+    public WorkflowHistoryDTO getProcessHistory(String processInstanceId) {
+        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        
+        if (historicProcessInstance == null) {
+            return null;
+        }
+        
+        WorkflowHistoryDTO history = new WorkflowHistoryDTO();
+        history.setProcessInstanceId(processInstanceId);
+        history.setProcessDefinitionId(historicProcessInstance.getProcessDefinitionId());
+        history.setProcessDefinitionKey(historicProcessInstance.getProcessDefinitionKey());
+        history.setProcessDefinitionName(historicProcessInstance.getProcessDefinitionName());
+        history.setBusinessKey(historicProcessInstance.getBusinessKey());
+        history.setStartTime(historicProcessInstance.getStartTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+        
+        if (historicProcessInstance.getEndTime() != null) {
+            history.setEndTime(historicProcessInstance.getEndTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            history.setDuration(historicProcessInstance.getDurationInMillis());
+        }
+        
+        history.setStartUserId(historicProcessInstance.getStartUserId());
+        history.setDeleteReason(historicProcessInstance.getDeleteReason());
+        
+        // 获取历史任务
+        List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .orderByHistoricTaskInstanceStartTime()
+                .asc()
+                .list();
+        
+        List<HistoricTaskDTO> taskInfos = new ArrayList<>();
+        for (HistoricTaskInstance task : historicTasks) {
+            HistoricTaskDTO taskInfo = new HistoricTaskDTO();
+            taskInfo.setId(task.getId());
+            taskInfo.setName(task.getName());
+            taskInfo.setTaskDefinitionKey(task.getTaskDefinitionKey());
+            taskInfo.setAssignee(task.getAssignee());
+            taskInfo.setStartTime(task.getStartTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+            
+            if (task.getEndTime() != null) {
+                taskInfo.setEndTime(task.getEndTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
+                taskInfo.setDuration(task.getDurationInMillis());
+            }
+            
+            taskInfo.setDeleteReason(task.getDeleteReason());
+            taskInfos.add(taskInfo);
+        }
+        history.setHistoricTasks(taskInfos);
+        
+        return history;
+    }
+
+    @Override
+    public List<TaskDTO> findHistoryTasks(String assignee, LocalDateTime startTime, LocalDateTime endTime) {
+        Date start = startTime != null ? Date.from(startTime.atZone(ZoneId.systemDefault()).toInstant()) : null;
+        Date end = endTime != null ? Date.from(endTime.atZone(ZoneId.systemDefault()).toInstant()) : null;
+        
+        List<HistoricTaskInstance> historicTasks = historyService.createHistoricTaskInstanceQuery()
+                .taskAssignee(assignee)
+                .taskCreatedAfter(start)
+                .taskCreatedBefore(end)
+                .orderByHistoricTaskInstanceStartTime()
+                .desc()
+                .list();
+        
+        List<TaskDTO> taskDTOs = new ArrayList<>();
+        for (HistoricTaskInstance task : historicTasks) {
+            TaskDTO taskDTO = new TaskDTO();
+            taskDTO.setTaskId(task.getId());
+            taskDTO.setTaskName(task.getName());
+            taskDTO.setTaskKey(task.getTaskDefinitionKey());
+            taskDTO.setProcessInstanceId(task.getProcessInstanceId());
+            taskDTO.setProcessDefinitionId(task.getProcessDefinitionId());
+            taskDTO.setAssignee(task.getAssignee());
+            taskDTO.setCreateTime(Date.from(task.getStartTime().toInstant()));
+            
+            taskDTOs.add(taskDTO);
+        }
+        
+        return taskDTOs;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delegateTask(String taskId, String assignee, String comment) {
+        if (comment != null && !comment.isEmpty()) {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            taskService.addComment(taskId, task.getProcessInstanceId(), comment);
+        }
+        taskService.delegateTask(taskId, assignee);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void claimTask(String taskId, String assignee) {
+        taskService.claim(taskId, assignee);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void transferTask(String taskId, String assignee, String comment) {
+        if (comment != null && !comment.isEmpty()) {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            taskService.addComment(taskId, task.getProcessInstanceId(), comment);
+        }
+        taskService.setAssignee(taskId, assignee);
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO> listProcessDefinitions(String category, String key, String name) {
+        org.flowable.engine.repository.ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery()
+                .latestVersion()
+                .orderByProcessDefinitionName()
+                .asc();
+        
+        if (category != null && !category.isEmpty()) {
+            query.processDefinitionCategory(category);
+        }
+        
+        if (key != null && !key.isEmpty()) {
+            query.processDefinitionKey(key);
+        }
+        
+        if (name != null && !name.isEmpty()) {
+            query.processDefinitionNameLike("%" + name + "%");
+        }
+        
+        List<ProcessDefinition> processDefinitions = query.list();
+        List<ProcessDefinitionDTO> dtos = new ArrayList<>();
+        
+        for (ProcessDefinition pd : processDefinitions) {
+            ProcessDefinitionDTO dto = new ProcessDefinitionDTO();
+            dto.setId(pd.getId());
+            dto.setKey(pd.getKey());
+            dto.setName(pd.getName());
+            dto.setCategory(pd.getCategory());
+            dto.setVersion(pd.getVersion());
+            dto.setResourceName(pd.getResourceName());
+            dto.setDeploymentId(pd.getDeploymentId());
+            dto.setDescription(pd.getDescription());
+            dto.setSuspended(pd.isSuspended());
+            dtos.add(dto);
+        }
+        
+        return dtos;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void suspendProcessDefinition(String processDefinitionId) {
+        repositoryService.suspendProcessDefinitionById(processDefinitionId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void activateProcessDefinition(String processDefinitionId) {
+        repositoryService.activateProcessDefinitionById(processDefinitionId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void suspendProcessInstance(String processInstanceId) {
+        runtimeService.suspendProcessInstanceById(processInstanceId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void activateProcessInstance(String processInstanceId) {
+        runtimeService.activateProcessInstanceById(processInstanceId);
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO> getProcessDefinitions() {
+        List<ProcessDefinition> processDefinitions = repositoryService.createProcessDefinitionQuery()
+                .latestVersion()
+                .list();
+        
+        List<ProcessDefinitionDTO> dtos = new ArrayList<>();
+        for (ProcessDefinition pd : processDefinitions) {
+            ProcessDefinitionDTO dto = new ProcessDefinitionDTO();
+            dto.setId(pd.getId());
+            dto.setKey(pd.getKey());
+            dto.setName(pd.getName());
+            dto.setCategory(pd.getCategory());
+            dto.setVersion(pd.getVersion());
+            dto.setResourceName(pd.getResourceName());
+            dto.setDeploymentId(pd.getDeploymentId());
+            dto.setDescription(pd.getDescription());
+            dto.setSuspended(pd.isSuspended());
+            dtos.add(dto);
+        }
+        
+        return dtos;
+    }
+
+    @Override
+    public byte[] getProcessDefinitionResource(String processDefinitionId, String resourceName) {
+        try {
+            InputStream inputStream = repositoryService.getResourceAsStream(
+                    repositoryService.createProcessDefinitionQuery()
+                            .processDefinitionId(processDefinitionId)
+                            .singleResult()
+                            .getDeploymentId(),
+                    resourceName);
+            
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, length);
+            }
+            
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程定义资源失败", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String deployProcess(String name, byte[] bpmnBytes, String category) {
+        try {
+            Deployment deployment = repositoryService.createDeployment()
+                    .name(name)
+                    .category(category)  // 设置流程分类，用于对流程进行分组管理
+                    .addBytes(name + ".bpmn20.xml", bpmnBytes)
+                    .deploy();
+            
+            return deployment.getId();
+        } catch (Exception e) {
+            throw new RuntimeException("部署流程失败", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteDeployment(String deploymentId, boolean cascade) {
+        try {
+            if (cascade) {
+                repositoryService.deleteDeployment(deploymentId, true);
+            } else {
+                repositoryService.deleteDeployment(deploymentId);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("删除部署失败", e);
+        }
+    }
+
+    @Override
+    public Map<String, Object> getProcessVariables(String processInstanceId) {
+        try {
+            return runtimeService.getVariables(processInstanceId);
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程变量失败", e);
+        }
     }
 }
