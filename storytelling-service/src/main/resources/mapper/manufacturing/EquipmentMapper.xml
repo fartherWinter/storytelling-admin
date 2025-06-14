@@ -68,31 +68,6 @@
         <result column="del_flag" property="delFlag" />
     </resultMap>
 
-    <!-- 启动设备 -->
-    <update id="startEquipment">
-        UPDATE equipment
-        SET equipment_status = 'RUNNING',
-            update_time = NOW()
-        WHERE equipment_id = #{equipmentId}
-    </update>
-
-    <!-- 停止设备 -->
-    <update id="stopEquipment">
-        UPDATE equipment
-        SET equipment_status = 'STOPPED',
-            update_time = NOW()
-        WHERE equipment_id = #{equipmentId}
-    </update>
-
-    <!-- 设备维护 -->
-    <update id="maintainEquipment">
-        UPDATE equipment
-        SET equipment_status = 'MAINTENANCE',
-            last_maintenance_time = NOW(),
-            next_maintenance_time = DATE_ADD(NOW(), INTERVAL 30 DAY),
-            update_time = NOW()
-        WHERE equipment_id = #{equipmentId}
-    </update>
 
     <!-- 获取设备利用率统计 -->
     <select id="selectUtilizationStatistics" resultType="java.util.Map">
