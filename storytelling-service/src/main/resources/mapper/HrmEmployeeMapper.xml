@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.hrm.HrmEmployeeMapper">
+
+    <resultMap type="com.chennian.storytelling.bean.model.hrm.HrmEmployee" id="BaseResultMap">
+        <id property="id" column="id" />
+        <result property="employeeNo" column="employee_no" />
+        <result property="name" column="name" />
+        <result property="gender" column="gender" />
+        <result property="birthDate" column="birth_date" />
+        <result property="idCard" column="id_card" />
+        <result property="phone" column="phone" />
+        <result property="email" column="email" />
+        <result property="address" column="address" />
+        <result property="departmentId" column="department_id" />
+        <result property="departmentName" column="department_name" />
+        <result property="positionId" column="position_id" />
+        <result property="positionName" column="position_name" />
+        <result property="hireDate" column="hire_date" />
+        <result property="resignReason" column="resign_reason" />
+        <result property="resignDate" column="resign_date" />
+        <result property="employmentType" column="employment_type" />
+        <result property="status" column="status" />
+        <result property="salary" column="salary" />
+        <result property="emergencyContact" column="emergency_contact" />
+        <result property="emergencyPhone" column="emergency_phone" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, employee_no, name, gender, birth_date, id_card, phone, email, address,
+        department_id, department_name, position_id, position_name, hire_date,
+        resign_reason, resign_date, employment_type, status, salary,
+        emergency_contact, emergency_phone, create_time, update_time, create_by, update_by, remark
+    </sql>
+
+    <!-- 根据部门ID查询员工列表 -->
+    <select id="selectByDepartmentId" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM hrm_employee
+        WHERE department_id = #{departmentId}
+        ORDER BY employee_no
+    </select>
+
+    <!-- 根据职位ID查询员工列表 -->
+    <select id="selectByPositionId" parameterType="long" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM hrm_employee
+        WHERE position_id = #{positionId}
+        ORDER BY employee_no
+    </select>
+
+    <!-- 根据员工状态查询员工列表 -->
+    <select id="selectByStatus" parameterType="integer" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM hrm_employee
+        WHERE status = #{status}
+        ORDER BY department_name, employee_no
+    </select>
+
+    <!-- 根据员工编号查询员工信息 -->
+    <select id="selectByEmployeeNo" parameterType="string" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM hrm_employee
+        WHERE employee_no = #{employeeNo}
+    </select>
+
+    <!-- 查询员工统计信息 -->
+    <select id="selectEmployeeStatistics" resultType="java.util.Map">
+        SELECT 
+            department_name,
+            COUNT(*) as total_employees,
+            COUNT(CASE WHEN status = 1 THEN 1 END) as active_employees,
+            COUNT(CASE WHEN status = 2 THEN 1 END) as resigned_employees,
+            COUNT(CASE WHEN status = 3 THEN 1 END) as suspended_employees,
+            COUNT(CASE WHEN employment_type = 1 THEN 1 END) as formal_employees,
+            COUNT(CASE WHEN employment_type = 2 THEN 1 END) as probation_employees,
+            COUNT(CASE WHEN employment_type = 3 THEN 1 END) as intern_employees,
+            COUNT(CASE WHEN employment_type = 4 THEN 1 END) as part_time_employees,
+            COUNT(CASE WHEN gender = 1 THEN 1 END) as male_count,
+            COUNT(CASE WHEN gender = 2 THEN 1 END) as female_count,
+            ROUND(AVG(salary), 2) as avg_salary,
+            MAX(salary) as max_salary,
+            MIN(salary) as min_salary
+        FROM hrm_employee
+        WHERE status IN (1, 3)
+        GROUP BY department_name
+        ORDER BY department_name
+    </select>
+
+</mapper>
