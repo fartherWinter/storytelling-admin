@@ -121,14 +121,17 @@
             AND create_time >= #{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND create_time <= #{endDate}
+            AND create_time &lt;= #{endDate}
         </if>
     </select>
     
     <!-- 审核模板 -->
-    <update id="auditTemplate">
+    <update id="approveTemplate">
         UPDATE bom_template
         SET status = 1,
+            reviewer_id = #{reviewerId},
+            reviewer_name = #{reviewerName},
+            review_time = #{reviewTime},
             update_time = NOW()
         WHERE bom_id = #{templateId}
     </update>
