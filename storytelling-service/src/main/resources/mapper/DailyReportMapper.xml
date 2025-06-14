@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.DailyReportMapper">
+
+    <resultMap id="DailyReportResultMap" type="com.chennian.storytelling.bean.dto.DailyReportDTO">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="reportDate" column="report_date"/>
+        <result property="content" column="content"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insertDailyReport" parameterType="com.chennian.storytelling.bean.dto.DailyReportDTO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO daily_report (user_id, report_date, content, create_time, update_time)
+        VALUES (#{userId}, #{reportDate}, #{content}, NOW(), NOW())
+    </insert>
+
+    <update id="updateDailyReport" parameterType="com.chennian.storytelling.bean.dto.DailyReportDTO">
+        UPDATE daily_report
+        SET
+            content = #{content},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteDailyReportById">
+        DELETE FROM daily_report WHERE id = #{id}
+    </delete>
+
+    <select id="selectDailyReportById" resultMap="DailyReportResultMap">
+        SELECT id, user_id, report_date, content, create_time, update_time
+        FROM daily_report
+        WHERE id = #{id}
+    </select>
+
+    <select id="listDailyReportsByUserId" resultMap="DailyReportResultMap">
+        SELECT id, user_id, report_date, content, create_time, update_time
+        FROM daily_report
+        WHERE user_id = #{userId}
+        ORDER BY report_date DESC
+    </select>
+
+    <select id="selectDailyReportByUserIdAndDate" resultMap="DailyReportResultMap">
+        SELECT id, user_id, report_date, content, create_time, update_time
+        FROM daily_report
+        WHERE user_id = #{userId} AND report_date = #{reportDate}
+    </select>
+
+</mapper>
