@@ -1,8 +1,8 @@
 package com.chennian.storytelling.service;
 
-import com.chennian.storytelling.vo.CashPoolStatusVO;
-import com.chennian.storytelling.vo.ForeignExchangeExposureVO;
-import com.chennian.storytelling.vo.InvestmentPortfolioStatusVO;
+import com.chennian.storytelling.bean.vo.CashPoolStatusVO;
+import com.chennian.storytelling.bean.vo.ForeignExchangeExposureVO;
+import com.chennian.storytelling.bean.vo.InvestmentPortfolioStatusVO;
 
 import java.util.List;
 import java.util.Map;
