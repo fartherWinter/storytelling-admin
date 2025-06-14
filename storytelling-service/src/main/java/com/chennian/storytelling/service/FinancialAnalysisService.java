@@ -1,9 +1,9 @@
 package com.chennian.storytelling.service;
 
-import com.chennian.storytelling.vo.AuditTrailVO;
-import com.chennian.storytelling.vo.FinancialDashboardVO;
-import com.chennian.storytelling.vo.FinancialRatioAnalysisVO;
-import com.chennian.storytelling.vo.FinancialTrendAnalysisVO;
+import com.chennian.storytelling.bean.vo.AuditTrailVO;
+import com.chennian.storytelling.bean.vo.FinancialDashboardVO;
+import com.chennian.storytelling.bean.vo.FinancialRatioAnalysisVO;
+import com.chennian.storytelling.bean.vo.FinancialTrendAnalysisVO;
 
 import java.util.List;
 

@@ -2,13 +2,13 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.FinancialReportMapper;
 import com.chennian.storytelling.service.FinancialReportService;
-import com.chennian.storytelling.vo.BalanceSheetVO;
-import com.chennian.storytelling.vo.CashFlowStatementVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedBalanceSheetVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedCashFlowStatementVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedIncomeStatementVO;
-import com.chennian.storytelling.vo.IncomeStatementVO;
-import com.chennian.storytelling.vo.ProfitAnalysisVO;
+import com.chennian.storytelling.bean.vo.BalanceSheetVO;
+import com.chennian.storytelling.bean.vo.CashFlowStatementVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedBalanceSheetVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedCashFlowStatementVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedIncomeStatementVO;
+import com.chennian.storytelling.bean.vo.IncomeStatementVO;
+import com.chennian.storytelling.bean.vo.ProfitAnalysisVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

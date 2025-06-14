@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.FinancialReportMapper">
+
+    <!-- 获取资产负债表数据 -->
+    <select id="getBalanceSheet" resultType="com.chennian.storytelling.bean.vo.BalanceSheetVO">
+        SELECT 
+            -- 资产
+            COALESCE(SUM(CASE WHEN account_type = 'CURRENT_ASSETS' THEN balance ELSE 0 END), 0) as currentAssets,
+            COALESCE(SUM(CASE WHEN account_type = 'NON_CURRENT_ASSETS' THEN balance ELSE 0 END), 0) as nonCurrentAssets,
+            COALESCE(SUM(CASE WHEN account_category = 'ASSETS' THEN balance ELSE 0 END), 0) as totalAssets,
+            -- 负债
+            COALESCE(SUM(CASE WHEN account_type = 'CURRENT_LIABILITIES' THEN balance ELSE 0 END), 0) as currentLiabilities,
+            COALESCE(SUM(CASE WHEN account_type = 'NON_CURRENT_LIABILITIES' THEN balance ELSE 0 END), 0) as nonCurrentLiabilities,
+            COALESCE(SUM(CASE WHEN account_category = 'LIABILITIES' THEN balance ELSE 0 END), 0) as totalLiabilities,
+            -- 所有者权益
+            COALESCE(SUM(CASE WHEN account_category = 'EQUITY' THEN balance ELSE 0 END), 0) as totalEquity
+        FROM erp_account_balance ab
+        JOIN erp_chart_of_accounts coa ON ab.account_id = coa.account_id
+        WHERE ab.period = #{period}
+    </select>
+
+    <!-- 获取利润表数据 -->
+    <select id="getIncomeStatement" resultType="com.chennian.storytelling.bean.vo.IncomeStatementVO">
+        SELECT 
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END), 0) as revenue,
+            COALESCE(SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END), 0) as costOfGoodsSold,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END), 0) as grossProfit,
+            COALESCE(SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END), 0) as operatingExpenses,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END), 0) as operatingIncome,
+            COALESCE(SUM(CASE WHEN account_type = 'OTHER_INCOME' THEN amount ELSE 0 END), 0) as otherIncome,
+            COALESCE(SUM(CASE WHEN account_type = 'OTHER_EXPENSES' THEN amount ELSE 0 END), 0) as otherExpenses,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END) +
+                     SUM(CASE WHEN account_type = 'OTHER_INCOME' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OTHER_EXPENSES' THEN amount ELSE 0 END), 0) as netIncome
+        FROM erp_financial_transaction ft
+        JOIN erp_chart_of_accounts coa ON ft.account_id = coa.account_id
+        WHERE ft.period = #{period}
+    </select>
+
+    <!-- 获取现金流量表数据 -->
+    <select id="getCashFlowStatement" resultType="com.chennian.storytelling.bean.vo.CashFlowStatementVO">
+        SELECT 
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'OPERATING' THEN amount ELSE 0 END), 0) as operatingCashFlow,
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'INVESTING' THEN amount ELSE 0 END), 0) as investingCashFlow,
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'FINANCING' THEN amount ELSE 0 END), 0) as financingCashFlow,
+            COALESCE(SUM(amount), 0) as netCashFlow
+        FROM erp_cash_flow cf
+        WHERE cf.period = #{period}
+    </select>
+
+    <!-- 获取产品维度利润分析数据 -->
+    <select id="getProductProfitAnalysis" resultType="com.chennian.storytelling.bean.vo.ProfitAnalysisVO$ProductProfit">
+        SELECT 
+            p.product_id as productId,
+            p.product_name as productName,
+            p.category_name as categoryName,
+            COALESCE(SUM(soi.quantity * soi.unit_price), 0) as revenue,
+            COALESCE(SUM(soi.quantity * p.cost_price), 0) as cost,
+            COALESCE(SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price), 0) as profit,
+            CASE 
+                WHEN SUM(soi.quantity * soi.unit_price) > 0 
+                THEN ROUND((SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price)) / SUM(soi.quantity * soi.unit_price) * 100, 2)
+                ELSE 0 
+            END as profitMargin
+        FROM erp_product p
+        LEFT JOIN erp_sales_order_item soi ON p.product_id = soi.product_id
+        LEFT JOIN erp_sales_order so ON soi.order_id = so.order_id
+        WHERE so.create_time LIKE CONCAT(#{period}, '%')
+        GROUP BY p.product_id, p.product_name, p.category_name
+        ORDER BY profit DESC
+    </select>
+
+    <!-- 获取地区维度利润分析数据 -->
+    <select id="getRegionProfitAnalysis" resultType="com.chennian.storytelling.bean.vo.ProfitAnalysisVO$RegionProfit">
+        SELECT 
+            c.region as regionName,
+            COALESCE(SUM(soi.quantity * soi.unit_price), 0) as revenue,
+            COALESCE(SUM(soi.quantity * p.cost_price), 0) as cost,
+            COALESCE(SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price), 0) as profit,
+            CASE 
+                WHEN SUM(soi.quantity * soi.unit_price) > 0 
+                THEN ROUND((SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price)) / SUM(soi.quantity * soi.unit_price) * 100, 2)
+                ELSE 0 
+            END as profitMargin
+        FROM erp_customer c
+        LEFT JOIN erp_sales_order so ON c.customer_id = so.customer_id
+        LEFT JOIN erp_sales_order_item soi ON so.order_id = soi.order_id
+        LEFT JOIN erp_product p ON soi.product_id = p.product_id
+        WHERE so.create_time LIKE CONCAT(#{period}, '%')
+        GROUP BY c.region
+        ORDER BY profit DESC
+    </select>
+
+    <!-- 获取客户维度利润分析数据 -->
+    <select id="getCustomerProfitAnalysis" resultType="com.chennian.storytelling.bean.vo.ProfitAnalysisVO$CustomerProfit">
+        SELECT 
+            c.customer_id as customerId,
+            c.customer_name as customerName,
+            c.customer_type as customerType,
+            COALESCE(SUM(soi.quantity * soi.unit_price), 0) as revenue,
+            COALESCE(SUM(soi.quantity * p.cost_price), 0) as cost,
+            COALESCE(SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price), 0) as profit,
+            CASE 
+                WHEN SUM(soi.quantity * soi.unit_price) > 0 
+                THEN ROUND((SUM(soi.quantity * soi.unit_price) - SUM(soi.quantity * p.cost_price)) / SUM(soi.quantity * soi.unit_price) * 100, 2)
+                ELSE 0 
+            END as profitMargin
+        FROM erp_customer c
+        LEFT JOIN erp_sales_order so ON c.customer_id = so.customer_id
+        LEFT JOIN erp_sales_order_item soi ON so.order_id = soi.order_id
+        LEFT JOIN erp_product p ON soi.product_id = p.product_id
+        WHERE so.create_time LIKE CONCAT(#{period}, '%')
+        GROUP BY c.customer_id, c.customer_name, c.customer_type
+        ORDER BY profit DESC
+    </select>
+
+    <!-- 获取合并资产负债表数据 -->
+    <select id="getConsolidatedBalanceSheet" resultType="com.chennian.storytelling.bean.vo.ConsolidatedReportVO$ConsolidatedBalanceSheetVO">
+        SELECT 
+            -- 资产
+            COALESCE(SUM(CASE WHEN account_type = 'CURRENT_ASSETS' THEN balance ELSE 0 END), 0) as currentAssets,
+            COALESCE(SUM(CASE WHEN account_type = 'NON_CURRENT_ASSETS' THEN balance ELSE 0 END), 0) as nonCurrentAssets,
+            COALESCE(SUM(CASE WHEN account_category = 'ASSETS' THEN balance ELSE 0 END), 0) as totalAssets,
+            -- 负债
+            COALESCE(SUM(CASE WHEN account_type = 'CURRENT_LIABILITIES' THEN balance ELSE 0 END), 0) as currentLiabilities,
+            COALESCE(SUM(CASE WHEN account_type = 'NON_CURRENT_LIABILITIES' THEN balance ELSE 0 END), 0) as nonCurrentLiabilities,
+            COALESCE(SUM(CASE WHEN account_category = 'LIABILITIES' THEN balance ELSE 0 END), 0) as totalLiabilities,
+            -- 所有者权益
+            COALESCE(SUM(CASE WHEN account_category = 'EQUITY' THEN balance ELSE 0 END), 0) as totalEquity,
+            -- 合并调整
+            0 as consolidationAdjustments
+        FROM erp_account_balance ab
+        JOIN erp_chart_of_accounts coa ON ab.account_id = coa.account_id
+        WHERE ab.period = #{period}
+        <if test="orgIds != null and orgIds.size() > 0">
+            AND ab.org_id IN
+            <foreach collection="orgIds" item="orgId" open="(" separator="," close=")">
+                #{orgId}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 获取合并利润表数据 -->
+    <select id="getConsolidatedIncomeStatement" resultType="com.chennian.storytelling.bean.vo.ConsolidatedReportVO$ConsolidatedIncomeStatementVO">
+        SELECT 
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END), 0) as revenue,
+            COALESCE(SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END), 0) as costOfGoodsSold,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END), 0) as grossProfit,
+            COALESCE(SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END), 0) as operatingExpenses,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END), 0) as operatingIncome,
+            COALESCE(SUM(CASE WHEN account_type = 'OTHER_INCOME' THEN amount ELSE 0 END), 0) as otherIncome,
+            COALESCE(SUM(CASE WHEN account_type = 'OTHER_EXPENSES' THEN amount ELSE 0 END), 0) as otherExpenses,
+            COALESCE(SUM(CASE WHEN account_type = 'REVENUE' THEN amount ELSE 0 END) - 
+                     SUM(CASE WHEN account_type = 'COST_OF_GOODS_SOLD' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OPERATING_EXPENSES' THEN amount ELSE 0 END) +
+                     SUM(CASE WHEN account_type = 'OTHER_INCOME' THEN amount ELSE 0 END) -
+                     SUM(CASE WHEN account_type = 'OTHER_EXPENSES' THEN amount ELSE 0 END), 0) as netIncome,
+            -- 合并调整
+            0 as consolidationAdjustments
+        FROM erp_financial_transaction ft
+        JOIN erp_chart_of_accounts coa ON ft.account_id = coa.account_id
+        WHERE ft.period = #{period}
+        <if test="orgIds != null and orgIds.size() > 0">
+            AND ft.org_id IN
+            <foreach collection="orgIds" item="orgId" open="(" separator="," close=")">
+                #{orgId}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 获取合并现金流量表数据 -->
+    <select id="getConsolidatedCashFlowStatement" resultType="com.chennian.storytelling.bean.vo.ConsolidatedReportVO$ConsolidatedCashFlowStatementVO">
+        SELECT 
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'OPERATING' THEN amount ELSE 0 END), 0) as operatingCashFlow,
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'INVESTING' THEN amount ELSE 0 END), 0) as investingCashFlow,
+            COALESCE(SUM(CASE WHEN cash_flow_type = 'FINANCING' THEN amount ELSE 0 END), 0) as financingCashFlow,
+            COALESCE(SUM(amount), 0) as netCashFlow,
+            -- 合并调整
+            0 as consolidationAdjustments
+        FROM erp_cash_flow cf
+        WHERE cf.period = #{period}
+        <if test="orgIds != null and orgIds.size() > 0">
+            AND cf.org_id IN
+            <foreach collection="orgIds" item="orgId" open="(" separator="," close=")">
+                #{orgId}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

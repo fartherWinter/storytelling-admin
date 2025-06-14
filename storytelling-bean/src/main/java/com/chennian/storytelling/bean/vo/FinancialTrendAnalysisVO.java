@@ -1,4 +1,4 @@
-package com.chennian.storytelling.vo;
+package com.chennian.storytelling.bean.vo;
 
 import lombok.Data;
 import java.util.List;

@@ -1,12 +1,12 @@
 package com.chennian.storytelling.dao;
 
-import com.chennian.storytelling.vo.BalanceSheetVO;
-import com.chennian.storytelling.vo.CashFlowStatementVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedBalanceSheetVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedCashFlowStatementVO;
-import com.chennian.storytelling.vo.ConsolidatedReportVO.ConsolidatedIncomeStatementVO;
-import com.chennian.storytelling.vo.IncomeStatementVO;
-import com.chennian.storytelling.vo.ProfitAnalysisVO;
+import com.chennian.storytelling.bean.vo.BalanceSheetVO;
+import com.chennian.storytelling.bean.vo.CashFlowStatementVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedBalanceSheetVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedCashFlowStatementVO;
+import com.chennian.storytelling.bean.vo.ConsolidatedReportVO.ConsolidatedIncomeStatementVO;
+import com.chennian.storytelling.bean.vo.IncomeStatementVO;
+import com.chennian.storytelling.bean.vo.ProfitAnalysisVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

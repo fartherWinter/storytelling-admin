@@ -2,10 +2,10 @@ package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.dao.FinancialAnalysisMapper;
 import com.chennian.storytelling.service.FinancialAnalysisService;
-import com.chennian.storytelling.vo.AuditTrailVO;
-import com.chennian.storytelling.vo.FinancialDashboardVO;
-import com.chennian.storytelling.vo.FinancialRatioAnalysisVO;
-import com.chennian.storytelling.vo.FinancialTrendAnalysisVO;
+import com.chennian.storytelling.bean.vo.AuditTrailVO;
+import com.chennian.storytelling.bean.vo.FinancialDashboardVO;
+import com.chennian.storytelling.bean.vo.FinancialRatioAnalysisVO;
+import com.chennian.storytelling.bean.vo.FinancialTrendAnalysisVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
