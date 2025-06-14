@@ -1,0 +1,1061 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.EquipmentMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.manufacturing.Equipment">
+        <id column="equipment_id" property="equipmentId" />
+        <result column="equipment_code" property="equipmentCode" />
+        <result column="equipment_name" property="equipmentName" />
+        <result column="equipment_type" property="equipmentType" />
+        <result column="equipment_category" property="equipmentCategory" />
+        <result column="equipment_status" property="equipmentStatus" />
+        <result column="line_id" property="lineId" />
+        <result column="line_name" property="lineName" />
+        <result column="workshop_id" property="workshopId" />
+        <result column="workshop_name" property="workshopName" />
+        <result column="location" property="location" />
+        <result column="manufacturer" property="manufacturer" />
+        <result column="model" property="model" />
+        <result column="serial_number" property="serialNumber" />
+        <result column="purchase_date" property="purchaseDate" />
+        <result column="commissioning_date" property="commissioningDate" />
+        <result column="purchase_price" property="purchasePrice" />
+        <result column="current_value" property="currentValue" />
+        <result column="depreciation_years" property="depreciationYears" />
+        <result column="depreciation_rate" property="depreciationRate" />
+        <result column="design_capacity" property="designCapacity" />
+        <result column="actual_capacity" property="actualCapacity" />
+        <result column="capacity_utilization" property="capacityUtilization" />
+        <result column="efficiency" property="efficiency" />
+        <result column="manager_id" property="managerId" />
+        <result column="manager_name" property="managerName" />
+        <result column="operator_id" property="operatorId" />
+        <result column="operator_name" property="operatorName" />
+        <result column="maintainer_id" property="maintainerId" />
+        <result column="maintainer_name" property="maintainerName" />
+        <result column="supplier_id" property="supplierId" />
+        <result column="supplier_name" property="supplierName" />
+        <result column="warranty_period" property="warrantyPeriod" />
+        <result column="warranty_expire_date" property="warrantyExpireDate" />
+        <result column="last_maintenance_time" property="lastMaintenanceTime" />
+        <result column="next_maintenance_time" property="nextMaintenanceTime" />
+        <result column="maintenance_cycle" property="maintenanceCycle" />
+        <result column="maintenance_cost" property="maintenanceCost" />
+        <result column="total_running_hours" property="totalRunningHours" />
+        <result column="total_downtime" property="totalDowntime" />
+        <result column="fault_count" property="faultCount" />
+        <result column="last_fault_time" property="lastFaultTime" />
+        <result column="mtbf" property="mtbf" />
+        <result column="mttr" property="mttr" />
+        <result column="availability_rate" property="availabilityRate" />
+        <result column="oee_rate" property="oeeRate" />
+        <result column="energy_level" property="energyLevel" />
+        <result column="rated_power" property="ratedPower" />
+        <result column="actual_power_consumption" property="actualPowerConsumption" />
+        <result column="technical_parameters" property="technicalParameters" />
+        <result column="operating_procedures" property="operatingProcedures" />
+        <result column="safety_requirements" property="safetyRequirements" />
+        <result column="environmental_requirements" property="environmentalRequirements" />
+        <result column="status_change_reason" property="statusChangeReason" />
+        <result column="status_change_time" property="statusChangeTime" />
+        <result column="description" property="description" />
+        <result column="remark" property="remark" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+    </resultMap>
+
+    <!-- 启动设备 -->
+    <update id="startEquipment">
+        UPDATE equipment
+        SET equipment_status = 'RUNNING',
+            update_time = NOW()
+        WHERE equipment_id = #{equipmentId}
+    </update>
+
+    <!-- 停止设备 -->
+    <update id="stopEquipment">
+        UPDATE equipment
+        SET equipment_status = 'STOPPED',
+            update_time = NOW()
+        WHERE equipment_id = #{equipmentId}
+    </update>
+
+    <!-- 设备维护 -->
+    <update id="maintainEquipment">
+        UPDATE equipment
+        SET equipment_status = 'MAINTENANCE',
+            last_maintenance_time = NOW(),
+            next_maintenance_time = DATE_ADD(NOW(), INTERVAL 30 DAY),
+            update_time = NOW()
+        WHERE equipment_id = #{equipmentId}
+    </update>
+
+    <!-- 获取设备利用率统计 -->
+    <select id="selectUtilizationStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            e.equipment_status as equipmentStatus,
+            e.capacity_utilization,
+            pl.line_name as productionLineName,
+            COUNT(wo.work_order_id) as totalWorkOrders,
+            SUM(wo.completed_quantity) as totalOutput,
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE NULL END) as avgOperatingTime,
+            SUM(CASE WHEN wo.work_status = 3 THEN 1 ELSE 0 END) as completedOrders,
+            ROUND(SUM(CASE WHEN wo.work_status = 3 THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(wo.work_order_id), 0), 2) as completionRate
+        FROM equipment e
+        LEFT JOIN production_line pl ON e.line_id = pl.line_id
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.equipment_status, e.capacity_utilization, pl.line_name
+        ORDER BY e.capacity_utilization DESC
+    </select>
+
+    <!-- 获取设备运行时间统计 -->
+    <select id="selectRunTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END) as totalRunTime,
+            COUNT(CASE WHEN wo.work_status = 3 THEN 1 END) as completedJobs,
+            COUNT(CASE WHEN wo.work_status = 4 THEN 1 END) as failedJobs,
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(MINUTE, wo.actual_start_time, wo.actual_end_time) 
+                ELSE NULL END) as avgJobTime,
+            SUM(wo.completed_quantity) as totalProduction,
+            SUM(wo.qualified_quantity) as totalQualified,
+            ROUND(SUM(wo.qualified_quantity) * 100.0 / NULLIF(SUM(wo.completed_quantity), 0), 2) as qualityRate
+        FROM equipment e
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name
+        ORDER BY totalRunTime DESC
+    </select>
+
+    <!-- 获取设备利用率趋势 -->
+    <select id="selectUtilizationTrend" resultType="java.util.Map">
+        SELECT 
+            DATE(wo.start_time) as workDate,
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            COUNT(wo.work_order_id) as dailyJobs,
+            SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END) as dailyRunTime,
+            SUM(wo.completed_quantity) as dailyOutput,
+            ROUND(SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END) / 24.0 * 100, 2) as dailyUtilization
+        FROM equipment e
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY DATE(wo.start_time), e.equipment_id, e.equipment_name
+        ORDER BY DATE(wo.start_time), e.equipment_id
+    </select>
+
+    <!-- 获取设备详细信息 -->
+    <select id="selectEquipmentDetails" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_code,
+            e.equipment_name,
+            e.equipment_type,
+            e.model,
+            e.manufacturer,
+            e.equipment_status,
+            e.capacity_utilization,
+            e.last_maintenance_time,
+            e.next_maintenance_time,
+            e.purchase_date,
+            e.warranty_expire_date,
+            pl.line_name as productionLineName,
+            COUNT(wo.work_order_id) as totalJobs,
+            SUM(wo.completed_quantity) as totalOutput,
+            AVG(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE NULL END) as avgJobTime,
+            DATEDIFF(e.next_maintenance_time, NOW()) as daysToMaintenance,
+            CASE 
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt; 0 THEN 'OVERDUE'
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 7 THEN 'DUE_SOON'
+                ELSE 'NORMAL'
+            END as maintenanceStatus
+        FROM equipment e
+        LEFT JOIN production_line pl ON e.line_id = pl.line_id
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="productionLineId != null">
+            AND e.line_id = #{productionLineId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_code, e.equipment_name, e.equipment_type, e.model, 
+                 e.manufacturer, e.equipment_status, e.capacity_utilization, e.last_maintenance_time, 
+                 e.next_maintenance_time, e.purchase_date, e.warranty_expire_date, pl.line_name
+        ORDER BY e.equipment_name
+    </select>
+
+    <!-- 获取设备状态分布 -->
+    <select id="selectStatusDistribution" resultType="java.util.Map">
+        SELECT 
+            equipment_status as status,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM equipment), 2) as percentage
+        FROM equipment
+        WHERE 1=1
+        <if test="productionLineId != null">
+            AND line_id = #{productionLineId}
+        </if>
+        <if test="equipmentType != null and equipmentType != ''">
+            AND equipment_type = #{equipmentType}
+        </if>
+        GROUP BY equipment_status
+        ORDER BY count DESC
+    </select>
+
+    <!-- 获取能耗统计数据 -->
+    <select id="selectEnergyConsumptionData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END) as totalRunTime,
+            SUM(wo.completed_quantity) as totalOutput,
+            -- 使用实际功耗字段
+            SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) * 
+                     COALESCE(e.actual_power_consumption, e.rated_power, 10.0)
+                ELSE 0 END) as totalEnergyConsumption,
+            ROUND(SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) * 
+                     COALESCE(e.actual_power_consumption, e.rated_power, 10.0)
+                ELSE 0 END) / NULLIF(SUM(wo.completed_quantity), 0), 2) as energyPerUnit
+        FROM equipment e
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type
+        ORDER BY totalEnergyConsumption DESC
+    </select>
+
+    <!-- 获取维护成本统计数据 -->
+    <select id="selectMaintenanceCostData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            COUNT(mr.maintenance_record_id) as maintenanceCount,
+            SUM(CASE WHEN mr.maintenance_cost IS NOT NULL THEN mr.maintenance_cost ELSE 0 END) as totalMaintenanceCost,
+            AVG(CASE WHEN mr.maintenance_cost IS NOT NULL THEN mr.maintenance_cost ELSE 0 END) as avgMaintenanceCost,
+            SUM(CASE WHEN mr.maintenance_type = 'PREVENTIVE' THEN mr.maintenance_cost ELSE 0 END) as preventiveCost,
+            SUM(CASE WHEN mr.maintenance_type = 'CORRECTIVE' THEN mr.maintenance_cost ELSE 0 END) as correctiveCost,
+            COUNT(CASE WHEN mr.maintenance_type = 'PREVENTIVE' THEN 1 END) as preventiveCount,
+            COUNT(CASE WHEN mr.maintenance_type = 'CORRECTIVE' THEN 1 END) as correctiveCount,
+            DATEDIFF(NOW(), e.last_maintenance_time) as daysSinceLastMaintenance,
+            DATEDIFF(e.next_maintenance_time, NOW()) as daysToNextMaintenance
+        FROM equipment e
+        LEFT JOIN maintenance_record mr ON e.equipment_id = mr.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND mr.maintenance_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND mr.maintenance_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.last_maintenance_time, e.next_maintenance_time
+        ORDER BY totalMaintenanceCost DESC
+    </select>
+
+    <!-- 获取维护计划优化数据 -->
+    <select id="selectMaintenancePlanOptimizationData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            e.equipment_status,
+            e.last_maintenance_time as lastMaintenanceDate,
+            e.next_maintenance_time as nextMaintenanceDate,
+            DATEDIFF(e.next_maintenance_time, NOW()) as daysToMaintenance,
+            COUNT(mr.maintenance_record_id) as maintenanceHistory,
+            AVG(DATEDIFF(mr.end_date, mr.start_date)) as avgMaintenanceDuration,
+            SUM(CASE WHEN mr.maintenance_cost IS NOT NULL THEN mr.maintenance_cost ELSE 0 END) as totalMaintenanceCost,
+            e.capacity_utilization,
+            COUNT(CASE WHEN wo.work_status = 4 THEN 1 END) as failureCount,
+            CASE 
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt; 0 THEN 'OVERDUE'
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 7 THEN 'URGENT'
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 30 THEN 'SCHEDULED'
+                ELSE 'FUTURE'
+            END as maintenancePriority,
+            CASE 
+                WHEN e.capacity_utilization &gt; 80 AND DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 7 THEN 'HIGH_IMPACT'
+                WHEN e.capacity_utilization &gt; 60 AND DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 14 THEN 'MEDIUM_IMPACT'
+                ELSE 'LOW_IMPACT'
+            END as businessImpact
+        FROM equipment e
+        LEFT JOIN maintenance_record mr ON e.equipment_id = mr.equipment_id
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="productionLineId != null">
+            AND e.line_id = #{productionLineId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.equipment_status, 
+                 e.last_maintenance_time, e.next_maintenance_time, e.capacity_utilization
+        ORDER BY 
+            CASE 
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt; 0 THEN 1
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 7 THEN 2
+                WHEN DATEDIFF(e.next_maintenance_time, NOW()) &lt;= 30 THEN 3
+                ELSE 4
+            END,
+            e.capacity_utilization DESC
+    </select>
+
+    <!-- 获取设备维护历史数据 -->
+    <select id="selectMaintenanceHistory" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            mr.maintenance_record_id as maintenanceId,
+            mr.maintenance_type as maintenanceType,
+            mr.maintenance_date as maintenanceDate,
+            mr.start_date as startDate,
+            mr.end_date as endDate,
+            mr.maintenance_cost as maintenanceCost,
+            mr.description as description,
+            mr.maintainer as maintainer,
+            mr.maintenance_status as maintenanceStatus,
+            DATEDIFF(mr.end_date, mr.start_date) as maintenanceDuration,
+            CASE 
+                WHEN mr.maintenance_type = 'PREVENTIVE' THEN '预防性维护'
+                WHEN mr.maintenance_type = 'CORRECTIVE' THEN '纠正性维护'
+                WHEN mr.maintenance_type = 'EMERGENCY' THEN '紧急维护'
+                ELSE '其他维护'
+            END as maintenanceTypeName,
+            CASE 
+                WHEN mr.maintenance_status = 'COMPLETED' THEN '已完成'
+                WHEN mr.maintenance_status = 'IN_PROGRESS' THEN '进行中'
+                WHEN mr.maintenance_status = 'PLANNED' THEN '已计划'
+                WHEN mr.maintenance_status = 'CANCELLED' THEN '已取消'
+                ELSE '未知状态'
+            END as maintenanceStatusName
+        FROM equipment e
+        LEFT JOIN maintenance_record mr ON e.equipment_id = mr.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND mr.maintenance_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND mr.maintenance_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        ORDER BY mr.maintenance_date DESC, e.equipment_name
+    </select>
+
+    <!-- 添加设备维护记录 -->
+    <insert id="addMaintenanceRecord">
+        INSERT INTO maintenance_record (
+            equipment_id,
+            maintenance_type,
+            description,
+            maintenance_date,
+            maintainer,
+            maintenance_status,
+            create_time
+        ) VALUES (
+            #{equipmentId},
+            #{maintenanceType},
+            #{description},
+            #{maintenanceDate},
+            #{maintainer},
+            'COMPLETED',
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新设备状态 -->
+    <update id="updateEquipmentStatus">
+        UPDATE equipment
+        SET equipment_status = #{status},
+            update_time = NOW()
+        WHERE equipment_id = #{equipmentId}
+    </update>
+    
+    <!-- 查询设备OEE分析数据 -->
+    <select id="selectOEEAnalysisData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name as equipmentName,
+            e.equipment_type as equipmentType,
+            e.capacity_utilization,
+            COUNT(wo.work_order_id) as totalWorkOrders,
+            SUM(wo.completed_quantity) as totalOutput,
+            SUM(wo.qualified_quantity) as totalQualified,
+            ROUND(SUM(wo.qualified_quantity) * 100.0 / NULLIF(SUM(wo.completed_quantity), 0), 2) as qualityRate,
+            SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END) as totalOperatingTime,
+            ROUND(SUM(wo.completed_quantity) / NULLIF(SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END), 0), 2) as productivity,
+            ROUND(e.capacity_utilization * (SUM(wo.qualified_quantity) * 100.0 / NULLIF(SUM(wo.completed_quantity), 0)) / 100.0 * 
+                (SUM(wo.completed_quantity) / NULLIF(SUM(CASE WHEN wo.actual_end_time IS NOT NULL AND wo.actual_start_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, wo.actual_start_time, wo.actual_end_time) 
+                ELSE 0 END), 0)) / 100.0, 2) as oeeScore
+        FROM equipment e
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE e.equipment_id = #{equipmentId}
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.capacity_utilization
+    </select>
+    
+    <!-- 查询实时监控数据 -->
+    <select id="selectRealTimeMonitoringData" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalEquipment,
+            SUM(CASE WHEN equipment_status = 'RUNNING' THEN 1 ELSE 0 END) as runningEquipment,
+            SUM(CASE WHEN equipment_status = 'STOPPED' THEN 1 ELSE 0 END) as stoppedEquipment,
+            SUM(CASE WHEN equipment_status = 'MAINTENANCE' THEN 1 ELSE 0 END) as maintenanceEquipment,
+            SUM(CASE WHEN equipment_status = 'ERROR' THEN 1 ELSE 0 END) as errorEquipment,
+            ROUND(AVG(capacity_utilization), 2) as avgUtilizationRate,
+            COUNT(CASE WHEN next_maintenance_time &lt;= DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 1 END) as upcomingMaintenance,
+            COUNT(CASE WHEN next_maintenance_time &gt; NOW() THEN 1 END) as overdueMaintenance
+        FROM equipment
+        WHERE 1=1
+    </select>
+    
+    <!-- 查询风险数据 -->
+    <select id="selectRiskData" resultType="java.util.Map">
+        SELECT 
+            COUNT(CASE WHEN e.equipment_status = 'ERROR' THEN 1 END) as equipmentErrors,
+            COUNT(CASE WHEN e.next_maintenance_time &gt; NOW() THEN 1 END) as overdueMaintenances,
+            COUNT(CASE WHEN e.capacity_utilization &gt; 90 THEN 1 END) as overUtilizedEquipment,
+            COUNT(CASE WHEN e.capacity_utilization &gt; 30 THEN 1 END) as underUtilizedEquipment,
+            AVG(CASE WHEN wo.qualified_quantity &gt; 0 AND wo.completed_quantity &gt; 0 
+                THEN (wo.qualified_quantity * 100.0 / wo.completed_quantity) 
+                ELSE 0 END) as avgQualityRate,
+            COUNT(CASE WHEN wo.actual_end_time &gt; wo.end_time THEN 1 END) as delayedWorkOrders,
+            COUNT(DISTINCT e.equipment_id) as totalEquipmentCount,
+            COUNT(DISTINCT wo.work_order_id) as totalWorkOrderCount
+        FROM equipment e
+        LEFT JOIN work_order wo ON e.equipment_id = wo.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND wo.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND wo.end_time &lt;= #{endDate}
+        </if>
+        <if test="departmentId != null">
+            AND EXISTS (
+                SELECT 1 FROM production_line pl 
+                WHERE pl.line_id = e.line_id 
+                AND pl.department_id = #{departmentId}
+            )
+        </if>
+    </select>
+    
+    <!-- 根据生产线ID查询设备列表 -->
+    <select id="selectByLineId" resultMap="BaseResultMap">
+        SELECT * FROM equipment 
+        WHERE line_id = #{lineId}
+        ORDER BY equipment_code
+    </select>
+    
+    <!-- 根据车间ID查询设备列表 -->
+    <select id="selectByWorkshopId" resultMap="BaseResultMap">
+        SELECT e.* FROM equipment e
+        INNER JOIN production_line pl ON e.line_id = pl.line_id
+        WHERE pl.workshop_id = #{workshopId}
+        ORDER BY e.equipment_code
+    </select>
+    
+    <!-- 根据设备状态查询设备列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM equipment 
+        WHERE equipment_status = #{status}
+        ORDER BY equipment_code
+    </select>
+    
+    <!-- 查询设备统计信息 -->
+    <select id="selectEquipmentStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalEquipment,
+            COUNT(CASE WHEN equipment_status = 'RUNNING' THEN 1 END) as runningCount,
+            COUNT(CASE WHEN equipment_status = 'STOPPED' THEN 1 END) as stoppedCount,
+            COUNT(CASE WHEN equipment_status = 'MAINTENANCE' THEN 1 END) as maintenanceCount,
+            COUNT(CASE WHEN equipment_status = 'ERROR' THEN 1 END) as errorCount,
+            ROUND(AVG(capacity_utilization), 2) as avgUtilizationRate,
+            MAX(capacity_utilization) as maxUtilizationRate,
+            MIN(capacity_utilization) as minUtilizationRate,
+            COUNT(CASE WHEN next_maintenance_time &lt;= DATE_ADD(NOW(), INTERVAL 30 DAY) THEN 1 END) as upcomingMaintenanceCount
+        FROM equipment e
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND e.create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND e.create_time &lt;= #{endDate}
+        </if>
+    </select>
+
+    <!-- 查询设备运行时间统计 -->
+    <select id="selectEquipmentRunTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_name,
+            COALESCE(SUM(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)), 0) as total_run_time,
+            COALESCE(AVG(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)), 0) as avg_run_time,
+            COUNT(er.runtime_id) as run_count
+        FROM equipment e
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id 
+            AND er.start_time &gt;= #{startDate} 
+            AND er.end_time &lt;= #{endDate}
+        WHERE (#{equipmentId} IS NULL OR e.equipment_id = #{equipmentId})
+        GROUP BY e.equipment_id, e.equipment_name
+    </select>
+
+    <!-- 查询设备详细信息（含运行时数据） -->
+    <select id="selectEquipmentDetailsWithRuntime" resultType="java.util.Map">
+        SELECT 
+            e.*,
+            pl.line_name as production_line_name,
+            COALESCE(er.utilization_rate, 0) as current_utilization,
+            COALESCE(er.efficiency_rate, 0) as efficiency_rate
+        FROM equipment e
+        LEFT JOIN production_line pl ON e.line_id = pl.line_id
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id 
+            AND er.start_time &gt;= #{startDate} 
+            AND er.end_time &lt;= #{endDate}
+        WHERE (#{equipmentId} IS NULL OR e.equipment_id = #{equipmentId})
+    </select>
+
+    <!-- 查询设备状态分布（按日期范围） -->
+    <select id="selectStatusDistributionByDateRange" resultType="java.util.Map">
+        SELECT 
+            equipment_status as status,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM equipment), 2) as percentage
+        FROM equipment e
+        WHERE EXISTS (
+            SELECT 1 FROM equipment_runtime er 
+            WHERE er.equipment_id = e.equipment_id 
+            AND er.start_time &gt;= #{startDate} 
+            AND er.end_time &lt;= #{endDate}
+        )
+        GROUP BY equipment_status
+    </select>
+
+    <!-- 查询设备报告数据 -->
+    <select id="selectEquipmentReportData" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_equipment,
+            SUM(CASE WHEN equipment_status = 'RUNNING' THEN 1 ELSE 0 END) as running_count,
+            SUM(CASE WHEN equipment_status = 'STOPPED' THEN 1 ELSE 0 END) as stopped_count,
+            SUM(CASE WHEN equipment_status = 'MAINTENANCE' THEN 1 ELSE 0 END) as maintenance_count,
+            AVG(capacity_utilization) as avg_utilization,
+            COUNT(CASE WHEN last_maintenance_time &gt;= #{startDate} AND last_maintenance_time &lt;= #{endDate} THEN 1 END) as maintenance_times
+        FROM equipment
+    </select>
+
+    <!-- 查询设备能耗数据 -->
+    <select id="selectEnergyConsumption" resultType="java.util.Map">
+        SELECT 
+            e.equipment_name,
+            COALESCE(SUM(ec.power_consumption), 0) as total_power,
+            COALESCE(AVG(ec.power_consumption), 0) as avg_power,
+            COALESCE(SUM(ec.energy_cost), 0) as total_cost
+        FROM equipment e
+        LEFT JOIN equipment_energy_consumption ec ON e.equipment_id = ec.equipment_id 
+            AND ec.consumption_date &gt;= #{startDate} 
+            AND ec.consumption_date &lt;= #{endDate}
+        WHERE (#{equipmentId} IS NULL OR e.equipment_id = #{equipmentId})
+        GROUP BY e.equipment_id, e.equipment_name
+    </select>
+
+    <!-- 查询设备维护成本统计 -->
+    <select id="selectMaintenanceCostStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_name,
+            COALESCE(SUM(mr.maintenance_cost), 0) as total_cost,
+            COALESCE(AVG(mr.maintenance_cost), 0) as avg_cost,
+            COUNT(mr.maintenance_record_id) as maintenance_count,
+            COALESCE(SUM(mr.downtime_hours), 0) as total_downtime
+        FROM equipment e
+        LEFT JOIN maintenance_record mr ON e.equipment_id = mr.equipment_id 
+            AND mr.maintenance_date &gt;= #{startDate} 
+            AND mr.maintenance_date &lt;= #{endDate}
+        WHERE (#{equipmentId} IS NULL OR e.equipment_id = #{equipmentId})
+        GROUP BY e.equipment_id, e.equipment_name
+    </select>
+    
+    <!-- 查询设备利用率统计 -->
+    <select id="selectEquipmentUtilizationStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            e.capacity_utilization as currentUtilization,
+            AVG(er.utilization_rate) as avgUtilization,
+            MAX(er.utilization_rate) as maxUtilization,
+            MIN(er.utilization_rate) as minUtilization,
+            COUNT(er.runtime_id) as recordCount,
+            SUM(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)) as totalRunTime,
+            ROUND(SUM(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)) / NULLIF(COUNT(er.runtime_id), 0), 2) as avgRunTime
+        FROM equipment e
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND er.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND er.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.capacity_utilization
+        ORDER BY avgUtilization DESC
+    </select>
+    
+    <!-- 查询设备维护记录 -->
+    <select id="selectMaintenanceRecords" resultType="java.util.Map">
+        SELECT 
+            mr.maintenance_record_id as recordId,
+            mr.equipment_id,
+            e.equipment_name,
+            mr.maintenance_type,
+            mr.description,
+            mr.maintenance_date,
+            mr.maintainer,
+            mr.maintenance_cost,
+            mr.downtime_hours,
+            mr.status as maintenanceStatus,
+            mr.create_time
+        FROM maintenance_record mr
+        LEFT JOIN equipment e ON mr.equipment_id = e.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND mr.equipment_id = #{equipmentId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND mr.maintenance_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND mr.maintenance_date &lt;= #{endDate}
+        </if>
+        ORDER BY mr.maintenance_date DESC
+    </select>
+    
+    <!-- 新增设备维护记录 -->
+    <insert id="insertMaintenanceRecord">
+        INSERT INTO maintenance_record (
+            equipment_id,
+            maintenance_type,
+            description,
+            maintenance_date,
+            maintainer,
+            status,
+            create_time
+        ) VALUES (
+            #{equipmentId},
+            #{maintenanceType},
+            #{description},
+            #{maintenanceDate},
+            #{maintainer},
+            'PENDING',
+            NOW()
+        )
+    </insert>
+    
+    <!-- 查询设备运行时间统计 -->
+    <select id="selectEquipmentRunningTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            SUM(CASE WHEN er.status = 'RUNNING' 
+                THEN TIMESTAMPDIFF(HOUR, er.start_time, COALESCE(er.end_time, NOW())) 
+                ELSE 0 END) as totalRunningTime,
+            SUM(CASE WHEN er.status = 'STOPPED' 
+                THEN TIMESTAMPDIFF(HOUR, er.start_time, COALESCE(er.end_time, NOW())) 
+                ELSE 0 END) as totalStoppedTime,
+            SUM(CASE WHEN er.status = 'MAINTENANCE' 
+                THEN TIMESTAMPDIFF(HOUR, er.start_time, COALESCE(er.end_time, NOW())) 
+                ELSE 0 END) as totalMaintenanceTime,
+            COUNT(CASE WHEN er.status = 'RUNNING' THEN 1 END) as runningCount,
+            COUNT(CASE WHEN er.status = 'STOPPED' THEN 1 END) as stoppedCount,
+            COUNT(CASE WHEN er.status = 'MAINTENANCE' THEN 1 END) as maintenanceCount,
+            ROUND(SUM(CASE WHEN er.status = 'RUNNING' 
+                THEN TIMESTAMPDIFF(HOUR, er.start_time, COALESCE(er.end_time, NOW())) 
+                ELSE 0 END) * 100.0 / NULLIF(SUM(TIMESTAMPDIFF(HOUR, er.start_time, COALESCE(er.end_time, NOW()))), 0), 2) as runningTimePercentage
+        FROM equipment e
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND er.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND er.end_time &lt;= #{endDate}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type
+        ORDER BY totalRunningTime DESC
+    </select>
+    
+    <!-- 查询设备故障统计 -->
+    <select id="selectEquipmentFailureStatistics" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            COUNT(ef.failure_id) as totalFailures,
+            COUNT(CASE WHEN ef.severity = 'HIGH' THEN 1 END) as highSeverityFailures,
+            COUNT(CASE WHEN ef.severity = 'MEDIUM' THEN 1 END) as mediumSeverityFailures,
+            COUNT(CASE WHEN ef.severity = 'LOW' THEN 1 END) as lowSeverityFailures,
+            SUM(ef.downtime_hours) as totalDowntime,
+            AVG(ef.downtime_hours) as avgDowntime,
+            SUM(ef.repair_cost) as totalRepairCost,
+            AVG(ef.repair_cost) as avgRepairCost,
+            COUNT(CASE WHEN ef.status = 'RESOLVED' THEN 1 END) as resolvedFailures,
+            COUNT(CASE WHEN ef.status = 'PENDING' THEN 1 END) as pendingFailures
+        FROM equipment e
+        LEFT JOIN equipment_failure ef ON e.equipment_id = ef.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND ef.failure_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND ef.failure_date &lt;= #{endDate}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type
+        ORDER BY totalFailures DESC
+    </select>
+    
+    <!-- 查询设备效率趋势 -->
+    <select id="selectEquipmentEfficiencyTrend" resultType="java.util.Map">
+        SELECT 
+            DATE(er.start_time) as date,
+            e.equipment_name,
+            AVG(er.efficiency_rate) as avgEfficiency,
+            AVG(er.utilization_rate) as avgUtilization,
+            SUM(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)) as totalRunTime,
+            COUNT(er.runtime_id) as recordCount
+        FROM equipment e
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id
+        WHERE 1=1
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND er.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND er.end_time &lt;= #{endDate}
+        </if>
+        GROUP BY DATE(er.start_time), e.equipment_name
+        ORDER BY date, e.equipment_name
+    </select>
+    
+    <!-- 查询设备维护历史 -->
+    <select id="selectMaintenanceRecordHistory" resultType="java.util.Map">
+        SELECT 
+            mr.maintenance_record_id as recordId,
+            mr.equipment_id,
+            e.equipment_name,
+            e.equipment_code,
+            mr.maintenance_type,
+            mr.description,
+            mr.maintenance_date,
+            mr.maintainer,
+            mr.maintenance_cost,
+            mr.downtime_hours,
+            mr.status,
+            mr.create_time,
+            mr.update_time
+        FROM maintenance_record mr
+        LEFT JOIN equipment e ON mr.equipment_id = e.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND mr.maintenance_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND mr.maintenance_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND mr.equipment_id = #{equipmentId}
+        </if>
+        ORDER BY mr.maintenance_date DESC
+    </select>
+    
+    <!-- 查询设备利用率分析数据 -->
+    <select id="selectEquipmentUtilizationAnalysis" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            e.capacity_utilization as currentUtilization,
+            COUNT(er.runtime_id) as totalRecords,
+            AVG(er.utilization_rate) as avgUtilization,
+            MAX(er.utilization_rate) as maxUtilization,
+            MIN(er.utilization_rate) as minUtilization,
+            STDDEV(er.utilization_rate) as utilizationStdDev,
+            SUM(TIMESTAMPDIFF(HOUR, er.start_time, er.end_time)) as totalOperatingHours,
+            COUNT(CASE WHEN er.utilization_rate &gt;= 80 THEN 1 END) as highUtilizationCount,
+            COUNT(CASE WHEN er.utilization_rate &gt; 50 THEN 1 END) as lowUtilizationCount
+        FROM equipment e
+        LEFT JOIN equipment_runtime er ON e.equipment_id = er.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND er.start_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND er.end_time &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.capacity_utilization
+        ORDER BY avgUtilization DESC
+    </select>
+    
+    <!-- 添加设备维护计划 -->
+    <insert id="addMaintenanceSchedule">
+        INSERT INTO maintenance_record (
+            equipment_id,
+            maintenance_type,
+            description,
+            maintenance_date,
+            maintainer,
+            status,
+            create_time,
+            update_time
+        ) VALUES (
+            #{equipmentId},
+            #{maintenanceType},
+            #{description},
+            #{maintenanceDate},
+            #{maintainer},
+            'SCHEDULED',
+            NOW(),
+            NOW()
+        )
+    </insert>
+    
+    <!-- 查询维护计划数据 -->
+    <select id="selectMaintenanceScheduleData" resultType="java.util.Map">
+        SELECT 
+            ms.schedule_id as scheduleId,
+            ms.equipment_id,
+            e.equipment_name,
+            e.equipment_code,
+            ms.maintenance_type,
+            ms.scheduled_date,
+            ms.description,
+            ms.assigned_technician,
+            ms.estimated_duration,
+            ms.priority,
+            ms.status,
+            ms.create_time
+        FROM maintenance_schedule ms
+        LEFT JOIN equipment e ON ms.equipment_id = e.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND ms.scheduled_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND ms.scheduled_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND ms.equipment_id = #{equipmentId}
+        </if>
+        ORDER BY ms.scheduled_date, ms.priority DESC
+    </select>
+    
+    <!-- 查询能效数据 -->
+    <select id="selectEnergyEfficiencyData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            AVG(ec.power_consumption) as avgPowerConsumption,
+            SUM(ec.power_consumption) as totalPowerConsumption,
+            AVG(ec.energy_efficiency_ratio) as avgEnergyEfficiency,
+            SUM(ec.energy_cost) as totalEnergyCost,
+            COUNT(ec.consumption_id) as recordCount,
+            MIN(ec.power_consumption) as minPowerConsumption,
+            MAX(ec.power_consumption) as maxPowerConsumption
+        FROM equipment e
+        LEFT JOIN equipment_energy_consumption ec ON e.equipment_id = ec.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND ec.consumption_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND ec.consumption_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type
+        ORDER BY avgEnergyEfficiency DESC
+    </select>
+    
+    <!-- 查询安全数据 -->
+    <select id="selectSafetyData" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT si.incident_id) as totalIncidents,
+            COUNT(CASE WHEN si.severity = 'HIGH' THEN 1 END) as highSeverityIncidents,
+            COUNT(CASE WHEN si.severity = 'MEDIUM' THEN 1 END) as mediumSeverityIncidents,
+            COUNT(CASE WHEN si.severity = 'LOW' THEN 1 END) as lowSeverityIncidents,
+            COUNT(CASE WHEN si.status = 'RESOLVED' THEN 1 END) as resolvedIncidents,
+            COUNT(CASE WHEN si.status = 'PENDING' THEN 1 END) as pendingIncidents,
+            AVG(si.resolution_time_hours) as avgResolutionTime,
+            COUNT(DISTINCT e.equipment_id) as affectedEquipmentCount,
+            SUM(si.downtime_hours) as totalDowntime
+        FROM safety_incident si
+        LEFT JOIN equipment e ON si.equipment_id = e.equipment_id
+        LEFT JOIN production_line pl ON e.line_id = pl.line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND si.incident_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND si.incident_date &lt;= #{endDate}
+        </if>
+        <if test="departmentId != null">
+            AND pl.department_id = #{departmentId}
+        </if>
+    </select>
+    
+    <!-- 查询环境数据 -->
+    <select id="selectEnvironmentalData" resultType="java.util.Map">
+        SELECT 
+            AVG(ed.temperature) as avgTemperature,
+            MAX(ed.temperature) as maxTemperature,
+            MIN(ed.temperature) as minTemperature,
+            AVG(ed.humidity) as avgHumidity,
+            MAX(ed.humidity) as maxHumidity,
+            MIN(ed.humidity) as minHumidity,
+            AVG(ed.noise_level) as avgNoiseLevel,
+            MAX(ed.noise_level) as maxNoiseLevel,
+            AVG(ed.air_quality_index) as avgAirQuality,
+            COUNT(CASE WHEN ed.temperature &gt; 30 THEN 1 END) as highTemperatureCount,
+            COUNT(CASE WHEN ed.humidity &gt; 70 THEN 1 END) as highHumidityCount,
+            COUNT(CASE WHEN ed.noise_level &gt; 85 THEN 1 END) as highNoiseCount
+        FROM environmental_data ed
+        LEFT JOIN equipment e ON ed.equipment_id = e.equipment_id
+        LEFT JOIN production_line pl ON e.line_id = pl.line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND ed.measurement_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND ed.measurement_date &lt;= #{endDate}
+        </if>
+        <if test="factoryId != null">
+            AND pl.factory_id = #{factoryId}
+        </if>
+    </select>
+    
+    <!-- 查询技术数据 -->
+    <select id="selectTechnologyData" resultType="java.util.Map">
+        SELECT 
+            e.equipment_id as equipmentId,
+            e.equipment_name,
+            e.equipment_type,
+            e.technology_level,
+            e.automation_level,
+            COUNT(td.tech_data_id) as totalTechRecords,
+            AVG(td.performance_score) as avgPerformanceScore,
+            MAX(td.performance_score) as maxPerformanceScore,
+            MIN(td.performance_score) as minPerformanceScore,
+            AVG(td.innovation_index) as avgInnovationIndex,
+            COUNT(CASE WHEN td.upgrade_status = 'COMPLETED' THEN 1 END) as completedUpgrades,
+            COUNT(CASE WHEN td.upgrade_status = 'PENDING' THEN 1 END) as pendingUpgrades,
+            SUM(td.upgrade_cost) as totalUpgradeCost
+        FROM equipment e
+        LEFT JOIN technology_data td ON e.equipment_id = td.equipment_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND td.assessment_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND td.assessment_date &lt;= #{endDate}
+        </if>
+        <if test="equipmentId != null">
+            AND e.equipment_id = #{equipmentId}
+        </if>
+        GROUP BY e.equipment_id, e.equipment_name, e.equipment_type, e.technology_level, e.automation_level
+        ORDER BY avgPerformanceScore DESC
+    </select>
+
+</mapper>
