@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.ProductionPlanMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.manufacturing.ProductionPlan">
+        <id column="plan_id" property="planId" />
+        <result column="plan_code" property="planCode" />
+        <result column="plan_name" property="planName" />
+        <result column="product_id" property="productId" />
+        <result column="product_name" property="productName" />
+        <result column="product_spec" property="productSpec" />
+        <result column="plan_quantity" property="planQuantity" />
+        <result column="completed_quantity" property="completedQuantity" />
+        <result column="plan_start_time" property="planStartTime" />
+        <result column="plan_end_time" property="planEndTime" />
+        <result column="actual_start_time" property="actualStartTime" />
+        <result column="actual_end_time" property="actualEndTime" />
+        <result column="plan_status" property="planStatus" />
+        <result column="priority" property="priority" />
+        <result column="production_line_id" property="productionLineId" />
+        <result column="production_line_name" property="productionLineName" />
+        <result column="manager_id" property="managerId" />
+        <result column="manager_name" property="managerName" />
+        <result column="plan_cost" property="planCost" />
+        <result column="actual_cost" property="actualCost" />
+        <result column="progress" property="progress" />
+        <result column="audit_status" property="auditStatus" />
+        <result column="auditor_id" property="auditorId" />
+        <result column="auditor_name" property="auditorName" />
+        <result column="audit_time" property="auditTime" />
+        <result column="audit_remark" property="auditRemark" />
+        <result column="description" property="description" />
+        <result column="remark" property="remark" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+    </resultMap>
+
+    <!-- 审核生产计划 -->
+    <update id="approvePlan">
+        UPDATE production_plan
+        SET plan_status = 1,
+            approver = #{approver},
+            approve_time = #{approveTime},
+            update_time = NOW()
+        WHERE plan_id = #{id}
+    </update>
+
+    <!-- 执行生产计划 -->
+    <update id="executePlan">
+        UPDATE production_plan
+        SET plan_status = 2,
+            actual_start_date = NOW(),
+            update_time = NOW()
+        WHERE plan_id = #{id}
+    </update>
+
+    <!-- 完成生产计划 -->
+    <update id="completePlan">
+        UPDATE production_plan
+        SET plan_status = 3,
+            actual_end_date = NOW(),
+            update_time = NOW()
+        WHERE plan_id = #{id}
+    </update>
+    
+    <!-- 更新计划状态 -->
+    <update id="updatePlanStatus">
+        UPDATE production_plan
+        SET plan_status = #{status},
+            update_time = NOW()
+        WHERE plan_id = #{planId}
+    </update>
+    
+    <!-- 根据状态查询计划列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM production_plan 
+        WHERE plan_status = #{status}
+        ORDER BY priority DESC, create_time DESC
+    </select>
+    
+    <!-- 根据产品ID查询计划列表 -->
+    <select id="selectByProductId" resultMap="BaseResultMap">
+        SELECT * FROM production_plan 
+        WHERE product_id = #{productId}
+        ORDER BY create_time DESC
+    </select>
+    
+    <!-- 查询计划统计信息 -->
+    <select id="selectPlanStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalPlans,
+            COUNT(CASE WHEN plan_status = 0 THEN 1 END) as draftPlans,
+            COUNT(CASE WHEN plan_status = 1 THEN 1 END) as approvedPlans,
+            COUNT(CASE WHEN plan_status = 2 THEN 1 END) as executingPlans,
+            COUNT(CASE WHEN plan_status = 3 THEN 1 END) as completedPlans,
+            COUNT(CASE WHEN plan_status = 4 THEN 1 END) as cancelledPlans,
+            SUM(planned_quantity) as totalPlannedQuantity,
+            SUM(completed_quantity) as totalCompletedQuantity,
+            ROUND(SUM(completed_quantity) * 100.0 / NULLIF(SUM(planned_quantity), 0), 2) as overallCompletionRate,
+            COUNT(CASE WHEN actual_end_date &lt;= plan_end_date THEN 1 END) as onTimePlans,
+            ROUND(COUNT(CASE WHEN actual_end_date &lt;= plan_end_date THEN 1 END) * 100.0 / NULLIF(COUNT(CASE WHEN actual_end_date IS NOT NULL THEN 1 END), 0), 2) as onTimeRate,
+            AVG(CASE WHEN actual_end_date IS NOT NULL AND actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(DAY, actual_start_date, actual_end_date) 
+                ELSE NULL END) as avgCycleTime
+        FROM production_plan
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND plan_end_date &lt;= #{endDate}
+        </if>
+    </select>
+    
+    <!-- 查询产能规划数据 -->
+    <select id="selectCapacityPlanningData" resultType="java.util.Map">
+        SELECT 
+            pl.id as lineId,
+            pl.line_name as lineName,
+            pl.capacity as lineCapacity,
+            COUNT(pp.id) as planCount,
+            SUM(pp.planned_quantity) as totalPlannedQuantity,
+            SUM(pp.completed_quantity) as totalCompletedQuantity,
+            ROUND(SUM(pp.planned_quantity) * 100.0 / NULLIF(pl.capacity, 0), 2) as capacityUtilization,
+            ROUND(SUM(pp.completed_quantity) * 100.0 / NULLIF(SUM(pp.planned_quantity), 0), 2) as completionRate,
+            AVG(CASE WHEN pp.actual_end_date IS NOT NULL AND pp.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, pp.actual_start_date, pp.actual_end_date) 
+                ELSE NULL END) as avgProductionTime
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.id = po.production_line_id
+        LEFT JOIN production_plan pp ON po.production_plan_id = pp.id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pl.id = #{lineId}
+        </if>
+        GROUP BY pl.id, pl.line_name, pl.capacity
+        ORDER BY capacityUtilization DESC
+    </select>
+    
+    <!-- 查询资源分配数据 -->
+    <select id="selectResourceAllocationData" resultType="java.util.Map">
+        SELECT 
+            pp.id as planId,
+            pp.plan_name as planName,
+            pp.planned_quantity,
+            pp.completed_quantity,
+            pl.line_name,
+            COUNT(DISTINCT po.id) as orderCount,
+            COUNT(DISTINCT e.id) as equipmentCount,
+            SUM(CASE WHEN e.equipment_status = 1 THEN 1 ELSE 0 END) as activeEquipmentCount,
+            ROUND(COUNT(DISTINCT po.id) * 100.0 / NULLIF(pl.capacity, 0), 2) as resourceUtilization,
+            pp.plan_start_date,
+            pp.plan_end_date,
+            pp.plan_status
+        FROM production_plan pp
+        LEFT JOIN production_order po ON pp.id = po.production_plan_id
+        LEFT JOIN production_line pl ON po.production_line_id = pl.id
+        LEFT JOIN equipment e ON pl.id = e.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="planId != null">
+            AND pp.id = #{planId}
+        </if>
+        GROUP BY pp.id, pp.plan_name, pp.planned_quantity, pp.completed_quantity, 
+                 pl.line_name, pl.capacity, pp.plan_start_date, pp.plan_end_date, pp.plan_status
+        ORDER BY pp.plan_start_date
+    </select>
+    
+    <!-- 查询计划效率数据 -->
+    <select id="selectPlanEfficiencyData" resultType="java.util.Map">
+        SELECT 
+            pp.id as planId,
+            pp.plan_name as planName,
+            pp.planned_quantity,
+            pp.completed_quantity,
+            ROUND(pp.completed_quantity * 100.0 / NULLIF(pp.planned_quantity, 0), 2) as completionRate,
+            CASE WHEN pp.actual_end_date IS NOT NULL AND pp.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(DAY, pp.actual_start_date, pp.actual_end_date) 
+                ELSE NULL END as actualCycleTime,
+            CASE WHEN pp.plan_end_date IS NOT NULL AND pp.plan_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(DAY, pp.plan_start_date, pp.plan_end_date) 
+                ELSE NULL END as plannedCycleTime,
+            CASE WHEN pp.actual_end_date &lt;= pp.plan_end_date THEN 'Y' ELSE 'N' END as onTime,
+            pp.plan_status,
+            COUNT(DISTINCT po.id) as orderCount,
+            AVG(CASE WHEN po.completed_quantity &gt; 0 AND po.planned_quantity &gt; 0 
+                THEN po.completed_quantity * 100.0 / po.planned_quantity 
+                ELSE 0 END) as avgOrderCompletionRate
+        FROM production_plan pp
+        LEFT JOIN production_order po ON pp.id = po.production_plan_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="planStatus != null">
+            AND pp.plan_status = #{planStatus}
+        </if>
+        GROUP BY pp.id, pp.plan_name, pp.planned_quantity, pp.completed_quantity, 
+                 pp.actual_start_date, pp.actual_end_date, pp.plan_start_date, 
+                 pp.plan_end_date, pp.plan_status
+        ORDER BY completionRate DESC
+    </select>
+    
+    <!-- 查询计划趋势数据 -->
+    <select id="selectPlanTrendData" resultType="java.util.Map">
+        SELECT 
+            <choose>
+                <when test="granularity == 'day'">
+                    DATE(plan_start_date) as period
+                </when>
+                <when test="granularity == 'week'">
+                    CONCAT(YEAR(plan_start_date), '-W', WEEK(plan_start_date)) as period
+                </when>
+                <when test="granularity == 'month'">
+                    DATE_FORMAT(plan_start_date, '%Y-%m') as period
+                </when>
+                <otherwise>
+                    DATE_FORMAT(plan_start_date, '%Y-%m') as period
+                </otherwise>
+            </choose>,
+            COUNT(*) as planCount,
+            SUM(planned_quantity) as totalPlanned,
+            SUM(completed_quantity) as totalCompleted,
+            ROUND(SUM(completed_quantity) * 100.0 / NULLIF(SUM(planned_quantity), 0), 2) as completionRate,
+            COUNT(CASE WHEN plan_status = 3 THEN 1 END) as completedPlans,
+            COUNT(CASE WHEN actual_end_date &lt;= plan_end_date THEN 1 END) as onTimePlans,
+            ROUND(COUNT(CASE WHEN actual_end_date &lt;= plan_end_date THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as onTimeRate
+        FROM production_plan
+        WHERE 1=1
+        <if test="period != null and period != ''">
+            <choose>
+                <when test="period == 'last_7_days'">
+                    AND plan_start_date &gt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                </when>
+                <when test="period == 'last_30_days'">
+                    AND plan_start_date &gt;= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                </when>
+                <when test="period == 'last_90_days'">
+                    AND plan_start_date &gt;= DATE_SUB(NOW(), INTERVAL 90 DAY)
+                </when>
+                <when test="period == 'this_year'">
+                    AND YEAR(plan_start_date) = YEAR(NOW())
+                </when>
+            </choose>
+        </if>
+        GROUP BY period
+        ORDER BY period
+    </select>
+    
+    <!-- 审核计划 -->
+    <update id="auditPlan">
+        UPDATE production_plan
+        SET plan_status = CASE 
+            WHEN #{approved} = true THEN 1 
+            ELSE 4 
+        END,
+        approver = #{auditor},
+        approve_time = NOW(),
+        update_time = NOW()
+        WHERE plan_id = #{planId}
+    </update>
+    
+    <!-- 发布计划 -->
+    <update id="publishPlan">
+        UPDATE production_plan
+        SET plan_status = 2,
+            actual_start_date = NOW(),
+            update_time = NOW()
+        WHERE plan_id = #{planId} AND plan_status = 1
+    </update>
+    
+    <!-- 冻结计划 -->
+    <update id="freezePlan">
+        UPDATE production_plan
+        SET plan_status = 5,
+            update_time = NOW()
+        WHERE plan_id = #{planId}
+    </update>
+
+    <!-- 获取效率统计数据 -->
+    <select id="selectEfficiencyStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalPlans,
+            SUM(CASE WHEN plan_status = 3 THEN 1 ELSE 0 END) as completedPlans,
+            SUM(planned_quantity) as totalPlannedQuantity,
+            SUM(completed_quantity) as totalCompletedQuantity,
+            AVG(CASE WHEN actual_end_date IS NOT NULL AND actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, actual_start_date, actual_end_date) 
+                ELSE NULL END) as avgProductionTime,
+            AVG(CASE WHEN completed_quantity &gt; 0 AND planned_quantity &gt; 0 
+                THEN (completed_quantity * 100.0 / planned_quantity) 
+                ELSE 0 END) as avgCompletionRate
+        FROM production_plan pp
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND EXISTS (
+                SELECT 1 FROM production_order po 
+                WHERE po.production_plan_id = pp.id 
+                AND po.production_line_id = #{lineId}
+            )
+        </if>
+    </select>
+
+    <!-- 获取效率趋势数据 -->
+    <select id="selectEfficiencyTrends" resultType="java.util.Map">
+        SELECT 
+            DATE(plan_start_date) as date,
+            COUNT(*) as planCount,
+            SUM(CASE WHEN plan_status = 3 THEN 1 ELSE 0 END) as completedCount,
+            AVG(CASE WHEN completed_quantity &gt; 0 AND planned_quantity &gt; 0 
+                THEN (completed_quantity * 100.0 / planned_quantity) 
+                ELSE 0 END) as efficiency
+        FROM production_plan
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND EXISTS (
+                SELECT 1 FROM production_order po 
+                WHERE po.production_plan_id = id 
+                AND po.production_line_id = #{lineId}
+            )
+        </if>
+        GROUP BY DATE(plan_start_date)
+        ORDER BY DATE(plan_start_date)
+    </select>
+
+    <!-- 获取生产线对比数据 -->
+    <select id="selectLineComparisons" resultType="java.util.Map">
+        SELECT 
+            pl.line_name,
+            pl.id as lineId,
+            COUNT(pp.id) as planCount,
+            SUM(CASE WHEN pp.plan_status = 3 THEN 1 ELSE 0 END) as completedCount,
+            SUM(pp.planned_quantity) as plannedQuantity,
+            SUM(pp.completed_quantity) as completedQuantity,
+            AVG(CASE WHEN pp.completed_quantity &gt; 0 AND pp.planned_quantity &gt; 0 
+                THEN (pp.completed_quantity * 100.0 / pp.planned_quantity) 
+                ELSE 0 END) as efficiency
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.id = po.production_line_id
+        LEFT JOIN production_plan pp ON po.production_plan_id = pp.id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        GROUP BY pl.id, pl.line_name
+        ORDER BY efficiency DESC
+    </select>
+
+    <!-- 获取决策数据 -->
+    <select id="selectDecisionData" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalDecisions,
+            SUM(CASE WHEN plan_status &gt;= 1 THEN 1 ELSE 0 END) as approvedDecisions,
+            AVG(CASE WHEN approve_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, STR_TO_DATE(create_time, '%Y-%m-%d %H:%i:%s'), STR_TO_DATE(approve_time, '%Y-%m-%d %H:%i:%s')) 
+                ELSE NULL END) as avgDecisionTime,
+            SUM(CASE WHEN plan_status = 3 AND completed_quantity &gt;= planned_quantity THEN 1 ELSE 0 END) as successfulDecisions
+        FROM production_plan
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND create_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND create_time &lt;= #{endDate}
+        </if>
+        <if test="departmentId != null">
+            AND created_by IN (
+                SELECT user_id FROM sys_user_dept WHERE dept_id = #{departmentId}
+            )
+        </if>
+    </select>
+
+    <!-- 查询生产计划优化数据 -->
+    <select id="selectOptimizationData" resultType="java.util.Map">
+        SELECT 
+            pp.plan_name,
+            pp.id as planId,
+            pp.planned_quantity,
+            pp.completed_quantity,
+            ROUND(pp.completed_quantity * 100.0 / NULLIF(pp.planned_quantity, 0), 2) as completionRate,
+            DATEDIFF(pp.plan_end_date, pp.plan_start_date) as plannedDuration,
+            CASE WHEN pp.actual_end_date IS NOT NULL AND pp.actual_start_date IS NOT NULL 
+                THEN DATEDIFF(pp.actual_end_date, pp.actual_start_date) 
+                ELSE NULL END as actualDuration,
+            CASE WHEN pp.actual_end_date IS NOT NULL AND pp.plan_end_date IS NOT NULL 
+                THEN DATEDIFF(pp.actual_end_date, pp.plan_end_date) 
+                ELSE NULL END as delayDays,
+            pl.line_name,
+            pl.capacity as lineCapacity,
+            ROUND(pp.planned_quantity / NULLIF(pl.capacity, 0), 2) as capacityUtilization,
+            -- 资源利用率分析
+            COUNT(po.id) as relatedOrders,
+            SUM(po.planned_quantity) as totalOrderQuantity,
+            -- 优化建议评分
+            CASE 
+                WHEN ROUND(pp.completed_quantity * 100.0 / NULLIF(pp.planned_quantity, 0), 2) &gt;= 95 AND 
+                     CASE WHEN pp.actual_end_date IS NOT NULL AND pp.plan_end_date IS NOT NULL 
+                          THEN DATEDIFF(pp.actual_end_date, pp.plan_end_date) 
+                          ELSE 0 END &lt;= 0 THEN 'EXCELLENT'
+                WHEN ROUND(pp.completed_quantity * 100.0 / NULLIF(pp.planned_quantity, 0), 2) &gt;= 80 THEN 'GOOD'
+                WHEN ROUND(pp.completed_quantity * 100.0 / NULLIF(pp.planned_quantity, 0), 2) &gt;= 60 THEN 'AVERAGE'
+                ELSE 'POOR'
+            END as performanceLevel,
+            -- 优化潜力评估
+            CASE 
+                WHEN ROUND(pp.planned_quantity / NULLIF(pl.capacity, 0), 2) &lt; 0.7 THEN 'HIGH_POTENTIAL'
+                WHEN ROUND(pp.planned_quantity / NULLIF(pl.capacity, 0), 2) &lt; 0.9 THEN 'MEDIUM_POTENTIAL'
+                ELSE 'LOW_POTENTIAL'
+            END as optimizationPotential
+        FROM production_plan pp
+        LEFT JOIN production_line pl ON pp.production_line_id = pl.id
+        LEFT JOIN production_order po ON pp.id = po.production_plan_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND pp.plan_start_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND pp.plan_end_date &lt;= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pp.production_line_id = #{lineId}
+        </if>
+        GROUP BY pp.id, pp.plan_name, pp.planned_quantity, pp.completed_quantity, 
+                 pp.plan_start_date, pp.plan_end_date, pp.actual_start_date, pp.actual_end_date,
+                 pl.line_name, pl.capacity
+        ORDER BY optimizationPotential DESC, performanceLevel ASC
+    </select>
+
+</mapper>

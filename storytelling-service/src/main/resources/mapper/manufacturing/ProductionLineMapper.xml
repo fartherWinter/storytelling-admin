@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.ProductionLineMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.manufacturing.ProductionLine">
+        <id column="line_id" property="lineId" />
+        <result column="line_code" property="lineCode" />
+        <result column="line_name" property="lineName" />
+        <result column="line_type" property="lineType" />
+        <result column="line_status" property="lineStatus" />
+        <result column="workshop_id" property="workshopId" />
+        <result column="workshop_name" property="workshopName" />
+        <result column="location" property="location" />
+        <result column="design_capacity" property="designCapacity" />
+        <result column="actual_capacity" property="actualCapacity" />
+        <result column="capacity_utilization" property="capacityUtilization" />
+        <result column="manager_id" property="managerId" />
+        <result column="manager_name" property="managerName" />
+        <result column="team_leader_id" property="teamLeaderId" />
+        <result column="team_leader_name" property="teamLeaderName" />
+        <result column="employee_count" property="employeeCount" />
+        <result column="equipment_count" property="equipmentCount" />
+        <result column="commissioning_date" property="commissioningDate" />
+        <result column="last_maintenance_time" property="lastMaintenanceTime" />
+        <result column="next_maintenance_time" property="nextMaintenanceTime" />
+        <result column="maintenance_cycle" property="maintenanceCycle" />
+        <result column="running_hours" property="runningHours" />
+        <result column="downtime" property="downtime" />
+        <result column="oee_rate" property="oeeRate" />
+        <result column="availability_rate" property="availabilityRate" />
+        <result column="performance_rate" property="performanceRate" />
+        <result column="quality_rate" property="qualityRate" />
+        <result column="status_change_reason" property="statusChangeReason" />
+        <result column="status_change_time" property="statusChangeTime" />
+        <result column="technical_parameters" property="technicalParameters" />
+        <result column="process_flow" property="processFlow" />
+        <result column="safety_requirements" property="safetyRequirements" />
+        <result column="environmental_requirements" property="environmentalRequirements" />
+        <result column="description" property="description" />
+        <result column="remark" property="remark" />
+        <result column="create_by" property="createBy" />
+        <result column="create_time" property="createTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+    </resultMap>
+
+    <!-- 启动生产线 -->
+    <update id="startLine">
+        UPDATE production_line
+        SET line_status = 1,
+            update_time = NOW()
+        WHERE line_id = #{lineId}
+    </update>
+
+    <!-- 停止生产线 -->
+    <update id="stopLine">
+        UPDATE production_line
+        SET line_status = 0,
+            update_time = NOW()
+        WHERE line_id = #{lineId}
+    </update>
+    
+    <!-- 更新生产线状态 -->
+    <update id="updateLineStatus">
+        UPDATE production_line
+        SET line_status = #{status},
+            update_time = NOW()
+        WHERE line_id = #{lineId}
+    </update>
+    
+    <!-- 根据车间ID查询生产线列表 -->
+    <select id="selectByWorkshopId" resultMap="BaseResultMap">
+        SELECT line_id, line_code, line_name, line_type, line_status, workshop_id, workshop_name, 
+               location, design_capacity, actual_capacity, capacity_utilization, manager_id, manager_name,
+               team_leader_id, team_leader_name, employee_count, equipment_count, commissioning_date,
+               last_maintenance_time, next_maintenance_time, maintenance_cycle, running_hours, downtime,
+               oee_rate, availability_rate, performance_rate, quality_rate, status_change_reason,
+               status_change_time, technical_parameters, process_flow, safety_requirements,
+               environmental_requirements, description, remark, create_by, create_time, update_by, update_time, del_flag
+        FROM production_line 
+        WHERE workshop_id = #{workshopId}
+        ORDER BY line_code
+    </select>
+    
+    <!-- 根据状态查询生产线列表 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT line_id, line_code, line_name, line_type, line_status, workshop_id, workshop_name, 
+               location, design_capacity, actual_capacity, capacity_utilization, manager_id, manager_name,
+               team_leader_id, team_leader_name, employee_count, equipment_count, commissioning_date,
+               last_maintenance_time, next_maintenance_time, maintenance_cycle, running_hours, downtime,
+               oee_rate, availability_rate, performance_rate, quality_rate, status_change_reason,
+               status_change_time, technical_parameters, process_flow, safety_requirements,
+               environmental_requirements, description, remark, create_by, create_time, update_by, update_time, del_flag
+        FROM production_line 
+        WHERE line_status = #{status}
+        ORDER BY line_code
+    </select>
+    
+    <!-- 查询产能利用率数据 -->
+    <select id="selectCapacityUtilizationData" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalLines,
+            SUM(design_capacity) as totalCapacity,
+            SUM(CASE WHEN po.completed_quantity IS NOT NULL THEN po.completed_quantity ELSE 0 END) as totalOutput,
+            ROUND(SUM(CASE WHEN po.completed_quantity IS NOT NULL THEN po.completed_quantity ELSE 0 END) * 100.0 / NULLIF(SUM(design_capacity), 0), 2) as avgUtilizationRate,
+            COUNT(CASE WHEN line_status = 1 THEN 1 END) as runningLines,
+            COUNT(CASE WHEN line_status = 0 THEN 1 END) as stoppedLines,
+            MAX(ROUND(po.completed_quantity * 100.0 / NULLIF(pl.design_capacity, 0), 2)) as maxUtilizationRate,
+            MIN(ROUND(po.completed_quantity * 100.0 / NULLIF(pl.design_capacity, 0), 2)) as minUtilizationRate
+        FROM production_line pl
+        LEFT JOIN (
+            SELECT production_line_id, SUM(completed_quantity) as completed_quantity
+            FROM production_order
+            WHERE 1=1
+            <if test="startDate != null and startDate != ''">
+                AND start_date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND end_date <= #{endDate}
+            </if>
+            GROUP BY production_line_id
+        ) po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+    </select>
+    
+    <!-- 查询生产线统计信息 -->
+    <select id="selectLineStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalLines,
+            COUNT(CASE WHEN line_status = 1 THEN 1 END) as runningLines,
+            COUNT(CASE WHEN line_status = 0 THEN 1 END) as stoppedLines,
+            COUNT(CASE WHEN line_status = 2 THEN 1 END) as maintenanceLines,
+            SUM(design_capacity) as totalCapacity,
+            AVG(design_capacity) as avgCapacity,
+            MAX(design_capacity) as maxCapacity,
+            MIN(design_capacity) as minCapacity,
+            COUNT(DISTINCT workshop_id) as workshopCount
+        FROM production_line
+        WHERE 1=1
+        <if test="workshopId != null">
+            AND workshop_id = #{workshopId}
+        </if>
+        <if test="lineType != null and lineType != ''">
+            AND line_type = #{lineType}
+        </if>
+        <if test="status != null">
+            AND line_status = #{status}
+        </if>
+    </select>
+    
+    <!-- 查询生产线运行时间统计 -->
+    <select id="selectLineRunTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            COUNT(po.order_id) as totalOrders,
+            SUM(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END) as totalRunTime,
+            AVG(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END) as avgRunTime,
+            MAX(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END) as maxRunTime,
+            MIN(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END) as minRunTime,
+            ROUND(SUM(po.completed_quantity) / NULLIF(SUM(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END), 0), 2) as productivity
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY pl.line_id, pl.line_name
+        ORDER BY totalRunTime DESC
+    </select>
+
+    <!-- 获取生产线效率统计 -->
+    <select id="selectEfficiencyStatistics" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            pl.design_capacity,
+            COUNT(po.order_id) as totalOrders,
+            SUM(po.completed_quantity) as totalOutput,
+            SUM(po.qualified_quantity) as totalQualified,
+            ROUND(SUM(po.completed_quantity) / NULLIF(pl.design_capacity, 0) * 100, 2) as capacityUtilization,
+            ROUND(AVG(CASE WHEN po.completed_quantity > 0 AND po.qualified_quantity > 0 
+                THEN (po.qualified_quantity * 100.0 / po.completed_quantity) 
+                ELSE 0 END), 2) as avgQualityRate,
+            SUM(CASE WHEN po.actual_end_date <= po.end_date THEN 1 ELSE 0 END) as onTimeOrders,
+            ROUND(SUM(CASE WHEN po.actual_end_date <= po.end_date THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(po.order_id), 0), 2) as onTimeRate
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY pl.line_id, pl.line_name, pl.design_capacity
+        ORDER BY capacityUtilization DESC
+    </select>
+
+    <!-- 获取生产线效率趋势 -->
+    <select id="selectEfficiencyTrends" resultType="java.util.Map">
+        SELECT 
+            DATE(po.start_date) as productionDate,
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            SUM(po.completed_quantity) as dailyOutput,
+            SUM(po.qualified_quantity) as dailyQualified,
+            ROUND(SUM(po.completed_quantity) / NULLIF(pl.design_capacity, 0) * 100, 2) as dailyUtilization,
+            ROUND(SUM(po.qualified_quantity) * 100.0 / NULLIF(SUM(po.completed_quantity), 0), 2) as dailyQualityRate
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY DATE(po.start_date), pl.line_id, pl.line_name, pl.design_capacity
+        ORDER BY DATE(po.start_date), pl.line_id
+    </select>
+
+    <!-- 获取生产线对比数据 -->
+    <select id="selectLineComparisons" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            pl.line_type as lineType,
+            pl.design_capacity,
+            COUNT(po.order_id) as orderCount,
+            SUM(po.planned_quantity) as plannedTotal,
+            SUM(po.completed_quantity) as completedTotal,
+            SUM(po.qualified_quantity) as qualifiedTotal,
+            ROUND(SUM(po.completed_quantity) * 100.0 / NULLIF(SUM(po.planned_quantity), 0), 2) as completionRate,
+            ROUND(SUM(po.qualified_quantity) * 100.0 / NULLIF(SUM(po.completed_quantity), 0), 2) as qualityRate,
+            ROUND(SUM(po.completed_quantity) / NULLIF(pl.design_capacity, 0) * 100, 2) as utilizationRate,
+            AVG(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(DAY, po.actual_start_date, po.actual_end_date) 
+                ELSE NULL END) as avgCycleTime
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        GROUP BY pl.line_id, pl.line_name, pl.line_type, pl.design_capacity
+        ORDER BY utilizationRate DESC
+    </select>
+
+    <!-- 获取产能分析数据 -->
+    <select id="selectCapacityAnalysis" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            pl.design_capacity as designCapacity,
+            SUM(po.completed_quantity) as actualOutput,
+            ROUND(SUM(po.completed_quantity) / NULLIF(pl.design_capacity, 0) * 100, 2) as capacityUtilization,
+            pl.design_capacity - SUM(po.completed_quantity) as remainingCapacity,
+            COUNT(po.order_id) as activeOrders,
+            AVG(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE NULL END) as avgProductionTime,
+            ROUND(SUM(po.completed_quantity) / NULLIF(SUM(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE 0 END), 0), 2) as hourlyProductivity
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY pl.line_id, pl.line_name, pl.design_capacity
+        ORDER BY capacityUtilization DESC
+    </select>
+
+    <!-- 获取瓶颈分析数据 -->
+    <select id="selectBottleneckAnalysis" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            COUNT(po.order_id) as queuedOrders,
+            SUM(po.planned_quantity - po.completed_quantity) as pendingQuantity,
+            AVG(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE NULL END) as avgProcessingTime,
+            COUNT(CASE WHEN po.order_status IN (0, 1, 2) THEN 1 END) as activeOrders,
+            ROUND(SUM(po.completed_quantity) / NULLIF(pl.design_capacity, 0) * 100, 2) as utilizationRate,
+            COUNT(CASE WHEN po.actual_end_date > po.end_date OR (po.order_status IN (0,1,2) AND NOW() > po.end_date) THEN 1 END) as delayedOrders,
+            CASE 
+                WHEN COUNT(CASE WHEN po.order_status IN (0, 1, 2) THEN 1 END) > 5 THEN 'HIGH'
+                WHEN COUNT(CASE WHEN po.order_status IN (0, 1, 2) THEN 1 END) > 2 THEN 'MEDIUM'
+                ELSE 'LOW'
+            END as bottleneckLevel
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        GROUP BY pl.line_id, pl.line_name, pl.design_capacity
+        ORDER BY queuedOrders DESC, utilizationRate DESC
+    </select>
+
+    <!-- 获取生产计划优化数据 -->
+    <select id="selectProductionPlanOptimizationData" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            pl.design_capacity,
+            COUNT(po.order_id) as currentOrders,
+            SUM(po.planned_quantity) as plannedLoad,
+            SUM(po.completed_quantity) as completedLoad,
+            ROUND((pl.design_capacity - SUM(po.completed_quantity)) / NULLIF(pl.design_capacity, 0) * 100, 2) as availableCapacity,
+            AVG(CASE WHEN po.actual_end_date IS NOT NULL AND po.actual_start_date IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, po.actual_start_date, po.actual_end_date) 
+                ELSE NULL END) as avgCycleTime,
+            COUNT(CASE WHEN po.order_status = 0 THEN 1 END) as waitingOrders,
+            COUNT(CASE WHEN po.actual_end_date > po.end_date THEN 1 END) as delayedOrders,
+            CASE 
+                WHEN (pl.design_capacity - SUM(po.completed_quantity)) / NULLIF(pl.design_capacity, 0) > 0.3 THEN 'UNDERUTILIZED'
+                WHEN (pl.design_capacity - SUM(po.completed_quantity)) / NULLIF(pl.design_capacity, 0) < 0.1 THEN 'OVERLOADED'
+                ELSE 'OPTIMAL'
+            END as loadStatus
+        FROM production_line pl
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        GROUP BY pl.line_id, pl.line_name, pl.design_capacity
+        ORDER BY availableCapacity DESC
+    </select>
+
+    <!-- 获取资源配置优化数据 -->
+    <select id="selectResourceOptimizationData" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            COUNT(DISTINCT e.equipment_id) as equipmentCount,
+            COUNT(DISTINCT wo.operator_id) as operatorCount,
+            SUM(po.completed_quantity) as totalOutput,
+            ROUND(SUM(po.completed_quantity) / NULLIF(COUNT(DISTINCT e.equipment_id), 0), 2) as outputPerEquipment,
+            ROUND(SUM(po.completed_quantity) / NULLIF(COUNT(DISTINCT wo.operator_id), 0), 2) as outputPerOperator,
+            AVG(CASE WHEN e.utilization_rate IS NOT NULL THEN e.utilization_rate ELSE 0 END) as avgEquipmentUtilization,
+            COUNT(CASE WHEN e.equipment_status = 'MAINTENANCE' THEN 1 END) as maintenanceEquipment,
+            COUNT(CASE WHEN e.equipment_status = 'IDLE' THEN 1 END) as idleEquipment,
+            CASE 
+                WHEN COUNT(DISTINCT e.equipment_id) = 0 THEN 'NO_EQUIPMENT'
+                WHEN AVG(CASE WHEN e.utilization_rate IS NOT NULL THEN e.utilization_rate ELSE 0 END) > 90 THEN 'OVERUTILIZED'
+                WHEN AVG(CASE WHEN e.utilization_rate IS NOT NULL THEN e.utilization_rate ELSE 0 END) < 60 THEN 'UNDERUTILIZED'
+                ELSE 'OPTIMAL'
+            END as resourceStatus
+        FROM production_line pl
+        LEFT JOIN equipment e ON pl.line_id = e.production_line_id
+        LEFT JOIN production_order po ON pl.line_id = po.production_line_id
+        LEFT JOIN work_order wo ON po.order_id = wo.production_order_id
+        WHERE 1=1
+        <if test="startDate != null and startDate != ''">
+            AND po.start_date >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND po.end_date <= #{endDate}
+        </if>
+        GROUP BY pl.line_id, pl.line_name
+        ORDER BY avgEquipmentUtilization DESC
+    </select>
+
+</mapper>
