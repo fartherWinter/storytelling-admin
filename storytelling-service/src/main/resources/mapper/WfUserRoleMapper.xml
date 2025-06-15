@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfUserRoleMapper">
+
+    <!-- 联表查询用户角色详细信息，避免循环查询数据库 -->
+    <select id="selectUserRoleDetailsByUserId" resultType="java.util.Map">
+        SELECT 
+            ur.user_id,
+            ur.role_id,
+            r.name as role_name,
+            r.code as role_code,
+            r.description as role_description,
+            r.enabled as role_enabled,
+            ur.created_time,
+            ur.updated_time,
+            ur.created_by,
+            ur.updated_by
+        FROM wf_user_role ur
+        LEFT JOIN wf_role r ON ur.role_id = r.id
+        WHERE ur.user_id = #{userId}
+        AND r.enabled = 1
+        ORDER BY ur.created_time DESC
+    </select>
+
+</mapper>

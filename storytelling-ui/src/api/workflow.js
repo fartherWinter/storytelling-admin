@@ -198,3 +198,161 @@ export function validateWorkflow(data) {
     data
   })
 }
+
+/**
+ * 获取流程历史记录
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getProcessHistory(params) {
+  return request({
+    url: '/workflow/history',
+    method: 'get',
+    params
+  })
+}
+
+// 工作流分析相关API
+
+/**
+ * 获取工作流概览数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getWorkflowOverview(params) {
+  return request({
+    url: '/workflow/analytics/overview',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取流程实例趋势数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getInstanceTrendData(params) {
+  return request({
+    url: '/workflow/analytics/instance-trend',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取任务状态分布数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getTaskStatusData(params) {
+  return request({
+    url: '/workflow/analytics/task-status',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取流程定义统计数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getProcessDefStats(params) {
+  return request({
+    url: '/workflow/analytics/process-definition-stats',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取用户任务统计数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getUserTaskStats(params) {
+  return request({
+    url: '/workflow/analytics/user-task-stats',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取平均处理时长数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getAvgDurationData(params) {
+  return request({
+    url: '/workflow/analytics/avg-duration',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取流程效率数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getEfficiencyData(params) {
+  return request({
+    url: '/workflow/analytics/efficiency',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取流程实例表格数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getInstanceTableData(params) {
+  return request({
+    url: '/workflow/analytics/instance-table',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取任务统计表格数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getTaskTableData(params) {
+  return request({
+    url: '/workflow/analytics/task-table',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取用户统计表格数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getUserTableData(params) {
+  return request({
+    url: '/workflow/analytics/user-table',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取性能分析表格数据
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getPerformanceTableData(params) {
+  return request({
+    url: '/workflow/analytics/performance-table',
+    method: 'get',
+    params
+  })
+}

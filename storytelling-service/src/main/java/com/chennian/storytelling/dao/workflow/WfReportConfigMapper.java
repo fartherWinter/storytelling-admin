@@ -1,6 +1,6 @@
 package com.chennian.storytelling.dao.workflow;
 
-import com.chennian.storytelling.dao.BaseMapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chennian.storytelling.bean.model.workflow.WfReportConfig;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

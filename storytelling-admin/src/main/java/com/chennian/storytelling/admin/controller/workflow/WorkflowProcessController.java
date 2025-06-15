@@ -232,14 +232,8 @@ public class WorkflowProcessController {
         return result;
     }
     
-    /**
-     * 获取流程历史记录
-     */
-    @ApiOperation("获取流程历史记录")
-    @GetMapping("/{processInstanceId}/history")
-    public WorkflowHistoryDTO getProcessHistory(@PathVariable("processInstanceId") String processInstanceId) {
-        return workflowService.getProcessHistory(processInstanceId);
-    }
+    // 获取流程历史记录已移至 WorkflowController 统一管理
+    // 路径: /workflow/process/{processInstanceId}/history
     
     /**
      * 流程跳转

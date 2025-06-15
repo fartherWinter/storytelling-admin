@@ -29,6 +29,8 @@ import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
+import static com.chennian.storytelling.admin.controller.workflow.WorkflowResponse.*;
+
 
 /**
  * 工作流控制器 - 基础工作流操作
@@ -40,7 +42,7 @@ import java.time.LocalDateTime;
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("/workflow")
+@RequestMapping(WorkflowApiPaths.BASE)
 public class WorkflowController {
 
     private final WorkflowService workflowService;
@@ -58,7 +60,7 @@ public class WorkflowController {
      * 部署流程定义
      */
     @ApiOperation(value = "部署流程定义", notes = "上传并部署新的流程定义")
-    @PostMapping("/deploy")
+    @PostMapping(WorkflowApiPaths.CorePaths.DEPLOY)
     public Map<String, Object> deployProcess(
             @ApiParam(value = "流程定义信息", required = true) 
             @Valid @RequestBody ProcessDefinitionDTO processDefinition) {
@@ -90,7 +92,7 @@ public class WorkflowController {
      * 启动流程实例
      */
     @ApiOperation(value = "启动流程实例", notes = "根据流程定义启动新的流程实例")
-    @PostMapping("/start")
+    @PostMapping(WorkflowApiPaths.CorePaths.START)
     public Map<String, Object> startProcess(
             @ApiParam(value = "流程定义Key", required = true) 
             @NotBlank @RequestParam("processKey") String processKey,
@@ -131,7 +133,7 @@ public class WorkflowController {
      * 查询待办任务
      */
     @ApiOperation(value = "查询待办任务", notes = "查询指定用户的待办任务列表")
-    @GetMapping("/tasks")
+    @GetMapping(WorkflowApiPaths.TaskPaths.TODO)
     public Map<String, Object> findTodoTasks(
             @ApiParam(value = "任务处理人", required = true) 
             @NotBlank @RequestParam("assignee") String assignee,
@@ -165,7 +167,7 @@ public class WorkflowController {
      * 查询流程任务
      */
     @ApiOperation(value = "查询流程任务", notes = "查询指定流程实例的所有任务")
-    @GetMapping("/process/{processInstanceId}/tasks")
+    @GetMapping(WorkflowApiPaths.TaskPaths.BY_PROCESS_INSTANCE)
     public Map<String, Object> findTasksByProcessInstanceId(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
@@ -193,7 +195,7 @@ public class WorkflowController {
      * 完成任务
      */
     @ApiOperation(value = "完成任务", notes = "完成指定的工作流任务")
-    @PostMapping("/tasks/{taskId}/complete")
+    @PostMapping(WorkflowApiPaths.TaskPaths.COMPLETE)
     public Map<String, Object> completeTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -202,6 +204,13 @@ public class WorkflowController {
         
         Map<String, Object> result = new HashMap<>();
         try {
+            // 验证任务ID
+            if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
+                result.put("success", false);
+                result.put("message", "无效的任务ID格式");
+                return result;
+            }
+            
             workflowService.completeTask(taskId, variables, comment);
             
             result.put("success", true);
@@ -222,7 +231,7 @@ public class WorkflowController {
      * 审批通过任务
      */
     @ApiOperation(value = "审批通过任务", notes = "审批通过指定的工作流任务")
-    @PostMapping("/tasks/{taskId}/approve")
+    @PostMapping(WorkflowApiPaths.TaskPaths.APPROVE)
     public Map<String, Object> approveTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -250,7 +259,7 @@ public class WorkflowController {
      * 拒绝任务
      */
     @ApiOperation(value = "拒绝任务", notes = "拒绝指定的工作流任务")
-    @PostMapping("/tasks/{taskId}/reject")
+    @PostMapping(WorkflowApiPaths.TaskPaths.REJECT)
     public Map<String, Object> rejectTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -278,7 +287,7 @@ public class WorkflowController {
      * 获取流程图
      */
     @ApiOperation(value = "获取流程图", notes = "获取指定流程实例的流程图")
-    @GetMapping("/process/{processInstanceId}/diagram")
+    @GetMapping(WorkflowApiPaths.ProcessPaths.DIAGRAM)
     public ResponseEntity<byte[]> getProcessDiagram(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
@@ -307,7 +316,7 @@ public class WorkflowController {
      * 终止流程实例
      */
     @ApiOperation(value = "终止流程实例", notes = "终止指定的流程实例")
-    @DeleteMapping("/process/{processInstanceId}")
+    @DeleteMapping(WorkflowApiPaths.ProcessPaths.TERMINATE)
     public Map<String, Object> terminateProcessInstance(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId,
@@ -336,7 +345,7 @@ public class WorkflowController {
      * 获取流程变量
      */
     @ApiOperation(value = "获取流程变量", notes = "获取指定流程实例的变量值")
-    @GetMapping("/process/{processInstanceId}/variables/{variableName}")
+    @GetMapping(WorkflowApiPaths.ProcessPaths.VARIABLE_GET)
     public Map<String, Object> getProcessVariable(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId,
@@ -365,7 +374,7 @@ public class WorkflowController {
      * 设置流程变量
      */
     @ApiOperation(value = "设置流程变量", notes = "设置指定流程实例的变量值")
-    @PostMapping("/process/{processInstanceId}/variables/{variableName}")
+    @PostMapping(WorkflowApiPaths.ProcessPaths.VARIABLE_SET)
     public Map<String, Object> setProcessVariable(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId,
@@ -396,7 +405,7 @@ public class WorkflowController {
      * 获取流程定义列表
      */
     @ApiOperation(value = "获取流程定义列表", notes = "获取系统中的流程定义列表")
-    @GetMapping("/process-definitions")
+    @GetMapping(WorkflowApiPaths.DefinitionPaths.LIST)
     public Map<String, Object> getProcessDefinitions(
             @ApiParam("流程定义Key") @RequestParam(value = "key", required = false) String key,
             @ApiParam("流程分类") @RequestParam(value = "category", required = false) String category,
@@ -450,7 +459,7 @@ public class WorkflowController {
      * 获取流程定义详情
      */
     @ApiOperation(value = "获取流程定义详情", notes = "获取指定流程定义的详细信息")
-    @GetMapping("/process-definitions/{processDefinitionId}")
+    @GetMapping(WorkflowApiPaths.DefinitionPaths.DETAIL)
     public Map<String, Object> getProcessDefinition(
             @ApiParam(value = "流程定义ID", required = true) 
             @NotBlank @PathVariable("processDefinitionId") String processDefinitionId) {
@@ -488,7 +497,7 @@ public class WorkflowController {
      * 获取流程定义资源
      */
     @ApiOperation(value = "获取流程定义资源", notes = "获取流程定义的XML或流程图资源")
-    @GetMapping("/process-definitions/{processDefinitionId}/resource")
+    @GetMapping(WorkflowApiPaths.DefinitionPaths.RESOURCE)
     public ResponseEntity<byte[]> getProcessDefinitionResource(
             @ApiParam(value = "流程定义ID", required = true) 
             @NotBlank @PathVariable("processDefinitionId") String processDefinitionId,
@@ -579,7 +588,7 @@ public class WorkflowController {
      * 获取工作流统计信息
      */
     @ApiOperation(value = "获取工作流统计信息", notes = "获取指定时间范围内的工作流统计数据")
-    @GetMapping("/statistics")
+    @GetMapping(WorkflowApiPaths.MonitorPaths.STATISTICS)
     public Map<String, Object> getWorkflowStatistics(
             @ApiParam("开始时间") @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -608,36 +617,34 @@ public class WorkflowController {
      * 批量操作任务
      */
     @ApiOperation(value = "批量操作任务", notes = "批量完成、审批或拒绝任务")
-    @PostMapping("/tasks/batch")
+    @PostMapping(WorkflowApiPaths.TaskPaths.BATCH)
     public Map<String, Object> batchOperateTasks(
             @ApiParam(value = "批量操作参数", required = true) 
             @Valid @RequestBody WorkflowBatchOperationDTO batchOperation) {
         
-        Map<String, Object> result = new HashMap<>();
         try {
             WorkflowBatchOperationDTO.BatchOperationResult operationResult =
                     workflowService.batchOperateTasks(batchOperation);
             
-            result.put("success", true);
-            result.put("result", operationResult);
-            result.put("operation", batchOperation.getOperationType());
-            result.put("taskCount", batchOperation.getTaskIds().size());
+            int totalCount = batchOperation.getTaskIds().size();
+            int successCount = operationResult.getSuccessCount();
+            int failureCount = operationResult.getFailureCount();
             
-            log.info("批量操作任务成功: operation={}, taskCount={}", 
-                    batchOperation.getOperationType(), batchOperation.getTaskIds().size());
+            log.info("批量操作任务完成: operation={}, total={}, success={}, failure={}", 
+                    batchOperation.getOperationType().name(), totalCount, successCount, failureCount);
+            
+            return batch(batchOperation.getOperationType().name(), totalCount, successCount, failureCount);
         } catch (Exception e) {
-            log.error("批量操作任务失败: operation={}", batchOperation.getOperationType(), e);
-            result.put("success", false);
-            result.put("message", "批量操作任务失败: " + e.getMessage());
+            log.error("批量操作任务失败: operation={}", batchOperation.getOperationType().name(), e);
+            return error("批量操作任务失败: " + e.getMessage(), e);
         }
-        return result;
     }
     
     /**
      * 批量操作流程实例
      */
     @ApiOperation(value = "批量操作流程实例", notes = "批量终止、挂起或激活流程实例")
-    @PostMapping("/process-instances/batch")
+    @PostMapping(WorkflowApiPaths.ProcessPaths.BATCH)
     public Map<String, Object> batchOperateProcessInstances(
             @ApiParam(value = "批量操作参数", required = true) 
             @Valid @RequestBody WorkflowBatchOperationDTO batchOperation) {
@@ -649,13 +656,13 @@ public class WorkflowController {
             
             result.put("success", true);
             result.put("result", operationResult);
-            result.put("operation", batchOperation.getOperationType());
+            result.put("operation", batchOperation.getOperationType().name());
             result.put("instanceCount", batchOperation.getProcessInstanceIds().size());
             
             log.info("批量操作流程实例成功: operation={}, instanceCount={}", 
-                    batchOperation.getOperationType(), batchOperation.getProcessInstanceIds().size());
+                    batchOperation.getOperationType().name(), batchOperation.getProcessInstanceIds().size());
         } catch (Exception e) {
-            log.error("批量操作流程实例失败: operation={}", batchOperation.getOperationType(), e);
+            log.error("批量操作流程实例失败: operation={}", batchOperation.getOperationType().name(), e);
             result.put("success", false);
             result.put("message", "批量操作流程实例失败: " + e.getMessage());
         }
@@ -666,7 +673,7 @@ public class WorkflowController {
      * 获取流程历史记录
      */
     @ApiOperation(value = "获取流程历史记录", notes = "获取指定流程实例的完整历史记录")
-    @GetMapping("/process/{processInstanceId}/history")
+    @GetMapping(WorkflowApiPaths.ProcessPaths.HISTORY)
     public Map<String, Object> getProcessHistory(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
@@ -692,7 +699,7 @@ public class WorkflowController {
      * 查询用户历史任务
      */
     @ApiOperation(value = "查询用户历史任务", notes = "查询指定用户在指定时间范围内的历史任务")
-    @GetMapping("/tasks/history")
+    @GetMapping(WorkflowApiPaths.TaskPaths.HISTORY)
     public Map<String, Object> findHistoryTasks(
             @ApiParam(value = "任务处理人", required = true) 
             @NotBlank @RequestParam("assignee") String assignee,
@@ -734,7 +741,7 @@ public class WorkflowController {
      * 任务委派
      */
     @ApiOperation(value = "任务委派", notes = "将任务委派给其他用户处理")
-    @PostMapping("/tasks/{taskId}/delegate")
+    @PostMapping(WorkflowApiPaths.TaskPaths.DELEGATE)
     public Map<String, Object> delegateTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -744,6 +751,13 @@ public class WorkflowController {
         
         Map<String, Object> result = new HashMap<>();
         try {
+            // 验证任务ID
+            if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
+                result.put("success", false);
+                result.put("message", "无效的任务ID格式");
+                return result;
+            }
+            
             workflowService.delegateTask(taskId, assignee, comment);
             
             result.put("success", true);
@@ -765,7 +779,7 @@ public class WorkflowController {
      * 任务认领
      */
     @ApiOperation(value = "任务认领", notes = "认领候选任务")
-    @PostMapping("/tasks/{taskId}/claim")
+    @PostMapping(WorkflowApiPaths.TaskPaths.CLAIM)
     public Map<String, Object> claimTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -774,6 +788,13 @@ public class WorkflowController {
         
         Map<String, Object> result = new HashMap<>();
         try {
+            // 验证任务ID
+            if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
+                result.put("success", false);
+                result.put("message", "无效的任务ID格式");
+                return result;
+            }
+            
             workflowService.claimTask(taskId, assignee);
             
             result.put("success", true);
@@ -794,7 +815,7 @@ public class WorkflowController {
      * 任务转办
      */
     @ApiOperation(value = "任务转办", notes = "将任务转办给其他用户")
-    @PostMapping("/tasks/{taskId}/transfer")
+    @PostMapping(WorkflowApiPaths.TaskPaths.TRANSFER)
     public Map<String, Object> transferTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -804,6 +825,13 @@ public class WorkflowController {
         
         Map<String, Object> result = new HashMap<>();
         try {
+            // 验证任务ID
+            if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
+                result.put("success", false);
+                result.put("message", "无效的任务ID格式");
+                return result;
+            }
+            
             workflowService.transferTask(taskId, assignee, comment);
             
             result.put("success", true);
@@ -825,7 +853,7 @@ public class WorkflowController {
      * 获取流程定义列表（增强版）
      */
     @ApiOperation(value = "获取流程定义列表", notes = "根据分类、键值、名称等条件查询流程定义")
-    @GetMapping("/process-definitions/enhanced")
+    @GetMapping(WorkflowApiPaths.DefinitionPaths.ENHANCED)
     public Map<String, Object> listProcessDefinitions(
             @ApiParam("流程分类") @RequestParam(value = "category", required = false) String category,
             @ApiParam("流程键值") @RequestParam(value = "key", required = false) String key,
@@ -867,7 +895,7 @@ public class WorkflowController {
      * 挂起流程定义
      */
     @ApiOperation(value = "挂起流程定义", notes = "挂起指定的流程定义，挂起后无法启动新的流程实例")
-    @PostMapping("/process-definitions/{processDefinitionId}/suspend")
+    @PostMapping(WorkflowApiPaths.DefinitionPaths.SUSPEND)
     public Map<String, Object> suspendProcessDefinition(
             @ApiParam(value = "流程定义ID", required = true) 
             @NotBlank @PathVariable("processDefinitionId") String processDefinitionId) {
@@ -893,7 +921,7 @@ public class WorkflowController {
      * 激活流程定义
      */
     @ApiOperation(value = "激活流程定义", notes = "激活指定的流程定义，激活后可以启动新的流程实例")
-    @PostMapping("/process-definitions/{processDefinitionId}/activate")
+    @PostMapping(WorkflowApiPaths.DefinitionPaths.ACTIVATE)
     public Map<String, Object> activateProcessDefinition(
             @ApiParam(value = "流程定义ID", required = true) 
             @NotBlank @PathVariable("processDefinitionId") String processDefinitionId) {
@@ -919,7 +947,7 @@ public class WorkflowController {
      * 挂起流程实例
      */
     @ApiOperation(value = "挂起流程实例", notes = "挂起指定的流程实例，挂起后无法继续执行任务")
-    @PostMapping("/process-instances/{processInstanceId}/suspend")
+    @PostMapping(WorkflowApiPaths.ProcessPaths.SUSPEND)
     public Map<String, Object> suspendProcessInstance(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
@@ -945,7 +973,7 @@ public class WorkflowController {
      * 激活流程实例
      */
     @ApiOperation(value = "激活流程实例", notes = "激活指定的流程实例，激活后可以继续执行任务")
-    @PostMapping("/process-instances/{processInstanceId}/activate")
+    @PostMapping(WorkflowApiPaths.ProcessPaths.ACTIVATE)
     public Map<String, Object> activateProcessInstance(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {

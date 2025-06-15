@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import static com.chennian.storytelling.admin.controller.workflow.WorkflowResponse.*;
+
 /**
  * 工作流任务管理控制器
  * 提供任务的高级管理功能
@@ -80,135 +82,9 @@ public class WorkflowTaskController {
         return detail;
     }
     
-    /**
-     * 批量任务操作
-     */
-    @ApiOperation("批量任务操作")
-    @PostMapping("/batch")
-    public WorkflowBatchOperationDTO.BatchOperationResult batchOperateTasks(
-            @RequestBody WorkflowBatchOperationDTO batchOperation) {
-        return workflowService.batchOperateTasks(batchOperation);
-    }
-    
-    /**
-     * 任务委派
-     */
-    @ApiOperation("任务委派")
-    @PostMapping("/{taskId}/delegate")
-    public Map<String, Object> delegateTask(
-            @PathVariable("taskId") String taskId,
-            @RequestParam("assignee") String assignee,
-            @RequestParam(value = "comment", required = false) String comment) {
-        
-        workflowService.delegateTask(taskId, assignee, comment);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "任务委派成功");
-        result.put("taskId", taskId);
-        result.put("newAssignee", assignee);
-        
-        return result;
-    }
-    
-    /**
-     * 任务认领
-     */
-    @ApiOperation("任务认领")
-    @PostMapping("/{taskId}/claim")
-    public Map<String, Object> claimTask(
-            @PathVariable("taskId") String taskId,
-            @RequestParam("assignee") String assignee) {
-        
-        workflowService.claimTask(taskId, assignee);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "任务认领成功");
-        result.put("taskId", taskId);
-        result.put("assignee", assignee);
-        
-        return result;
-    }
-    
-    /**
-     * 任务转办
-     */
-    @ApiOperation("任务转办")
-    @PostMapping("/{taskId}/transfer")
-    public Map<String, Object> transferTask(
-            @PathVariable("taskId") String taskId,
-            @RequestParam("assignee") String assignee,
-            @RequestParam(value = "comment", required = false) String comment) {
-        
-        workflowService.transferTask(taskId, assignee, comment);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "任务转办成功");
-        result.put("taskId", taskId);
-        result.put("newAssignee", assignee);
-        
-        return result;
-    }
-    
-    /**
-     * 获取用户历史任务
-     */
-    @ApiOperation("获取用户历史任务")
-    @GetMapping("/history")
-    public Map<String, Object> getHistoryTasks(
-            @RequestParam("assignee") String assignee,
-            @RequestParam(value = "startTime", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(value = "endTime", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size) {
-        
-        List<TaskDTO> historyTasks = workflowService.findHistoryTasks(assignee, startTime, endTime);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("tasks", historyTasks);
-        result.put("total", historyTasks.size());
-        result.put("page", page);
-        result.put("size", size);
-        
-        return result;
-    }
-    
-    /**
-     * 获取任务统计信息
-     */
-    @ApiOperation("获取任务统计信息")
-    @GetMapping("/statistics")
-    public Map<String, Object> getTaskStatistics(
-            @RequestParam(value = "assignee", required = false) String assignee,
-            @RequestParam(value = "startTime", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @RequestParam(value = "endTime", required = false) 
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        
-        Map<String, Object> statistics = new HashMap<>();
-        
-        if (assignee != null) {
-            List<TaskDTO> historyTasks = workflowService.findHistoryTasks(assignee, startTime, endTime);
-            List<Task> todoTasks = workflowService.findTodoTasks(assignee);
-            
-            statistics.put("completedTaskCount", historyTasks.size());
-            statistics.put("pendingTaskCount", todoTasks.size());
-            statistics.put("totalTaskCount", historyTasks.size() + todoTasks.size());
-            
-            // 计算完成率
-            int total = historyTasks.size() + todoTasks.size();
-            if (total > 0) {
-                double completionRate = (double) historyTasks.size() / total * 100;
-                statistics.put("completionRate", completionRate);
-            }
-        }
-        
-        return statistics;
-    }
+    // 批量任务操作已移至 WorkflowController 统一管理
+    // 路径: /workflow/tasks/batch
+
     
     /**
      * 任务提醒设置
