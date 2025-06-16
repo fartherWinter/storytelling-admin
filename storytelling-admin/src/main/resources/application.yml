@@ -7,10 +7,13 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-      enabled: true
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+  mvc:
+    # 启用路径匹配
+    pathmatch:
+      matching-strategy: ant_path_matcher
   #资源信息
   messages:
     #国际化资源文件信息
@@ -24,19 +27,19 @@ mybatis-plus:
     banner: false
     db-config:
       # 主键类型 0:数据库ID自增 1.未定义 2.用户输入 3 id_worker 4.uuid 5.id_worker字符串表示
-      id-type: AUTO
+      id-type: auto
       #字段策略 0:"忽略判断",1:"非 NULL 判断"),2:"非空判断"
-      field-strategy: NOT_NULL
+      field-strategy: not_null
       # 默认数据库表下划线命名
       table-underline: true
 # springdoc-openapi项目配置
 springdoc:
+  api-docs:
+    path: /v3/api-docs  # OpenAPI 文档端点
   swagger-ui:
-    path: /swagger-ui.html
     tags-sorter: alpha
     operations-sorter: alpha
-  api-docs:
-    path: /v3/api-docs
+    disable-swagger-default-url: true  # 禁用默认URL
   group-configs:
     - group: 'default'
       paths-to-match: '/**'
@@ -53,3 +56,61 @@ sa-token:
   token-style: random-32
   #jwt密钥
   jwt-secret-key: chennian
+
+# 工作流API配置
+workflow:
+  api:
+    # API版本配置
+    version: "v1"
+    
+    # 基础路径配置
+    base-path: "/api/workflow"
+    
+    # 路径验证配置
+    validation:
+      task-id:
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+        enabled: true
+      process-instance-id:
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+        enabled: true
+      process-definition-id:
+        pattern: '^[a-zA-Z0-9_-]{1,64}$'
+        enabled: true
+    
+    # 拦截器配置
+    interceptor:
+      enabled: true
+      log-requests: true
+      validate-paths: true
+      monitor-performance: true
+    
+    # 路径分组配置
+    paths:
+      tasks:
+        enabled: true
+        prefix: "/tasks"
+      processes:
+        enabled: true
+        prefix: "/process"
+      definitions:
+        enabled: true
+        prefix: "/process-definitions"
+      monitoring:
+        enabled: true
+        prefix: "/monitor"
+    
+    # 安全配置
+    security:
+      rate-limiting:
+        enabled: true
+        requests-per-minute: 100
+      authentication:
+        required: true
+        roles: ["WORKFLOW_USER", "WORKFLOW_ADMIN"]
+    
+    # 响应配置
+    response:
+      format: "standard"
+      include-metadata: true
+      error-details: true

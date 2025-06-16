@@ -13,8 +13,8 @@ spring:
     time-zone: GMT+8
   mail:
     host: smtp.163.com
-    username: cnianxdjs@163.com
-    password: etufo456
+    username: ${spring.mail_username:1}
+    password: ${spring.mail_password:1}
     port: 25
     protocol: smtp
     default-encoding: UTF-8

@@ -33,3 +33,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 敏感信息配置文件 ###
+**/application-secrets.yml
+**/application-secrets.yaml
+# 其他可能包含敏感信息的文件
+**/*-secrets.*
+**/*.key
+**/*.pem

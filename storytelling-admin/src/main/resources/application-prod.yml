@@ -12,8 +12,8 @@ spring:
         server-addr: http://
   datasource:
     url: jdbc:mysql://0.0.0.0:3306/storytelling?allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-    username:
-    password:
+    username: ${spring.datasource.username:}
+    password: ${spring.datasource.password:}
     driverClassName: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 0
@@ -42,7 +42,21 @@ spring:
           min-idle: 0
           #连接超时时间
       connect-timeout: 10s
-      password:
+      password: ${spring.data.redis.password:}
+    mongodb:
+      uri: mongodb://${mongodb.username:}:${mongodb.password:}@127.0.0.1:27017/storytelling?authSource=storytelling&tls=false&retryWrites=true&maxPoolSize=100&minPoolSize=10&maxIdleTimeMS=120000
+      auto-index-creation: true
+  mail:
+    host: smtp.163.com
+    port: 465
+    username: ${spring.mail.username:}
+    password: ${spring.mail.password:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 flowable:
   database-schema-update: true
   async-executor-activate: false
@@ -54,4 +68,6 @@ file:
 logging:
   config: classpath:logback/logback-prod.xml
   level:
+    com.chennian.storytelling.admin.controller.workflow: DEBUG
+    com.chennian.storytelling.admin.interceptor: INFO
     com.baomidou.mybatisplus: debug
