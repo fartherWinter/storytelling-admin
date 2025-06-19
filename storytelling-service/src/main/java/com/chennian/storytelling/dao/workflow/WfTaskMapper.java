@@ -271,4 +271,70 @@ public interface WfTaskMapper extends BaseMapper<WfTask> {
      * @return 最近任务列表
      */
     List<RecentTaskDTO> selectRecentTasks(@Param("limit") Integer limit);
+
+    /**
+     * 查询任务详情
+     * 
+     * @param taskId 任务ID
+     * @return 工作流任务
+     */
+    WfTask selectTaskDetail(@Param("taskId") String taskId);
+
+    /**
+     * 根据任务ID列表批量查询任务
+     * 
+     * @param taskIds 任务ID列表
+     * @return 任务列表
+     */
+    List<WfTask> selectByTaskIds(@Param("taskIds") List<String> taskIds);
+
+    /**
+     * 查询用户的任务历史
+     * 
+     * @param userId 用户ID
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 任务列表
+     */
+    List<WfTask> selectUserTaskHistory(@Param("userId") String userId,
+                                      @Param("startTime") java.util.Date startTime,
+                                      @Param("endTime") java.util.Date endTime);
+
+    /**
+     * 查询任务处理时长统计
+     * 
+     * @param processDefinitionKey 流程定义键
+     * @param taskDefinitionKey 任务定义键
+     * @return 统计信息
+     */
+    List<java.util.Map<String, Object>> selectTaskDurationStatistics(@Param("processDefinitionKey") String processDefinitionKey,
+                                                                     @Param("taskDefinitionKey") String taskDefinitionKey);
+
+    /**
+     * 更新任务优先级
+     * 
+     * @param taskId 任务ID
+     * @param priority 优先级
+     * @param updatedBy 更新人
+     * @return 更新行数
+     */
+    int updateTaskPriority(@Param("taskId") String taskId, 
+                          @Param("priority") Integer priority, 
+                          @Param("updatedBy") String updatedBy);
+
+    /**
+     * 查询委托任务
+     * 
+     * @param delegateUserId 委托人ID
+     * @return 任务列表
+     */
+    List<WfTask> selectDelegatedTasks(@Param("delegateUserId") String delegateUserId);
+
+    /**
+     * 查询任务执行路径
+     * 
+     * @param processInstanceId 流程实例ID
+     * @return 执行路径
+     */
+    List<java.util.Map<String, Object>> selectTaskExecutionPath(@Param("processInstanceId") String processInstanceId);
 }

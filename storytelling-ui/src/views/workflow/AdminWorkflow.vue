@@ -329,16 +329,22 @@ const deployProcess = async () => {
     return
   }
   
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
+    }
+  }, 10000); // 10秒超时
   try {
-    const loading = ElLoading.service({
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '正在部署流程...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
+    });
     
     const response = await axios.post('/admin/workflow/deploy/admin', deployForm)
-    
-    loading.close()
     
     if (response.data.code === 200) {
       ElMessage.success('流程部署成功')
@@ -357,6 +363,12 @@ const deployProcess = async () => {
   } catch (error) {
     console.error('部署流程出错:', error)
     ElMessage.error(error.response?.data?.msg || '部署流程出错，请检查网络连接')
+  } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
@@ -380,16 +392,22 @@ const startProcess = async () => {
     return
   }
   
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
+    }
+  }, 10000); // 10秒超时
   try {
-    const loading = ElLoading.service({
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '正在启动流程...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
+    });
     
     const response = await axios.post('/admin/workflow/start/admin', adminForm)
-    
-    loading.close()
     
     if (response.data.code === 200) {
       ElMessage.success('流程启动成功')
@@ -417,6 +435,12 @@ const startProcess = async () => {
   } catch (error) {
     console.error('启动流程出错:', error)
     ElMessage.error(error.response?.data?.msg || '启动流程出错，请检查网络连接')
+  } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
@@ -444,22 +468,56 @@ const fetchTodoTasks = async () => {
   }
 }
 
+
+// // 获取流程实例列表
+// const fetchProcessInstances = async () => {
+//   try {
+//     const loading = ElLoading.service({
+//       lock: true,
+//       text: '加载流程实例中...',
+//       background: 'rgba(0, 0, 0, 0.7)'
+//     })
+//     const response = await axios.post('/admin/workflow/instances', {
+//       pageNum: currentPage.value,
+//       pageSize: pageSize.value
+//     })
+//
+//     loading.close()
+//
+//     if (response.data.code === 200) {
+//       processInstances.value = response.data.data.list || []
+//       total.value = response.data.data.total || 0
+//     } else {
+//       ElMessage.error(response.data.msg || '获取流程实例列表失败')
+//     }
+//   } catch (error) {
+//     console.error('获取流程实例列表出错:', error)
+//     ElMessage.error('获取流程实例列表出错')
+//   }
+// }
+
 // 获取流程实例列表
 const fetchProcessInstances = async () => {
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
+    }
+  }, 10000); // 10秒超时
   try {
-    const loading = ElLoading.service({
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '加载流程实例中...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
-    
+    });
+
     const response = await axios.post('/admin/workflow/instances', {
       pageNum: currentPage.value,
       pageSize: pageSize.value
-    })
-    
-    loading.close()
-    
+    });
+
     if (response.data.code === 200) {
       processInstances.value = response.data.data.list || []
       total.value = response.data.data.total || 0
@@ -469,17 +527,31 @@ const fetchProcessInstances = async () => {
   } catch (error) {
     console.error('获取流程实例列表出错:', error)
     ElMessage.error('获取流程实例列表出错')
+    } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
 // 查看流程图
 const viewProcessDiagram = async (processInstanceId) => {
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
+    }
+  }, 10000); // 10秒超时
   try {
-    const loading = ElLoading.service({
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '正在加载流程图...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
+    });
     
     // 设置图片URL，调用后端接口获取流程图
     processDiagramUrl.value = `/admin/workflow/diagram/${processInstanceId}`
@@ -488,21 +560,28 @@ const viewProcessDiagram = async (processInstanceId) => {
     const img = new Image()
     img.src = processDiagramUrl.value
     img.onload = () => {
-      loading.close()
+      clearTimeout(timeout);
+      if (loadingInstance) {
+        loadingInstance.close();
+      }
       dialogVisible.value = true
     }
     img.onerror = () => {
-      loading.close()
+      clearTimeout(timeout);
+      if (loadingInstance) {
+        loadingInstance.close();
+      }
       ElMessage.error('流程图加载失败')
     }
-    
-    // 如果图片加载时间过长，5秒后自动关闭loading
-    setTimeout(() => {
-      loading.close()
-    }, 5000)
   } catch (error) {
     console.error('获取流程图出错:', error)
     ElMessage.error('获取流程图出错，请稍后再试')
+  } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
@@ -528,18 +607,26 @@ const rejectTask = (task) => {
 
 // 提交审批
 const submitApproval = async () => {
-  try {
-    // 验证审批意见
-    if (!approveForm.comment) {
-      ElMessage.warning('请输入审批意见')
-      return
+  // 验证审批意见
+  if (!approveForm.comment) {
+    ElMessage.warning('请输入审批意见')
+    return
+  }
+  
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
     }
-    
-    const loading = ElLoading.service({
+  }, 10000); // 10秒超时
+  try {
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '正在提交审批...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
+    });
     
     let url = ''
     if (approveForm.type === 'approve') {
@@ -554,8 +641,6 @@ const submitApproval = async () => {
       }
     })
     
-    loading.close()
-    
     if (response.data.code === 200) {
       ElMessage.success(approveForm.type === 'approve' ? '审批通过成功' : '拒绝任务成功')
       approveDialogVisible.value = false
@@ -569,6 +654,12 @@ const submitApproval = async () => {
   } catch (error) {
     console.error('审批出错:', error)
     ElMessage.error(error.response?.data?.msg || '审批出错，请检查网络连接')
+  } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
@@ -588,20 +679,26 @@ const submitTerminate = async () => {
     return
   }
   
+  let loadingInstance = null; // 声明变量用于保存Loading实例
+  const timeout = setTimeout(() => {
+    if (loadingInstance) {
+      loadingInstance.close();
+      ElMessage.warning('请求超时，请检查网络');
+    }
+  }, 10000); // 10秒超时
   try {
-    const loading = ElLoading.service({
+    // 创建Loading实例并保存
+    loadingInstance = ElLoading.service({
       lock: true,
       text: '正在终止流程...',
       background: 'rgba(0, 0, 0, 0.7)'
-    })
+    });
     
     const response = await axios.post(`/admin/workflow/terminate/${terminateForm.processInstanceId}`, null, {
       params: {
         reason: terminateForm.reason
       }
     })
-    
-    loading.close()
     
     if (response.data.code === 200) {
       ElMessage.success('终止流程成功')
@@ -615,6 +712,12 @@ const submitTerminate = async () => {
   } catch (error) {
     console.error('终止流程出错:', error)
     ElMessage.error(error.response?.data?.msg || '终止流程出错，请检查网络连接')
+  } finally {
+    // 在finally块中清除定时器
+    clearTimeout(timeout);
+    if (loadingInstance) {
+      loadingInstance.close();
+    }
   }
 }
 
