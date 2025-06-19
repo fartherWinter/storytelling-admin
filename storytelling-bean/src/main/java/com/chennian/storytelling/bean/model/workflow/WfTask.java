@@ -130,6 +130,17 @@ public class WfTask implements Serializable {
     @ApiModelProperty("更新时间")
     private Date updatedTime;
 
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+    @ApiModelProperty("备注")
+    public String remark;
+
     public WfTask() {
     }
 

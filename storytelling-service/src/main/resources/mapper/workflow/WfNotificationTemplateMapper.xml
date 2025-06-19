@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfNotificationTemplateMapper">
+
+    <!-- 工作流通知模板结果映射 -->
+    <resultMap id="WfNotificationTemplateResult" type="com.chennian.storytelling.bean.model.workflow.WfNotificationTemplate">
+        <id property="id" column="id"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="templateName" column="template_name"/>
+        <result property="templateType" column="template_type"/>
+        <result property="eventType" column="event_type"/>
+        <result property="subject" column="subject"/>
+        <result property="content" column="content"/>
+        <result property="contentType" column="content_type"/>
+        <result property="variables" column="variables"/>
+        <result property="enabled" column="enabled"/>
+        <result property="isDefault" column="is_default"/>
+        <result property="priority" column="priority"/>
+        <result property="sendCondition" column="send_condition"/>
+        <result property="recipientType" column="recipient_type"/>
+        <result property="recipientConfig" column="recipient_config"/>
+        <result property="attachmentConfig" column="attachment_config"/>
+        <result property="retryConfig" column="retry_config"/>
+        <result property="scheduleConfig" column="schedule_config"/>
+        <result property="category" column="category"/>
+        <result property="tags" column="tags"/>
+        <result property="description" column="description"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="version" column="version"/>
+        <result property="usageCount" column="usage_count"/>
+        <result property="lastUsedTime" column="last_used_time"/>
+    </resultMap>
+
+    <!-- 模板统计结果映射 -->
+    <resultMap id="TemplateStatisticsResult" type="com.chennian.storytelling.bean.dto.TemplateStatisticsDTO">
+        <result property="templateType" column="template_type"/>
+        <result property="eventType" column="event_type"/>
+        <result property="count" column="count"/>
+        <result property="enabledCount" column="enabled_count"/>
+        <result property="usageCount" column="usage_count"/>
+    </resultMap>
+
+    <!-- 模板使用统计结果映射 -->
+    <resultMap id="TemplateUsageStatisticsResult" type="com.chennian.storytelling.bean.dto.TemplateUsageStatisticsDTO">
+        <result property="templateId" column="template_id"/>
+        <result property="templateCode" column="template_code"/>
+        <result property="templateName" column="template_name"/>
+        <result property="usageCount" column="usage_count"/>
+        <result property="lastUsedTime" column="last_used_time"/>
+        <result property="successCount" column="success_count"/>
+        <result property="failureCount" column="failure_count"/>
+    </resultMap>
+
+    <!-- 基础列字段 -->
+    <sql id="Base_Column_List">
+        id, template_code, template_name, template_type, event_type, subject, content, content_type,
+        variables, enabled, is_default, priority, send_condition, recipient_type, recipient_config,
+        attachment_config, retry_config, schedule_config, category, tags, description, tenant_id,
+        created_by, created_time, updated_by, updated_time, version, usage_count, last_used_time
+    </sql>
+
+    <!-- 根据模板编码查询模板 -->
+    <select id="selectByTemplateCode" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE template_code = #{templateCode}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据模板类型查询模板列表 -->
+    <select id="selectByTemplateType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE template_type = #{templateType}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据事件类型查询模板列表 -->
+    <select id="selectByEventType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE event_type = #{eventType}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据启用状态查询模板列表 -->
+    <select id="selectByEnabled" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE enabled = #{enabled}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据模板类型和事件类型查询模板列表 -->
+    <select id="selectByTemplateTypeAndEventType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE template_type = #{templateType}
+        AND event_type = #{eventType}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据模板名称模糊查询 -->
+    <select id="selectByTemplateNameLike" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE template_name LIKE CONCAT('%', #{templateName}, '%')
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 检查模板编码是否存在 -->
+    <select id="existsByTemplateCode" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wf_notification_template
+        WHERE template_code = #{templateCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+        AND deleted = 0
+    </select>
+
+    <!-- 检查模板名称是否存在 -->
+    <select id="existsByTemplateName" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wf_notification_template
+        WHERE template_name = #{templateName}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+        AND deleted = 0
+    </select>
+
+    <!-- 批量更新模板状态 -->
+    <update id="batchUpdateTemplateStatus">
+        UPDATE wf_notification_template
+        SET enabled = #{enabled},
+            updated_time = NOW(),
+            updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="templateIds" item="templateId" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 查询模板详情 -->
+    <select id="selectTemplateDetail" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE id = #{templateId}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据模板ID列表批量查询模板 -->
+    <select id="selectByTemplateIds" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE id IN
+        <foreach collection="templateIds" item="templateId" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询所有事件类型 -->
+    <select id="selectAllEventTypes" resultType="java.lang.String">
+        SELECT DISTINCT event_type
+        FROM wf_notification_template
+        WHERE event_type IS NOT NULL
+        AND event_type != ''
+        AND deleted = 0
+        ORDER BY event_type
+    </select>
+
+    <!-- 查询模板统计信息 -->
+    <select id="selectTemplateStatistics" resultType="java.util.Map">
+        SELECT 
+            template_type,
+            event_type,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count,
+            SUM(usage_count) as total_usage_count
+        FROM wf_notification_template
+        WHERE deleted = 0
+        GROUP BY template_type, event_type
+        ORDER BY total_count DESC
+    </select>
+
+    <!-- 根据事件类型查询默认模板 -->
+    <select id="selectDefaultTemplateByEventType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE event_type = #{eventType}
+        AND is_default = 1
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY priority DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询模板使用统计 -->
+    <select id="selectTemplateUsageStatistics" resultMap="TemplateUsageStatisticsResult">
+        SELECT 
+            nt.id as template_id,
+            nt.template_code,
+            nt.template_name,
+            nt.usage_count,
+            nt.last_used_time,
+            COALESCE(nls.success_count, 0) as success_count,
+            COALESCE(nls.failure_count, 0) as failure_count
+        FROM wf_notification_template nt
+        LEFT JOIN (
+            SELECT 
+                template_id,
+                SUM(CASE WHEN send_status = 'SUCCESS' THEN 1 ELSE 0 END) as success_count,
+                SUM(CASE WHEN send_status = 'FAILURE' THEN 1 ELSE 0 END) as failure_count
+            FROM wf_notification_log
+            WHERE deleted = 0
+            GROUP BY template_id
+        ) nls ON nt.id = nls.template_id
+        WHERE nt.deleted = 0
+        ORDER BY nt.usage_count DESC
+    </select>
+
+    <!-- 查询所有模板类型 -->
+    <select id="selectAllTemplateTypes" resultType="java.lang.String">
+        SELECT DISTINCT template_type
+        FROM wf_notification_template
+        WHERE template_type IS NOT NULL
+        AND template_type != ''
+        AND deleted = 0
+        ORDER BY template_type
+    </select>
+
+    <!-- 根据模板类型统计模板数量 -->
+    <select id="selectTemplateCountByType" resultMap="TemplateStatisticsResult">
+        SELECT 
+            template_type,
+            COUNT(*) as count,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count,
+            SUM(usage_count) as usage_count
+        FROM wf_notification_template
+        WHERE deleted = 0
+        GROUP BY template_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 根据分类查询模板列表 -->
+    <select id="selectByCategory" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE category = #{category}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询所有分类 -->
+    <select id="selectAllCategories" resultType="java.lang.String">
+        SELECT DISTINCT category
+        FROM wf_notification_template
+        WHERE category IS NOT NULL
+        AND category != ''
+        AND deleted = 0
+        ORDER BY category
+    </select>
+
+    <!-- 根据标签查询模板列表 -->
+    <select id="selectByTags" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE FIND_IN_SET(#{tag}, tags)
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据租户ID查询模板列表 -->
+    <select id="selectByTenantId" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE tenant_id = #{tenantId}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据优先级查询模板列表 -->
+    <select id="selectByPriority" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE priority = #{priority}
+        AND deleted = 0
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询默认模板列表 -->
+    <select id="selectDefaultTemplates" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE is_default = 1
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY template_type, event_type, priority DESC
+    </select>
+
+    <!-- 根据内容类型查询模板列表 -->
+    <select id="selectByContentType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE content_type = #{contentType}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 根据接收人类型查询模板列表 -->
+    <select id="selectByRecipientType" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE recipient_type = #{recipientType}
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询最近使用的模板 -->
+    <select id="selectRecentUsedTemplates" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE last_used_time IS NOT NULL
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY last_used_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门模板 -->
+    <select id="selectPopularTemplates" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE usage_count > 0
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY usage_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 更新模板使用次数 -->
+    <update id="updateTemplateUsageCount">
+        UPDATE wf_notification_template
+        SET usage_count = usage_count + 1,
+            last_used_time = NOW(),
+            updated_time = NOW()
+        WHERE id = #{templateId}
+        AND deleted = 0
+    </update>
+
+    <!-- 根据发送条件查询模板列表 -->
+    <select id="selectBySendCondition" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE send_condition IS NOT NULL
+        AND send_condition != ''
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询有附件配置的模板 -->
+    <select id="selectTemplatesWithAttachment" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE attachment_config IS NOT NULL
+        AND attachment_config != ''
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询有重试配置的模板 -->
+    <select id="selectTemplatesWithRetry" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE retry_config IS NOT NULL
+        AND retry_config != ''
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 查询有调度配置的模板 -->
+    <select id="selectTemplatesWithSchedule" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE schedule_config IS NOT NULL
+        AND schedule_config != ''
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+    <!-- 复合条件查询模板列表 -->
+    <select id="selectByConditions" resultMap="WfNotificationTemplateResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_notification_template
+        WHERE deleted = 0
+        <if test="templateCode != null and templateCode != ''">
+            AND template_code = #{templateCode}
+        </if>
+        <if test="templateType != null and templateType != ''">
+            AND template_type = #{templateType}
+        </if>
+        <if test="eventType != null and eventType != ''">
+            AND event_type = #{eventType}
+        </if>
+        <if test="enabled != null">
+            AND enabled = #{enabled}
+        </if>
+        <if test="templateName != null and templateName != ''">
+            AND template_name LIKE CONCAT('%', #{templateName}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="contentType != null and contentType != ''">
+            AND content_type = #{contentType}
+        </if>
+        <if test="recipientType != null and recipientType != ''">
+            AND recipient_type = #{recipientType}
+        </if>
+        <if test="isDefault != null">
+            AND is_default = #{isDefault}
+        </if>
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId}
+        </if>
+        ORDER BY priority DESC, created_time DESC
+    </select>
+
+</mapper>

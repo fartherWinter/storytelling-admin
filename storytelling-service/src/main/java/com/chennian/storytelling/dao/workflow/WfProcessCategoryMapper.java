@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 流程分类Mapper接口
@@ -63,42 +64,6 @@ public interface WfProcessCategoryMapper extends BaseMapper<WfProcessCategory> {
     List<WfProcessCategory> selectByCategoryNameLike(@Param("categoryName") String categoryName);
 
     /**
-     * 检查分类编码是否存在
-     * 
-     * @param categoryCode 分类编码
-     * @param excludeId 排除的分类ID
-     * @return 存在数量
-     */
-    int checkCategoryCodeExists(@Param("categoryCode") String categoryCode, 
-                               @Param("excludeId") String excludeId);
-
-    /**
-     * 检查分类名称是否存在
-     * 
-     * @param categoryName 分类名称
-     * @param excludeId 排除的分类ID
-     * @return 存在数量
-     */
-    int checkCategoryNameExists(@Param("categoryName") String categoryName, 
-                               @Param("excludeId") String excludeId);
-
-    /**
-     * 查询分类下是否有子分类
-     * 
-     * @param parentId 父分类ID
-     * @return 子分类数量
-     */
-    int countChildCategories(@Param("parentId") String parentId);
-
-    /**
-     * 查询分类下的流程定义数量
-     * 
-     * @param categoryId 分类ID
-     * @return 流程定义数量
-     */
-    int countProcessDefinitions(@Param("categoryId") String categoryId);
-
-    /**
      * 批量更新分类状态
      * 
      * @param categoryIds 分类ID列表
@@ -115,5 +80,38 @@ public interface WfProcessCategoryMapper extends BaseMapper<WfProcessCategory> {
      * 
      * @return 统计信息
      */
-    List<java.util.Map<String, Object>> selectCategoryStatistics();
+    List<Map<String, Object>> selectCategoryStatistics();
+
+    /**
+     * 查询分类详情
+     * 
+     * @param categoryId 分类ID
+     * @return 流程分类
+     */
+    WfProcessCategory selectCategoryDetail(@Param("categoryId") String categoryId);
+
+    /**
+     * 根据分类ID列表批量查询分类
+     * 
+     * @param categoryIds 分类ID列表
+     * @return 分类列表
+     */
+    List<WfProcessCategory> selectByCategoryIds(@Param("categoryIds") List<String> categoryIds);
+
+    /**
+     * 查询分类层级路径
+     * 
+     * @param categoryId 分类ID
+     * @return 层级路径
+     */
+    String selectCategoryPath(@Param("categoryId") String categoryId);
+
+    /**
+      * 查询所有叶子分类（没有子分类的分类）
+      * 
+      * @return 分类列表
+      */
+     List<WfProcessCategory> selectLeafCategories();
+
+
 }

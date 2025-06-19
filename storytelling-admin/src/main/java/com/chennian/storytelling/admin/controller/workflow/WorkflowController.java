@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.chennian.storytelling.bean.dto.*;
+import com.chennian.storytelling.common.response.ServerResponseEntity;
 import jakarta.validation.Valid;
 import org.flowable.engine.RepositoryService;
 import org.flowable.engine.RuntimeService;
@@ -61,7 +62,7 @@ public class WorkflowController {
      */
     @ApiOperation(value = "部署流程定义", notes = "上传并部署新的流程定义")
     @PostMapping(WorkflowApiPaths.CorePaths.DEPLOY)
-    public Map<String, Object> deployProcess(
+    public ServerResponseEntity<Map<String, Object>> deployProcess(
             @ApiParam(value = "流程定义信息", required = true) 
             @Valid @RequestBody ProcessDefinitionDTO processDefinition) {
         try {
@@ -72,19 +73,14 @@ public class WorkflowController {
                     processDefinition.getDeploymentFile());
             
             Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", "流程部署成功");
             result.put("deploymentId", deploymentId);
             result.put("processName", processDefinition.getName());
             
             log.info("流程部署成功: {}, deploymentId: {}", processDefinition.getName(), deploymentId);
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程部署失败: {}", processDefinition.getName(), e);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("message", "流程部署失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("流程部署失败: " + e.getMessage());
         }
     }
     
@@ -93,7 +89,7 @@ public class WorkflowController {
      */
     @ApiOperation(value = "启动流程实例", notes = "根据流程定义启动新的流程实例")
     @PostMapping(WorkflowApiPaths.CorePaths.START)
-    public Map<String, Object> startProcess(
+    public ServerResponseEntity<Map<String, Object>> startProcess(
             @ApiParam(value = "流程定义Key", required = true) 
             @NotBlank @RequestParam("processKey") String processKey,
             @ApiParam(value = "业务Key", required = true) 
@@ -109,8 +105,6 @@ public class WorkflowController {
                 processKey, businessKey, businessType, title, variables);
             
             Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", "流程启动成功");
             result.put("processInstanceId", processInstance.getId());
             result.put("processDefinitionId", processInstance.getProcessDefinitionId());
             result.put("businessKey", processInstance.getBusinessKey());
@@ -119,13 +113,10 @@ public class WorkflowController {
             
             log.info("流程启动成功: processKey={}, businessKey={}, instanceId={}", 
                 processKey, businessKey, processInstance.getId());
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程启动失败: processKey={}, businessKey={}", processKey, businessKey, e);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("message", "流程启动失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("流程启动失败: " + e.getMessage());
         }
     }
     
@@ -134,7 +125,7 @@ public class WorkflowController {
      */
     @ApiOperation(value = "查询待办任务", notes = "查询指定用户的待办任务列表")
     @GetMapping(WorkflowApiPaths.TaskPaths.TODO)
-    public Map<String, Object> findTodoTasks(
+    public ServerResponseEntity<Map<String, Object>> findTodoTasks(
             @ApiParam(value = "任务处理人", required = true) 
             @NotBlank @RequestParam("assignee") String assignee,
             @ApiParam(value = "页码", defaultValue = "0") 
@@ -145,7 +136,6 @@ public class WorkflowController {
             List<Task> tasks = workflowService.findTodoTasks(assignee);
             
             Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
             result.put("tasks", tasks);
             result.put("total", tasks.size());
             result.put("assignee", assignee);
@@ -153,13 +143,10 @@ public class WorkflowController {
             result.put("size", size);
             
             log.debug("查询待办任务成功: assignee={}, count={}", assignee, tasks.size());
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("查询待办任务失败: assignee={}", assignee, e);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("message", "查询待办任务失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("查询待办任务失败: " + e.getMessage());
         }
     }
     
@@ -168,26 +155,22 @@ public class WorkflowController {
      */
     @ApiOperation(value = "查询流程任务", notes = "查询指定流程实例的所有任务")
     @GetMapping(WorkflowApiPaths.TaskPaths.BY_PROCESS_INSTANCE)
-    public Map<String, Object> findTasksByProcessInstanceId(
+    public ServerResponseEntity<Map<String, Object>> findTasksByProcessInstanceId(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
         try {
             List<Task> tasks = workflowService.findTasksByProcessInstanceId(processInstanceId);
             
             Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
             result.put("tasks", tasks);
             result.put("total", tasks.size());
             result.put("processInstanceId", processInstanceId);
             
             log.debug("查询流程任务成功: processInstanceId={}, count={}", processInstanceId, tasks.size());
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("查询流程任务失败: processInstanceId={}", processInstanceId, e);
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", false);
-            result.put("message", "查询流程任务失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("查询流程任务失败: " + e.getMessage());
         }
     }
     
@@ -196,35 +179,30 @@ public class WorkflowController {
      */
     @ApiOperation(value = "完成任务", notes = "完成指定的工作流任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.COMPLETE)
-    public Map<String, Object> completeTask(
+    public ServerResponseEntity<Map<String, Object>> completeTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
             @ApiParam("审批意见") @RequestParam(value = "comment", required = false) String comment,
             @ApiParam("流程变量") @RequestBody(required = false) Map<String, Object> variables) {
         
-        Map<String, Object> result = new HashMap<>();
         try {
             // 验证任务ID
             if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
-                result.put("success", false);
-                result.put("message", "无效的任务ID格式");
-                return result;
+                return ServerResponseEntity.showFailMsg("无效的任务ID格式");
             }
             
             workflowService.completeTask(taskId, variables, comment);
             
-            result.put("success", true);
-            result.put("message", "任务完成成功");
+            Map<String, Object> result = new HashMap<>();
             result.put("taskId", taskId);
             result.put("comment", comment);
             
             log.info("任务完成成功: taskId={}, comment={}", taskId, comment);
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("任务完成失败: taskId={}", taskId, e);
-            result.put("success", false);
-            result.put("message", "任务完成失败: " + e.getMessage());
+            return ServerResponseEntity.showFailMsg("任务完成失败: " + e.getMessage());
         }
-        return result;
     }
     
     /**
@@ -232,27 +210,24 @@ public class WorkflowController {
      */
     @ApiOperation(value = "审批通过任务", notes = "审批通过指定的工作流任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.APPROVE)
-    public Map<String, Object> approveTask(
+    public ServerResponseEntity<Map<String, Object>> approveTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
             @ApiParam("审批意见") @RequestParam(value = "comment", required = false) String comment) {
         
-        Map<String, Object> result = new HashMap<>();
         try {
             workflowService.approveTask(taskId, comment);
             
-            result.put("success", true);
-            result.put("message", "任务审批通过");
+            Map<String, Object> result = new HashMap<>();
             result.put("taskId", taskId);
             result.put("comment", comment);
             
             log.info("任务审批通过: taskId={}, comment={}", taskId, comment);
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("任务审批失败: taskId={}", taskId, e);
-            result.put("success", false);
-            result.put("message", "任务审批失败: " + e.getMessage());
+            return ServerResponseEntity.showFailMsg("任务审批失败: " + e.getMessage());
         }
-        return result;
     }
     
     /**

@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 通知模板Mapper接口
@@ -99,11 +100,20 @@ public interface WfNotificationTemplateMapper extends BaseMapper<WfNotificationT
                                  @Param("updatedBy") String updatedBy);
 
     /**
-     * 查询所有模板类型
+     * 查询模板详情
      * 
-     * @return 模板类型列表
+     * @param templateId 模板ID
+     * @return 通知模板
      */
-    List<String> selectAllTemplateTypes();
+    WfNotificationTemplate selectTemplateDetail(@Param("templateId") String templateId);
+
+    /**
+     * 根据模板ID列表批量查询模板
+     * 
+     * @param templateIds 模板ID列表
+     * @return 模板列表
+     */
+    List<WfNotificationTemplate> selectByTemplateIds(@Param("templateIds") List<String> templateIds);
 
     /**
      * 查询所有事件类型
@@ -120,9 +130,33 @@ public interface WfNotificationTemplateMapper extends BaseMapper<WfNotificationT
     List<java.util.Map<String, Object>> selectTemplateStatistics();
 
     /**
+     * 根据事件类型查询默认模板
+     * 
+     * @param eventType 事件类型
+     * @return 通知模板
+     */
+    WfNotificationTemplate selectDefaultTemplateByEventType(@Param("eventType") String eventType);
+
+    /**
+     * 查询模板使用统计
+     * 
+     * @param templateId 模板ID
+     * @return 使用次数
+     */
+    int countTemplateUsage(@Param("templateId") String templateId);
+
+    /**
+     * 查询所有模板类型
+     * 
+     * @return 模板类型列表
+     */
+    List<String> selectAllTemplateTypes();
+
+
+    /**
      * 根据模板类型统计模板数量
      * 
      * @return 统计信息
      */
-    List<java.util.Map<String, Object>> selectTemplateCountByType();
+    List<Map<String, Object>> selectTemplateCountByType();
 }

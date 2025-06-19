@@ -1,284 +1,383 @@
 package com.chennian.storytelling.service.impl;
 
-import java.util.List;
-import java.util.ArrayList;
-
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.chennian.storytelling.bean.dto.WorkflowFormDTO;
-import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
-
+import com.chennian.storytelling.bean.model.workflow.WfFormTemplate;
+import com.chennian.storytelling.dao.workflow.WfFormTemplateMapper;
 import com.chennian.storytelling.service.WorkflowFormService;
-import com.chennian.storytelling.common.utils.EntityUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * 工作流表单服务实现类
  * 
  * @author chennian
  */
-@Slf4j
 @Service
 public class WorkflowFormServiceImpl implements WorkflowFormService {
 
+    @Autowired
+    private WfFormTemplateMapper wfFormTemplateMapper;
+
     @Override
-    public List<WorkflowFormDTO.FieldOptionDTO> getFieldOptions(String formId, String fieldId, String query) {
-        log.info("获取字段选项，表单ID: {}, 字段ID: {}, 查询条件: {}", formId, fieldId, query);
+    public List<WorkflowFormDTO.FormTemplateDTO> getAllFormTemplates() {
+        List<WfFormTemplate> templates = wfFormTemplateMapper.selectList(
+            new QueryWrapper<WfFormTemplate>()
+                .eq("del_flag", 0)
+                .orderByDesc("create_time")
+        );
         
-        List<WorkflowFormDTO.FieldOptionDTO> result = new ArrayList<>();
-        
-        try {
-            // 根据字段类型返回不同的选项
-            if ("department".equals(fieldId)) {
-                // 部门选项
-                result.add(createOption("dept_001", "技术部"));
-                result.add(createOption("dept_002", "市场部"));
-                result.add(createOption("dept_003", "人事部"));
-                result.add(createOption("dept_004", "财务部"));
-            } else if ("priority".equals(fieldId)) {
-                // 优先级选项
-                result.add(createOption("high", "高"));
-                result.add(createOption("medium", "中"));
-                result.add(createOption("low", "低"));
-            } else if ("status".equals(fieldId)) {
-                // 状态选项
-                result.add(createOption("pending", "待处理"));
-                result.add(createOption("processing", "处理中"));
-                result.add(createOption("completed", "已完成"));
-                result.add(createOption("rejected", "已拒绝"));
-            } else if ("category".equals(fieldId)) {
-                // 分类选项
-                result.add(createOption("leave", "请假申请"));
-                result.add(createOption("expense", "费用报销"));
-                result.add(createOption("purchase", "采购申请"));
-                result.add(createOption("contract", "合同审批"));
-            }
-            
-            // 根据查询条件过滤选项
-            if (query != null && !query.trim().isEmpty()) {
-                String queryLower = query.toLowerCase();
-                result = result.stream()
-                    .filter(option -> option.getLabel().toLowerCase().contains(queryLower) ||
-                                    option.getValue().toLowerCase().contains(queryLower))
-                    .collect(java.util.stream.Collectors.toList());
-            }
-            
-        } catch (Exception e) {
-            log.error("获取字段选项失败", e);
-            throw new RuntimeException("获取字段选项失败", e);
+        List<WorkflowFormDTO.FormTemplateDTO> result = new ArrayList<>();
+        for (WfFormTemplate template : templates) {
+            WorkflowFormDTO.FormTemplateDTO dto = convertToFormTemplateDTO(template);
+            result.add(dto);
         }
-        
         return result;
     }
-    
-    private WorkflowFormDTO.FieldOptionDTO createOption(String value, String label) {
-        WorkflowFormDTO.FieldOptionDTO option = new WorkflowFormDTO.FieldOptionDTO();
-        option.setValue(value);
-        option.setLabel(label);
-        option.setDisabled(false);
-        return option;
-    }
-    
+
     @Override
-    public List<WorkflowFormDTO.FieldOptionDTO> saveFieldOptions(String formId, String fieldId, List<WorkflowFormDTO.FieldOptionDTO> options) {
-        log.info("保存字段选项，表单ID: {}, 字段ID: {}, 选项数量: {}", formId, fieldId, options.size());
-        
-        try {
-            // 验证表单ID和字段ID的有效性
-            if (formId == null || formId.trim().isEmpty()) {
-                throw new IllegalArgumentException("表单ID不能为空");
-            }
-            if (fieldId == null || fieldId.trim().isEmpty()) {
-                throw new IllegalArgumentException("字段ID不能为空");
-            }
-            
-            // 验证选项数据的有效性
-            for (WorkflowFormDTO.FieldOptionDTO option : options) {
-                if (option.getValue() == null || option.getValue().trim().isEmpty()) {
-                    throw new IllegalArgumentException("选项值不能为空");
-                }
-                if (option.getLabel() == null || option.getLabel().trim().isEmpty()) {
-                    throw new IllegalArgumentException("选项标签不能为空");
-                }
-            }
-            
-            // 这里应该保存到数据库，目前模拟保存成功
-            log.info("字段选项保存成功，表单ID: {}, 字段ID: {}", formId, fieldId);
-            
-            // 返回保存后的选项列表（实际应该从数据库重新查询）
-            return options;
-            
-        } catch (Exception e) {
-            log.error("保存字段选项失败", e);
-            throw new RuntimeException("保存字段选项失败: " + e.getMessage(), e);
+    public WorkflowFormDTO.FormTemplateDTO getFormTemplate(String formId) {
+        WfFormTemplate template = wfFormTemplateMapper.selectById(formId);
+        if (template == null || template.getDeleted() == 1) {
+            return null;
         }
+        return convertToFormTemplateDTO(template);
     }
-    
+
+    @Override
+    @Transactional
+    public Map<String, Object> createFormTemplate(Map<String, Object> formData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = new WfFormTemplate();
+            template.setFormId(UUID.randomUUID().toString());
+            template.setFormName((String) formData.get("formName"));
+            template.setFormDescription((String) formData.get("formDescription"));
+            template.setProcessKey((String) formData.get("processKey"));
+            template.setVersion(1);
+            template.setFormConfig((String) formData.get("formConfig"));
+            template.setFormFields((String) formData.get("formFields"));
+            template.setFormLayout((String) formData.get("formLayout"));
+            template.setFormRules((String) formData.get("formRules"));
+            template.setCategory((String) formData.get("category"));
+            template.setEnabled(1);
+            template.setSortOrder(0);
+            template.setCreatedTime(LocalDateTime.now());
+            template.setUpdatedTime(LocalDateTime.now());
+            template.setDeleted(0);
+            
+            wfFormTemplateMapper.insert(template);
+            
+            result.put("success", true);
+            result.put("message", "表单模板创建成功");
+            result.put("formId", template.getFormId());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "表单模板创建失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> updateFormTemplate(String formId, Map<String, Object> formData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = wfFormTemplateMapper.selectById(formId);
+            if (template == null || template.getDeleted() == 1) {
+                result.put("success", false);
+                result.put("message", "表单模板不存在");
+                return result;
+            }
+            
+            template.setFormName((String) formData.get("formName"));
+            template.setFormDescription((String) formData.get("formDescription"));
+            template.setProcessKey((String) formData.get("processKey"));
+            template.setFormConfig((String) formData.get("formConfig"));
+            template.setFormFields((String) formData.get("formFields"));
+            template.setFormLayout((String) formData.get("formLayout"));
+            template.setFormRules((String) formData.get("formRules"));
+            template.setCategory((String) formData.get("category"));
+            template.setUpdatedTime(LocalDateTime.now());
+            
+            wfFormTemplateMapper.updateById(template);
+            
+            result.put("success", true);
+            result.put("message", "表单模板更新成功");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "表单模板更新失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> deleteFormTemplate(String formId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = wfFormTemplateMapper.selectById(formId);
+            if (template == null || template.getDeleted() == 1) {
+                result.put("success", false);
+                result.put("message", "表单模板不存在");
+                return result;
+            }
+            
+            template.setDeleted(1);
+            template.setUpdatedTime(LocalDateTime.now());
+            wfFormTemplateMapper.updateById(template);
+            
+            result.put("success", true);
+            result.put("message", "表单模板删除成功");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "表单模板删除失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> copyFormTemplate(String formId, String newName) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate sourceTemplate = wfFormTemplateMapper.selectById(formId);
+            if (sourceTemplate == null || sourceTemplate.getDeleted() == 1) {
+                result.put("success", false);
+                result.put("message", "源表单模板不存在");
+                return result;
+            }
+            
+            WfFormTemplate newTemplate = new WfFormTemplate();
+            newTemplate.setFormId(UUID.randomUUID().toString());
+            newTemplate.setFormName(newName);
+            newTemplate.setFormDescription(sourceTemplate.getFormDescription());
+            newTemplate.setProcessKey(sourceTemplate.getProcessKey());
+            newTemplate.setVersion(1);
+            newTemplate.setFormConfig(sourceTemplate.getFormConfig());
+            newTemplate.setFormFields(sourceTemplate.getFormFields());
+            newTemplate.setFormLayout(sourceTemplate.getFormLayout());
+            newTemplate.setFormRules(sourceTemplate.getFormRules());
+            newTemplate.setCategory(sourceTemplate.getCategory());
+            newTemplate.setEnabled(1);
+            newTemplate.setSortOrder(0);
+            newTemplate.setCreatedTime(LocalDateTime.now());
+            newTemplate.setUpdatedTime(LocalDateTime.now());
+            newTemplate.setDeleted(0);
+            
+            wfFormTemplateMapper.insert(newTemplate);
+            
+            result.put("success", true);
+            result.put("message", "表单模板复制成功");
+            result.put("formId", newTemplate.getFormId());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "表单模板复制失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> getFormData(String formId, String instanceId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // TODO: 实现从数据库获取表单数据的逻辑
+            // 这里需要根据实际的表单数据存储表来实现
+            result.put("success", true);
+            result.put("data", new HashMap<>());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "获取表单数据失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> saveFormData(String formId, String instanceId, Map<String, Object> formData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            // TODO: 实现保存表单数据到数据库的逻辑
+            // 这里需要根据实际的表单数据存储表来实现
+            result.put("success", true);
+            result.put("message", "表单数据保存成功");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "表单数据保存失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public Map<String, Object> validateFormData(String formId, Map<String, Object> formData) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = wfFormTemplateMapper.selectById(formId);
+            if (template == null || template.getDeleted() == 1) {
+                result.put("valid", false);
+                result.put("message", "表单模板不存在");
+                return result;
+            }
+            
+            // TODO: 实现表单数据验证逻辑
+            // 根据表单规则验证数据
+            result.put("valid", true);
+            result.put("message", "验证通过");
+        } catch (Exception e) {
+            result.put("valid", false);
+            result.put("message", "验证失败: " + e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public List<WorkflowFormDTO.FieldOptionDTO> getFieldOptions(String formId, String fieldId, String query) {
+        // TODO: 从数据库获取字段选项
+        List<WorkflowFormDTO.FieldOptionDTO> options = new ArrayList<>();
+        
+        WorkflowFormDTO.FieldOptionDTO option1 = new WorkflowFormDTO.FieldOptionDTO();
+        option1.setValue("option1");
+        option1.setLabel("选项1");
+        options.add(option1);
+        
+        WorkflowFormDTO.FieldOptionDTO option2 = new WorkflowFormDTO.FieldOptionDTO();
+        option2.setValue("option2");
+        option2.setLabel("选项2");
+        options.add(option2);
+        
+        return options;
+    }
+    @Override
+    @Transactional
+    public List<WorkflowFormDTO.FieldOptionDTO> saveFieldOptions(String formId, String fieldId, List<WorkflowFormDTO.FieldOptionDTO> options) {
+        // TODO: 实现保存字段选项逻辑
+        return options;
+    }
     @Override
     public WorkflowFormDTO.FormDefinitionDTO getFormDefinition(String formKey) {
-        log.info("获取表单定义，表单键: {}", formKey);
-        
-        try {
-            if (formKey == null || formKey.trim().isEmpty()) {
-                throw new IllegalArgumentException("表单键不能为空");
-            }
-            
-            WorkflowFormDTO.FormDefinitionDTO result = new WorkflowFormDTO.FormDefinitionDTO();
-            
-            // 根据表单键返回不同的表单定义
-            if ("leave_application".equals(formKey)) {
-                result = createLeaveApplicationForm();
-            } else if ("expense_reimbursement".equals(formKey)) {
-                result = createExpenseReimbursementForm();
-            } else if ("purchase_request".equals(formKey)) {
-                result = createPurchaseRequestForm();
-            } else {
-                // 默认表单
-                result = createDefaultForm(formKey);
-            }
-            
-            return result;
-            
-        } catch (Exception e) {
-            log.error("获取表单定义失败", e);
-            throw new RuntimeException("获取表单定义失败: " + e.getMessage(), e);
-        }
+        // TODO: 实现获取表单定义逻辑
+        return new WorkflowFormDTO.FormDefinitionDTO();
     }
-    
     @Override
+    @Transactional
     public WorkflowFormDTO.FormDefinitionDTO saveFormDefinition(WorkflowFormDTO.FormDefinitionDTO formDefinition) {
-        log.info("保存表单定义，表单键: {}", formDefinition.getFormKey());
-        
-        try {
-            // 验证表单定义的完整性
-            if (formDefinition == null) {
-                throw new IllegalArgumentException("表单定义不能为空");
-            }
-            if (formDefinition.getFormKey() == null || formDefinition.getFormKey().trim().isEmpty()) {
-                throw new IllegalArgumentException("表单键不能为空");
-            }
-            if (formDefinition.getName() == null || formDefinition.getName().trim().isEmpty()) {
-                throw new IllegalArgumentException("表单名称不能为空");
-            }
-            
-            // 验证表单字段
-            if (formDefinition.getFields() != null) {
-                for (WorkflowFormDTO.FormFieldDTO field : formDefinition.getFields()) {
-                    if (field.getId() == null || field.getId().trim().isEmpty()) {
-                        throw new IllegalArgumentException("字段ID不能为空");
-                    }
-                    if (field.getName() == null || field.getName().trim().isEmpty()) {
-                        throw new IllegalArgumentException("字段名称不能为空");
-                    }
-                }
-            }
-            
-            // 这里应该保存到数据库，目前模拟保存成功
-            log.info("表单定义保存成功，表单键: {}", formDefinition.getFormKey());
-            
-            // 返回保存后的表单定义（实际应该从数据库重新查询）
-            return formDefinition;
-            
-        } catch (Exception e) {
-            log.error("保存表单定义失败", e);
-            throw new RuntimeException("保存表单定义失败: " + e.getMessage(), e);
-        }
+        // TODO: 实现保存表单定义逻辑
+        return formDefinition;
     }
-    
-    /**
-     * 创建请假申请表单
-     */
-    private WorkflowFormDTO.FormDefinitionDTO createLeaveApplicationForm() {
-        WorkflowFormDTO.FormDefinitionDTO form = new WorkflowFormDTO.FormDefinitionDTO();
-        form.setFormKey("leave_application");
-        form.setName("请假申请");
-        form.setDescription("员工请假申请表单");
-        
-        List<WorkflowFormDTO.FormFieldDTO> fields = new ArrayList<>();
-        
-        // 使用通用方法创建字段
-        fields.add(createFormField("leaveType", "请假类型", "select", true));
-        fields.add(createFormField("startDate", "开始时间", "date", true));
-        fields.add(createFormField("endDate", "结束时间", "date", true));
-        fields.add(createFormField("reason", "请假原因", "textarea", true));
-        
-        form.setFields(fields);
-        return form;
-    }
-    
-    /**
-     * 创建费用报销表单
-     */
-    private WorkflowFormDTO.FormDefinitionDTO createExpenseReimbursementForm() {
-        WorkflowFormDTO.FormDefinitionDTO form = new WorkflowFormDTO.FormDefinitionDTO();
-        form.setFormKey("expense_reimbursement");
-        form.setName("费用报销");
-        form.setDescription("员工费用报销申请表单");
-        
-        List<WorkflowFormDTO.FormFieldDTO> fields = new ArrayList<>();
-        
-        // 使用通用方法创建字段
-        fields.add(createFormField("expenseType", "报销类型", "select", true));
-        fields.add(createFormField("amount", "报销金额", "text", true));
-        fields.add(createFormField("description", "费用说明", "textarea", true));
-        
-        form.setFields(fields);
-        return form;
-    }
-    
-    /**
-     * 创建采购申请表单
-     */
-    private WorkflowFormDTO.FormDefinitionDTO createPurchaseRequestForm() {
-        WorkflowFormDTO.FormDefinitionDTO form = new WorkflowFormDTO.FormDefinitionDTO();
-        form.setFormKey("purchase_request");
-        form.setName("采购申请");
-        form.setDescription("物品采购申请表单");
-        
-        List<WorkflowFormDTO.FormFieldDTO> fields = new ArrayList<>();
-        
-        // 使用通用方法创建字段
-        fields.add(createFormField("itemName", "物品名称", "text", true));
-        fields.add(createFormField("quantity", "数量", "text", true));
-        fields.add(createFormField("budget", "预算金额", "text", true));
-        fields.add(createFormField("reason", "采购理由", "textarea", true));
 
-        form.setFields(fields);
-        return form;
+    @Override
+    public Map<String, Object> exportFormTemplate(String formId) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = wfFormTemplateMapper.selectById(formId);
+            if (template == null || template.getDeleted() == 1) {
+                result.put("success", false);
+                result.put("message", "表单模板不存在");
+                return result;
+            }
+            
+            Map<String, Object> exportData = new HashMap<>();
+            exportData.put("formName", template.getFormName());
+            exportData.put("formDescription", template.getFormDescription());
+            exportData.put("formConfig", template.getFormConfig());
+            exportData.put("formFields", template.getFormFields());
+            exportData.put("formLayout", template.getFormLayout());
+            exportData.put("formRules", template.getFormRules());
+            exportData.put("category", template.getCategory());
+            
+            result.put("success", true);
+            result.put("data", exportData);
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "导出失败: " + e.getMessage());
+        }
+        return result;
     }
-    
-    /**
-     * 创建默认表单
-     */
-    private WorkflowFormDTO.FormDefinitionDTO createDefaultForm(String formKey) {
-        WorkflowFormDTO.FormDefinitionDTO form = new WorkflowFormDTO.FormDefinitionDTO();
-        form.setFormKey(formKey);
-        form.setName("默认表单");
-        form.setDescription("默认表单定义");
-        
-        List<WorkflowFormDTO.FormFieldDTO> fields = new ArrayList<>();
-        
-        // 使用通用方法创建字段
-        fields.add(createFormField("title", "标题", "text", true));
-        fields.add(createFormField("content", "内容", "textarea", true));
-        
-        form.setFields(fields);
-        return form;
+
+    @Override
+    @Transactional
+    public Map<String, Object> importFormTemplate(Map<String, Object> formTemplate) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            WfFormTemplate template = new WfFormTemplate();
+            template.setFormId(UUID.randomUUID().toString());
+            template.setFormName((String) formTemplate.get("formName"));
+            template.setFormDescription((String) formTemplate.get("formDescription"));
+            template.setVersion(1);
+            template.setFormConfig((String) formTemplate.get("formConfig"));
+            template.setFormFields((String) formTemplate.get("formFields"));
+            template.setFormLayout((String) formTemplate.get("formLayout"));
+            template.setFormRules((String) formTemplate.get("formRules"));
+            template.setCategory((String) formTemplate.get("category"));
+            template.setEnabled(1);
+            template.setSortOrder(0);
+            template.setCreatedTime(LocalDateTime.now());
+            template.setUpdatedTime(LocalDateTime.now());
+            template.setDeleted(0);
+            
+            wfFormTemplateMapper.insert(template);
+            
+            result.put("success", true);
+            result.put("message", "导入成功");
+            result.put("formId", template.getFormId());
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "导入失败: " + e.getMessage());
+        }
+        return result;
     }
-    
-    /**
-      * 创建表单字段的通用方法
-      * @param fieldId 字段ID
-      * @param fieldName 字段名称
-      * @param fieldType 字段类型
-      * @param required 是否必填
-      * @return 表单字段DTO
-      */
-     private WorkflowFormDTO.FormFieldDTO createFormField(String fieldId, String fieldName, String fieldType, boolean required) {
-         WorkflowFormDTO.FormFieldDTO field = new WorkflowFormDTO.FormFieldDTO();
-         field.setId(fieldId);
-         field.setName(fieldName);
-         field.setType(fieldType);
-         field.setRequired(required);
-         return field;
-     }
+
+    private WorkflowFormDTO.FormTemplateDTO convertToFormTemplateDTO(WfFormTemplate template) {
+        WorkflowFormDTO.FormTemplateDTO dto = new WorkflowFormDTO.FormTemplateDTO();
+        dto.setId(template.getFormId());
+        dto.setName(template.getFormName());
+        dto.setDescription(template.getFormDescription());
+        dto.setCategory(template.getCategory());
+        dto.setProcessKey(template.getProcessKey());
+        dto.setVersion(template.getVersion());
+        dto.setFormConfig(template.getFormConfig());
+        dto.setFormFields(template.getFormFields());
+        dto.setFormLayout(template.getFormLayout());
+        dto.setFormRules(template.getFormRules());
+        dto.setEnabled(template.getEnabled());
+        dto.setSortOrder(template.getSortOrder());
+        dto.setRemark(template.getRemark());
+        dto.setCreatedTime(template.getCreatedTime());
+        dto.setUpdatedTime(template.getUpdatedTime());
+        
+        // 设置是否公开（将数据库的Integer转换为Boolean）
+        dto.setIsPublic(template.getIsPublic() != null && template.getIsPublic() == 1);
+        
+        // 设置创建者
+        dto.setCreator(template.getCreatorName());
+        
+        // 使用次数默认为0，实际使用时可能需要从其他地方获取
+        dto.setUsageCount(0);
+        
+        // 构建FormDefinitionDTO作为template字段
+        WorkflowFormDTO.FormDefinitionDTO formDefinition = new WorkflowFormDTO.FormDefinitionDTO();
+        formDefinition.setId(template.getFormId());
+        formDefinition.setName(template.getFormName());
+        formDefinition.setDescription(template.getFormDescription());
+        formDefinition.setProcessKey(template.getProcessKey());
+        formDefinition.setVersion(template.getVersion());
+        formDefinition.setFormConfig(template.getFormConfig());
+        formDefinition.setFormFields(template.getFormFields());
+        formDefinition.setFormLayout(template.getFormLayout());
+        formDefinition.setFormRules(template.getFormRules());
+        formDefinition.setEnabled(template.getEnabled() != null && template.getEnabled() == 1);
+        formDefinition.setSortOrder(template.getSortOrder());
+        formDefinition.setRemark(template.getRemark());
+        formDefinition.setCreatedTime(template.getCreatedTime());
+        formDefinition.setUpdatedTime(template.getUpdatedTime());
+        
+        dto.setTemplate(formDefinition);
+        
+        return dto;
+    }
+
 }

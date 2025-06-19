@@ -1,5 +1,6 @@
 package com.chennian.storytelling.admin.controller.workflow;
 
+import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.WorkflowService;
 import com.chennian.storytelling.service.WorkflowModelService;
 import com.chennian.storytelling.bean.dto.ProcessDefinitionDTO;
@@ -25,7 +26,7 @@ import java.util.HashMap;
  */
 @Api(tags = "工作流定义管理")
 @RestController
-@RequestMapping("/workflow/definitions")
+@RequestMapping("/sys/workflow/definitions")
 @RequiredArgsConstructor
 public class WorkflowDefinitionController {
 
@@ -37,8 +38,8 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("获取所有流程定义")
     @GetMapping
-    public List<ProcessDefinitionDTO> getAllProcessDefinitions() {
-        return workflowService.getProcessDefinitions();
+    public ServerResponseEntity<List<ProcessDefinitionDTO>> getAllProcessDefinitions() {
+        return ServerResponseEntity.success(workflowService.getProcessDefinitions());
     }
     
     /**
@@ -46,7 +47,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("分页查询流程定义")
     @GetMapping("/page")
-    public Map<String, Object> getProcessDefinitionsPage(
+    public ServerResponseEntity<Map<String, Object>> getProcessDefinitionsPage(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size,
             @RequestParam(value = "category", required = false) String category,
@@ -63,7 +64,7 @@ public class WorkflowDefinitionController {
         result.put("total", definitions.size());
         result.put("totalPages", (definitions.size() + size - 1) / size);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -71,7 +72,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("获取流程定义详情")
     @GetMapping("/{definitionId}")
-    public Map<String, Object> getProcessDefinitionDetail(@PathVariable("definitionId") String definitionId) {
+    public ServerResponseEntity<Map<String, Object>> getProcessDefinitionDetail(@PathVariable("definitionId") String definitionId) {
         Map<String, Object> detail = new HashMap<>();
         
         // 获取流程定义基本信息
@@ -98,7 +99,7 @@ public class WorkflowDefinitionController {
             detail.put("statistics", getDefinitionStatistics(definitionId));
         }
         
-        return detail;
+        return ServerResponseEntity.success(detail);
     }
     
     /**
@@ -106,7 +107,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("部署流程定义")
     @PostMapping("/deploy")
-    public Map<String, Object> deployProcessDefinition(
+    public ServerResponseEntity<Map<String, Object>> deployProcessDefinition(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "tenantId", required = false) String tenantId) {
@@ -124,12 +125,12 @@ public class WorkflowDefinitionController {
             result.put("deploymentId", deploymentId);
             result.put("fileName", file.getOriginalFilename());
             
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "流程部署失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("流程部署失败: " + e.getMessage());
         }
     }
     
@@ -138,7 +139,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("从模型部署流程定义")
     @PostMapping("/deploy-from-model/{modelId}")
-    public Map<String, Object> deployFromModel(@PathVariable("modelId") String modelId) {
+    public ServerResponseEntity<Map<String, Object>> deployFromModel(@PathVariable("modelId") String modelId) {
         try {
             String deploymentId = workflowModelService.deployModel(modelId);
             
@@ -148,12 +149,12 @@ public class WorkflowDefinitionController {
             result.put("deploymentId", deploymentId);
             result.put("modelId", modelId);
             
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "从模型部署流程失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("从模型部署流程失败: " + e.getMessage());
         }
     }
     
@@ -162,7 +163,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("挂起流程定义")
     @PostMapping("/{definitionId}/suspend")
-    public Map<String, Object> suspendProcessDefinition(@PathVariable("definitionId") String definitionId) {
+    public ServerResponseEntity<Map<String, Object>> suspendProcessDefinition(@PathVariable("definitionId") String definitionId) {
         workflowService.suspendProcessDefinition(definitionId);
         
         Map<String, Object> result = new HashMap<>();
@@ -170,7 +171,7 @@ public class WorkflowDefinitionController {
         result.put("message", "流程定义挂起成功");
         result.put("definitionId", definitionId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -178,7 +179,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("激活流程定义")
     @PostMapping("/{definitionId}/activate")
-    public Map<String, Object> activateProcessDefinition(@PathVariable("definitionId") String definitionId) {
+    public ServerResponseEntity<Map<String, Object>> activateProcessDefinition(@PathVariable("definitionId") String definitionId) {
         workflowService.activateProcessDefinition(definitionId);
         
         Map<String, Object> result = new HashMap<>();
@@ -186,7 +187,7 @@ public class WorkflowDefinitionController {
         result.put("message", "流程定义激活成功");
         result.put("definitionId", definitionId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -194,7 +195,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("删除流程定义")
     @DeleteMapping("/{deploymentId}")
-    public Map<String, Object> deleteProcessDefinition(
+    public ServerResponseEntity<Map<String, Object>> deleteProcessDefinition(
             @PathVariable("deploymentId") String deploymentId,
             @RequestParam(value = "cascade", defaultValue = "false") boolean cascade) {
         
@@ -208,12 +209,12 @@ public class WorkflowDefinitionController {
             result.put("deploymentId", deploymentId);
             result.put("cascade", cascade);
             
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
             Map<String, Object> result = new HashMap<>();
             result.put("success", false);
             result.put("message", "流程定义删除失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.showFailMsg("流程定义删除失败: " + e.getMessage());
         }
     }
     
@@ -268,8 +269,8 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("获取流程定义统计信息")
     @GetMapping("/{definitionId}/statistics")
-    public Map<String, Object> getProcessDefinitionStatistics(@PathVariable("definitionId") String definitionId) {
-        return getDefinitionStatistics(definitionId);
+    public ServerResponseEntity<Map<String, Object>> getProcessDefinitionStatistics(@PathVariable("definitionId") String definitionId) {
+        return ServerResponseEntity.success(getDefinitionStatistics(definitionId));
     }
     
     /**
@@ -277,7 +278,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("复制流程定义")
     @PostMapping("/{definitionId}/copy")
-    public Map<String, Object> copyProcessDefinition(
+    public ServerResponseEntity<Map<String, Object>> copyProcessDefinition(
             @PathVariable("definitionId") String definitionId,
             @RequestParam("newKey") String newKey,
             @RequestParam("newName") String newName,
@@ -302,7 +303,7 @@ public class WorkflowDefinitionController {
             result.put("message", "流程定义复制失败: " + e.getMessage());
         }
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -310,12 +311,12 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("获取流程定义版本历史")
     @GetMapping("/{definitionKey}/versions")
-    public List<ProcessDefinitionDTO> getProcessDefinitionVersions(@PathVariable("definitionKey") String definitionKey) {
+    public ServerResponseEntity<List<ProcessDefinitionDTO>> getProcessDefinitionVersions(@PathVariable("definitionKey") String definitionKey) {
         // 这里可以实现获取指定key的所有版本
         List<ProcessDefinitionDTO> allDefinitions = workflowService.getProcessDefinitions();
-        return allDefinitions.stream()
+        return ServerResponseEntity.success(allDefinitions.stream()
             .filter(d -> definitionKey.equals(d.getKey()))
-            .toList();
+            .toList());
     }
     
     /**
@@ -323,7 +324,7 @@ public class WorkflowDefinitionController {
      */
     @ApiOperation("设置流程定义为默认版本")
     @PostMapping("/{definitionId}/set-default")
-    public Map<String, Object> setDefaultVersion(@PathVariable("definitionId") String definitionId) {
+    public ServerResponseEntity<Map<String, Object>> setDefaultVersion(@PathVariable("definitionId") String definitionId) {
         Map<String, Object> result = new HashMap<>();
         
         // 这里可以实现设置默认版本的逻辑
@@ -332,7 +333,7 @@ public class WorkflowDefinitionController {
         result.put("message", "设置默认版本成功");
         result.put("definitionId", definitionId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**

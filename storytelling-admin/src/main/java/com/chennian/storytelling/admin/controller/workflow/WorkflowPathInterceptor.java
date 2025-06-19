@@ -26,7 +26,7 @@ public class WorkflowPathInterceptor implements HandlerInterceptor {
     private WorkflowApiConfig apiConfig;
 
     // 工作流路径匹配模式
-    private static final Pattern WORKFLOW_PATH_PATTERN = Pattern.compile(".*/api/v\\d+/workflow/.*");
+    private static final Pattern WORKFLOW_PATH_PATTERN = Pattern.compile(".*/sys/v\\d+/workflow/.*");
     
     // 危险路径模式（防止路径遍历攻击）
     private static final Pattern DANGEROUS_PATH_PATTERN = Pattern.compile(".*(\\.\\.|\\.\\.|%2e%2e|%252e%252e).*");
@@ -170,7 +170,7 @@ public class WorkflowPathInterceptor implements HandlerInterceptor {
         }
         
         // 匹配 /api/v1/workflow 或 /api/v2/workflow 等模式
-        Pattern versionPattern = Pattern.compile(".*/api/(v\\d+)/workflow.*");
+        Pattern versionPattern = Pattern.compile(".*/sys/(v\\d+)/workflow.*");
         java.util.regex.Matcher matcher = versionPattern.matcher(path);
         
         if (matcher.matches()) {

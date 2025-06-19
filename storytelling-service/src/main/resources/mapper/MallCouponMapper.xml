@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallCouponMapper">
+
+    <!-- 优惠券基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.chennian.storytelling.bean.model.mall.MallCoupon">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="INTEGER"/>
+        <result column="discount_amount" property="discountAmount" jdbcType="DECIMAL"/>
+        <result column="discount_rate" property="discountRate" jdbcType="DECIMAL"/>
+        <result column="min_amount" property="minAmount" jdbcType="DECIMAL"/>
+        <result column="max_discount_amount" property="maxDiscountAmount" jdbcType="DECIMAL"/>
+        <result column="total_count" property="totalCount" jdbcType="INTEGER"/>
+        <result column="received_count" property="receivedCount" jdbcType="INTEGER"/>
+        <result column="used_count" property="usedCount" jdbcType="INTEGER"/>
+        <result column="limit_per_user" property="limitPerUser" jdbcType="INTEGER"/>
+        <result column="valid_start_time" property="validStartTime" jdbcType="TIMESTAMP"/>
+        <result column="valid_end_time" property="validEndTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+        <result column="update_by" property="updateBy" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 优惠券VO结果映射 -->
+    <resultMap id="CouponVOResultMap" type="com.chennian.storytelling.bean.vo.MallCouponVO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="INTEGER"/>
+        <result column="type_name" property="typeName" jdbcType="VARCHAR"/>
+        <result column="discount_amount" property="discountAmount" jdbcType="DECIMAL"/>
+        <result column="discount_rate" property="discountRate" jdbcType="DECIMAL"/>
+        <result column="min_amount" property="minAmount" jdbcType="DECIMAL"/>
+        <result column="max_discount_amount" property="maxDiscountAmount" jdbcType="DECIMAL"/>
+        <result column="total_count" property="totalCount" jdbcType="INTEGER"/>
+        <result column="received_count" property="receivedCount" jdbcType="INTEGER"/>
+        <result column="used_count" property="usedCount" jdbcType="INTEGER"/>
+        <result column="remain_count" property="remainCount" jdbcType="INTEGER"/>
+        <result column="limit_per_user" property="limitPerUser" jdbcType="INTEGER"/>
+        <result column="valid_start_time" property="validStartTime" jdbcType="TIMESTAMP"/>
+        <result column="valid_end_time" property="validEndTime" jdbcType="TIMESTAMP"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="status_name" property="statusName" jdbcType="VARCHAR"/>
+        <result column="can_receive" property="canReceive" jdbcType="BOOLEAN"/>
+        <result column="user_received_count" property="userReceivedCount" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="create_by" property="createBy" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!-- 分页查询优惠券列表 -->
+    <select id="selectCouponPage" resultMap="CouponVOResultMap">
+        SELECT 
+            c.id,
+            c.name,
+            c.description,
+            c.type,
+            CASE c.type
+                WHEN 1 THEN '满减券'
+                WHEN 2 THEN '折扣券'
+                WHEN 3 THEN '固定金额券'
+                ELSE '未知类型'
+            END as type_name,
+            c.discount_amount,
+            c.discount_rate,
+            c.min_amount,
+            c.max_discount_amount,
+            c.total_count,
+            c.received_count,
+            c.used_count,
+            (c.total_count - c.received_count) as remain_count,
+            c.limit_per_user,
+            c.valid_start_time,
+            c.valid_end_time,
+            c.status,
+            CASE c.status
+                WHEN 0 THEN '未发布'
+                WHEN 1 THEN '已发布'
+                WHEN 2 THEN '已停用'
+                ELSE '未知状态'
+            END as status_name,
+            c.create_time,
+            c.create_by,
+            COALESCE(ur.received_count, 0) as user_received_count,
+            CASE 
+                WHEN c.status = 1 
+                    AND c.valid_start_time &lt;= NOW() 
+                    AND c.valid_end_time &gt;= NOW() 
+                    AND (c.total_count - c.received_count) &gt; 0
+                    AND (c.limit_per_user = 0 OR COALESCE(ur.received_count, 0) &lt; c.limit_per_user)
+                THEN TRUE 
+                ELSE FALSE 
+            END as can_receive
+        FROM mall_coupon c
+        LEFT JOIN (
+            SELECT 
+                coupon_id, 
+                COUNT(*) as received_count
+            FROM mall_user_coupon 
+            WHERE user_id = #{searchBo.userId}
+            GROUP BY coupon_id
+        ) ur ON c.id = ur.coupon_id
+        WHERE 1=1
+        <if test="searchBo.name != null and searchBo.name != ''">
+            AND c.name LIKE CONCAT('%', #{searchBo.name}, '%')
+        </if>
+        <if test="searchBo.type != null">
+            AND c.type = #{searchBo.type}
+        </if>
+        <if test="searchBo.status != null">
+            AND c.status = #{searchBo.status}
+        </if>
+        <if test="searchBo.validStartTime != null">
+            AND c.valid_start_time &gt;= #{searchBo.validStartTime}
+        </if>
+        <if test="searchBo.validEndTime != null">
+            AND c.valid_end_time &lt;= #{searchBo.validEndTime}
+        </if>
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 根据ID查询优惠券详情 -->
+    <select id="selectCouponById" resultMap="CouponVOResultMap">
+        SELECT 
+            c.id,
+            c.name,
+            c.description,
+            c.type,
+            CASE c.type
+                WHEN 1 THEN '满减券'
+                WHEN 2 THEN '折扣券'
+                WHEN 3 THEN '固定金额券'
+                ELSE '未知类型'
+            END as type_name,
+            c.discount_amount,
+            c.discount_rate,
+            c.min_amount,
+            c.max_discount_amount,
+            c.total_count,
+            c.received_count,
+            c.used_count,
+            (c.total_count - c.received_count) as remain_count,
+            c.limit_per_user,
+            c.valid_start_time,
+            c.valid_end_time,
+            c.status,
+            CASE c.status
+                WHEN 0 THEN '未发布'
+                WHEN 1 THEN '已发布'
+                WHEN 2 THEN '已停用'
+                ELSE '未知状态'
+            END as status_name,
+            c.create_time,
+            c.create_by
+        FROM mall_coupon c
+        WHERE c.id = #{couponId}
+    </select>
+
+    <!-- 查询可领取的优惠券列表 -->
+    <select id="selectAvailableCoupons" resultMap="CouponVOResultMap">
+        SELECT 
+            c.id,
+            c.name,
+            c.description,
+            c.type,
+            CASE c.type
+                WHEN 1 THEN '满减券'
+                WHEN 2 THEN '折扣券'
+                WHEN 3 THEN '固定金额券'
+                ELSE '未知类型'
+            END as type_name,
+            c.discount_amount,
+            c.discount_rate,
+            c.min_amount,
+            c.max_discount_amount,
+            c.total_count,
+            c.received_count,
+            c.used_count,
+            (c.total_count - c.received_count) as remain_count,
+            c.limit_per_user,
+            c.valid_start_time,
+            c.valid_end_time,
+            c.status,
+            CASE c.status
+                WHEN 0 THEN '未发布'
+                WHEN 1 THEN '已发布'
+                WHEN 2 THEN '已停用'
+                ELSE '未知状态'
+            END as status_name,
+            c.create_time,
+            c.create_by,
+            COALESCE(ur.received_count, 0) as user_received_count,
+            TRUE as can_receive
+        FROM mall_coupon c
+        LEFT JOIN (
+            SELECT 
+                coupon_id, 
+                COUNT(*) as received_count
+            FROM mall_user_coupon 
+            WHERE user_id = #{userId}
+            GROUP BY coupon_id
+        ) ur ON c.id = ur.coupon_id
+        WHERE c.status = 1
+            AND c.valid_start_time &lt;= NOW()
+            AND c.valid_end_time &gt;= NOW()
+            AND (c.total_count - c.received_count) &gt; 0
+            AND (c.limit_per_user = 0 OR COALESCE(ur.received_count, 0) &lt; c.limit_per_user)
+        ORDER BY c.discount_amount DESC, c.create_time DESC
+    </select>
+
+    <!-- 查询用户可用于指定订单的优惠券 -->
+    <select id="selectUsableCouponsForOrder" resultMap="CouponVOResultMap">
+        SELECT 
+            c.id,
+            c.name,
+            c.description,
+            c.type,
+            CASE c.type
+                WHEN 1 THEN '满减券'
+                WHEN 2 THEN '折扣券'
+                WHEN 3 THEN '固定金额券'
+                ELSE '未知类型'
+            END as type_name,
+            c.discount_amount,
+            c.discount_rate,
+            c.min_amount,
+            c.max_discount_amount,
+            c.total_count,
+            c.received_count,
+            c.used_count,
+            (c.total_count - c.received_count) as remain_count,
+            c.limit_per_user,
+            c.valid_start_time,
+            c.valid_end_time,
+            c.status,
+            CASE c.status
+                WHEN 0 THEN '未发布'
+                WHEN 1 THEN '已发布'
+                WHEN 2 THEN '已停用'
+                ELSE '未知状态'
+            END as status_name,
+            c.create_time,
+            c.create_by
+        FROM mall_coupon c
+        INNER JOIN mall_user_coupon uc ON c.id = uc.coupon_id
+        WHERE uc.user_id = #{userId}
+            AND uc.status = 0
+            AND c.status = 1
+            AND c.valid_start_time &lt;= NOW()
+            AND c.valid_end_time &gt;= NOW()
+            AND (c.min_amount IS NULL OR c.min_amount &lt;= #{orderAmount})
+        ORDER BY 
+            CASE c.type
+                WHEN 1 THEN c.discount_amount
+                WHEN 2 THEN LEAST(#{orderAmount} * (1 - c.discount_rate), COALESCE(c.max_discount_amount, #{orderAmount}))
+                WHEN 3 THEN c.discount_amount
+                ELSE 0
+            END DESC
+    </select>
+
+    <!-- 查询优惠券统计信息 -->
+    <select id="getCouponStatistics" resultType="com.chennian.storytelling.bean.vo.MallCouponStatisticsVO">
+        SELECT 
+            COUNT(*) as totalCoupons,
+            COUNT(CASE WHEN status = 1 THEN 1 END) as activeCoupons,
+            COUNT(CASE WHEN status = 0 THEN 1 END) as inactiveCoupons,
+            COUNT(CASE WHEN valid_end_time &lt; NOW() THEN 1 END) as expiredCoupons,
+            COALESCE(SUM(total_count), 0) as totalQuantity,
+            COALESCE(SUM(used_count), 0) as usedQuantity,
+            COALESCE(SUM(total_count - received_count), 0) as remainingQuantity,
+            (
+                SELECT COUNT(*) 
+                FROM mall_user_coupon 
+                WHERE DATE(create_time) = CURDATE()
+            ) as todayReceived,
+            (
+                SELECT COUNT(*) 
+                FROM mall_user_coupon 
+                WHERE status = 1 
+                    AND DATE(use_time) = CURDATE()
+            ) as todayUsed
+        FROM mall_coupon
+    </select>
+
+    <!-- 更新优惠券库存 -->
+    <update id="updateCouponStock">
+        UPDATE mall_coupon 
+        SET received_count = received_count + #{quantity},
+            update_time = NOW()
+        WHERE id = #{couponId}
+            AND (total_count - received_count) &gt;= #{quantity}
+    </update>
+
+    <!-- 查询过期的优惠券ID列表 -->
+    <select id="selectExpiredCouponIds" resultType="java.lang.Long">
+        SELECT id
+        FROM mall_coupon
+        WHERE status = 1
+            AND valid_end_time &lt; NOW()
+    </select>
+
+</mapper>

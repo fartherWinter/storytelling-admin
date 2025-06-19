@@ -41,7 +41,7 @@ import jakarta.validation.constraints.NotBlank;
  * @author chennian
  */
 @RestController
-@RequestMapping("/workflow/model")
+@RequestMapping("/sys/workflow/model")
 @Tag(name = "工作流模型管理", description = "工作流模型的创建、修改、查询和部署等操作")
 @Validated
 public class WorkflowModelController {

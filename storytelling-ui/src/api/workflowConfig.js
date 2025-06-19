@@ -9,7 +9,7 @@ import request from '@/utils/request'
  */
 export function getSystemConfigList(params) {
   return request({
-    url: '/workflow/config/system/list',
+    url: '/sys/workflow/config/system/list',
     method: 'get',
     params
   })
@@ -22,7 +22,7 @@ export function getSystemConfigList(params) {
  */
 export function saveSystemConfig(data) {
   return request({
-    url: '/workflow/config/system/save',
+    url: '/sys/workflow/config/system/save',
     method: 'post',
     data
   })
@@ -35,7 +35,7 @@ export function saveSystemConfig(data) {
  */
 export function deleteSystemConfig(id) {
   return request({
-    url: `/workflow/config/system/delete/${id}`,
+    url: `/sys/workflow/config/system/delete/${id}`,
     method: 'delete'
   })
 }
@@ -47,7 +47,7 @@ export function deleteSystemConfig(id) {
  */
 export function batchUpdateSystemConfigStatus(data) {
   return request({
-    url: '/workflow/config/system/batch-status',
+    url: '/sys/workflow/config/system/batch-status',
     method: 'put',
     data
   })
@@ -59,34 +59,35 @@ export function batchUpdateSystemConfigStatus(data) {
  */
 export function getSystemConfigStats() {
   return request({
-    url: '/workflow/config/system/stats',
+    url: '/sys/workflow/config/system/stats',
     method: 'get'
   })
 }
 
-// ==================== 权限相关接口 ====================
+// ==================== 权限相关接口 (统一使用UnifiedPermissionController) ====================
 
 /**
  * 获取权限树
+ * @param {String} permissionType 权限类型
  * @returns {Promise}
  */
-export function getPermissionTree() {
+export function getPermissionTree(permissionType) {
   return request({
-    url: '/workflow/config/permission/tree',
-    method: 'get'
+    url: '/admin/unified-permission/permissions/tree',
+    method: 'get',
+    params: { permissionType }
   })
 }
 
 /**
- * 获取权限列表
- * @param {Object} params 查询参数
+ * 根据角色ID获取权限列表
+ * @param {Number} roleId 角色ID
  * @returns {Promise}
  */
-export function getPermissionList(params) {
+export function getPermissionsByRoleId(roleId) {
   return request({
-    url: '/workflow/config/permission/list',
-    method: 'get',
-    params
+    url: `/admin/unified-permission/permissions/role/${roleId}`,
+    method: 'get'
   })
 }
 
@@ -97,177 +98,228 @@ export function getPermissionList(params) {
  */
 export function savePermission(data) {
   return request({
-    url: '/workflow/config/permission/save',
+    url: '/admin/unified-permission/permissions',
     method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新权限
+ * @param {Object} data 权限数据
+ * @returns {Promise}
+ */
+export function updatePermission(data) {
+  return request({
+    url: '/admin/unified-permission/permissions',
+    method: 'put',
     data
   })
 }
 
 /**
  * 删除权限
- * @param {String} id 权限ID
+ * @param {Number} permissionId 权限ID
  * @returns {Promise}
  */
-export function deletePermission(id) {
+export function deletePermission(permissionId) {
   return request({
-    url: `/workflow/config/permission/delete/${id}`,
+    url: `/admin/unified-permission/permissions/${permissionId}`,
     method: 'delete'
   })
 }
 
-/**
- * 批量更新权限状态
- * @param {Object} data 更新数据
- * @returns {Promise}
- */
-export function batchUpdatePermissionStatus(data) {
-  return request({
-    url: '/workflow/config/permission/batch-status',
-    method: 'put',
-    data
-  })
-}
-
-// ==================== 角色相关接口 ====================
+// ==================== 角色相关接口 (统一使用UnifiedPermissionController) ====================
 
 /**
- * 获取角色列表
+ * 分页查询角色
  * @param {Object} params 查询参数
  * @returns {Promise}
  */
 export function getRoleList(params) {
   return request({
-    url: '/workflow/config/role/list',
+    url: '/admin/unified-permission/roles/page',
     method: 'get',
     params
   })
 }
 
 /**
- * 保存角色
+ * 根据ID查询角色
+ * @param {Number} roleId 角色ID
+ * @returns {Promise}
+ */
+export function getRoleById(roleId) {
+  return request({
+    url: `/admin/unified-permission/roles/${roleId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增角色
  * @param {Object} data 角色数据
  * @returns {Promise}
  */
 export function saveRole(data) {
   return request({
-    url: '/workflow/config/role/save',
+    url: '/admin/unified-permission/roles',
     method: 'post',
+    data
+  })
+}
+
+/**
+ * 修改角色
+ * @param {Object} data 角色数据
+ * @returns {Promise}
+ */
+export function updateRole(data) {
+  return request({
+    url: '/admin/unified-permission/roles',
+    method: 'put',
     data
   })
 }
 
 /**
  * 删除角色
- * @param {String} id 角色ID
+ * @param {Number} roleId 角色ID
  * @returns {Promise}
  */
-export function deleteRole(id) {
+export function deleteRole(roleId) {
   return request({
-    url: `/workflow/config/role/delete/${id}`,
+    url: `/admin/unified-permission/roles/${roleId}`,
     method: 'delete'
   })
 }
 
 /**
- * 获取角色权限
- * @param {String} roleId 角色ID
+ * 为角色分配权限
+ * @param {Number} roleId 角色ID
+ * @param {Array} permissionIds 权限ID列表
  * @returns {Promise}
  */
-export function getRolePermissions(roleId) {
+export function assignPermissionsToRole(roleId, permissionIds) {
   return request({
-    url: `/workflow/config/role/${roleId}/permissions`,
-    method: 'get'
-  })
-}
-
-/**
- * 保存角色权限
- * @param {Object} data 角色权限数据
- * @returns {Promise}
- */
-export function saveRolePermissions(data) {
-  return request({
-    url: '/workflow/config/role/permissions',
+    url: '/admin/unified-permission/role-permissions/assign',
     method: 'post',
-    data
+    data: { roleId, permissionIds }
   })
 }
 
 /**
- * 批量删除角色权限关联
- * @param {Object} data 删除数据
+ * 获取工作流角色列表
+ * @param {String} processDefinitionKey 流程定义Key
  * @returns {Promise}
  */
-export function batchDeleteRolePermissions(data) {
+export function getWorkflowRoles(processDefinitionKey) {
   return request({
-    url: '/workflow/config/role/permissions/batch-delete',
-    method: 'delete',
-    data
-  })
-}
-
-/**
- * 获取角色统计信息
- * @returns {Promise}
- */
-export function getRoleStats() {
-  return request({
-    url: '/workflow/config/role/stats',
-    method: 'get'
-  })
-}
-
-// ==================== 用户角色相关接口 ====================
-
-/**
- * 获取用户角色列表
- * @param {Object} params 查询参数
- * @returns {Promise}
- */
-export function getUserRoleList(params) {
-  return request({
-    url: '/workflow/config/user-role/list',
+    url: '/admin/unified-permission/sys/workflow/roles',
     method: 'get',
-    params
+    params: { processDefinitionKey }
   })
 }
 
 /**
- * 保存用户角色关联
- * @param {Object} data 用户角色数据
+ * 获取工作流权限列表
+ * @param {String} processDefinitionKey 流程定义Key
  * @returns {Promise}
  */
-export function saveUserRole(data) {
+export function getWorkflowPermissions(processDefinitionKey) {
   return request({
-    url: '/workflow/config/user-role/save',
+    url: '/admin/unified-permission/sys/workflow/permissions',
+    method: 'get',
+    params: { processDefinitionKey }
+  })
+}
+
+// ==================== 用户角色相关接口 (统一使用UnifiedPermissionController) ====================
+
+/**
+ * 根据用户ID获取角色列表
+ * @param {Number} userId 用户ID
+ * @returns {Promise}
+ */
+export function getUserRoles(userId) {
+  return request({
+    url: `/admin/unified-permission/user-roles/user/${userId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 为用户分配角色
+ * @param {Number} userId 用户ID
+ * @param {Array} roleIds 角色ID列表
+ * @returns {Promise}
+ */
+export function assignRolesToUser(userId, roleIds) {
+  return request({
+    url: '/admin/unified-permission/user-roles/assign',
     method: 'post',
-    data
+    data: { userId, roleIds }
   })
 }
 
 /**
- * 删除用户角色关联
- * @param {String} userId 用户ID
- * @param {String} roleId 角色ID
+ * 获取用户权限列表
+ * @param {Number} userId 用户ID
  * @returns {Promise}
  */
-export function deleteUserRole(userId, roleId) {
+export function getUserPermissions(userId) {
   return request({
-    url: `/workflow/config/user-role/delete/${userId}/${roleId}`,
-    method: 'delete'
+    url: `/admin/unified-permission/user-permissions/${userId}`,
+    method: 'get'
   })
 }
 
 /**
- * 批量保存用户角色关联
- * @param {Object} data 批量数据
+ * 检查用户是否有指定权限
+ * @param {Number} userId 用户ID
+ * @param {String} permission 权限标识
  * @returns {Promise}
  */
-export function batchSaveUserRole(data) {
+export function checkUserPermission(userId, permission) {
   return request({
-    url: '/workflow/config/user-role/batch-save',
-    method: 'post',
-    data
+    url: '/admin/unified-permission/user-permissions/check',
+    method: 'get',
+    params: { userId, permission }
+  })
+}
+
+/**
+ * 获取当前用户权限列表
+ * @returns {Promise}
+ */
+export function getCurrentUserPermissions() {
+  return request({
+    url: '/admin/unified-permission/current-user/permissions',
+    method: 'get'
+  })
+}
+
+/**
+ * 检查当前用户是否有指定权限
+ * @param {String} permission 权限标识
+ * @returns {Promise}
+ */
+export function checkCurrentUserPermission(permission) {
+  return request({
+    url: '/admin/unified-permission/current-user/permissions/check',
+    method: 'get',
+    params: { permission }
+  })
+}
+
+/**
+ * 获取当前用户角色列表
+ * @returns {Promise}
+ */
+export function getCurrentUserRoles() {
+  return request({
+    url: '/admin/unified-permission/current-user/roles',
+    method: 'get'
   })
 }
 
@@ -279,7 +331,7 @@ export function batchSaveUserRole(data) {
  */
 export function getCategoryTree() {
   return request({
-    url: '/workflow/config/category/tree',
+    url: '/sys/workflow/config/category/tree',
     method: 'get'
   })
 }
@@ -291,7 +343,7 @@ export function getCategoryTree() {
  */
 export function getCategoryList(params) {
   return request({
-    url: '/workflow/config/category/list',
+    url: '/sys/workflow/config/category/list',
     method: 'get',
     params
   })
@@ -304,7 +356,7 @@ export function getCategoryList(params) {
  */
 export function saveCategory(data) {
   return request({
-    url: '/workflow/config/category/save',
+    url: '/sys/workflow/config/category/save',
     method: 'post',
     data
   })
@@ -317,7 +369,7 @@ export function saveCategory(data) {
  */
 export function deleteCategory(id) {
   return request({
-    url: `/workflow/config/category/delete/${id}`,
+    url: `/sys/workflow/config/category/delete/${id}`,
     method: 'delete'
   })
 }
@@ -329,7 +381,7 @@ export function deleteCategory(id) {
  */
 export function batchUpdateCategoryStatus(data) {
   return request({
-    url: '/workflow/config/category/batch-status',
+    url: '/sys/workflow/config/category/batch-status',
     method: 'put',
     data
   })
@@ -341,7 +393,7 @@ export function batchUpdateCategoryStatus(data) {
  */
 export function getCategoryStats() {
   return request({
-    url: '/workflow/config/category/stats',
+    url: '/sys/workflow/config/category/stats',
     method: 'get'
   })
 }
@@ -355,7 +407,7 @@ export function getCategoryStats() {
  */
 export function getNotificationList(params) {
   return request({
-    url: '/workflow/config/notification/list',
+    url: '/sys/workflow/config/notification/list',
     method: 'get',
     params
   })
@@ -368,7 +420,7 @@ export function getNotificationList(params) {
  */
 export function saveNotification(data) {
   return request({
-    url: '/workflow/config/notification/save',
+    url: '/sys/workflow/config/notification/save',
     method: 'post',
     data
   })
@@ -381,7 +433,7 @@ export function saveNotification(data) {
  */
 export function deleteNotification(id) {
   return request({
-    url: `/workflow/config/notification/delete/${id}`,
+    url: `/sys/workflow/config/notification/delete/${id}`,
     method: 'delete'
   })
 }
@@ -393,7 +445,7 @@ export function deleteNotification(id) {
  */
 export function batchUpdateNotificationStatus(data) {
   return request({
-    url: '/workflow/config/notification/batch-status',
+    url: '/sys/workflow/config/notification/batch-status',
     method: 'put',
     data
   })
@@ -405,7 +457,7 @@ export function batchUpdateNotificationStatus(data) {
  */
 export function getTemplateTypes() {
   return request({
-    url: '/workflow/config/notification/template-types',
+    url: '/sys/workflow/config/notification/template-types',
     method: 'get'
   })
 }
@@ -416,7 +468,7 @@ export function getTemplateTypes() {
  */
 export function getEventTypes() {
   return request({
-    url: '/workflow/config/notification/event-types',
+    url: '/sys/workflow/config/notification/event-types',
     method: 'get'
   })
 }
@@ -429,7 +481,7 @@ export function getEventTypes() {
  */
 export function previewNotification(id, data) {
   return request({
-    url: `/workflow/config/notification/preview/${id}`,
+    url: `/sys/workflow/config/notification/preview/${id}`,
     method: 'post',
     data
   })
@@ -441,7 +493,7 @@ export function previewNotification(id, data) {
  */
 export function getNotificationStats() {
   return request({
-    url: '/workflow/config/notification/stats',
+    url: '/sys/workflow/config/notification/stats',
     method: 'get'
   })
 }
@@ -455,7 +507,7 @@ export function getNotificationStats() {
  */
 export function getReportConfigList(params) {
   return request({
-    url: '/workflow/config/report/list',
+    url: '/sys/workflow/config/report/list',
     method: 'get',
     params
   })
@@ -468,7 +520,7 @@ export function getReportConfigList(params) {
  */
 export function saveReportConfig(data) {
   return request({
-    url: '/workflow/config/report/save',
+    url: '/sys/workflow/config/report/save',
     method: 'post',
     data
   })
@@ -481,7 +533,7 @@ export function saveReportConfig(data) {
  */
 export function deleteReportConfig(id) {
   return request({
-    url: `/workflow/config/report/delete/${id}`,
+    url: `/sys/workflow/config/report/delete/${id}`,
     method: 'delete'
   })
 }
@@ -493,7 +545,7 @@ export function deleteReportConfig(id) {
  */
 export function batchUpdateReportStatus(data) {
   return request({
-    url: '/workflow/config/report/batch-status',
+    url: '/sys/workflow/config/report/batch-status',
     method: 'put',
     data
   })
@@ -505,7 +557,7 @@ export function batchUpdateReportStatus(data) {
  */
 export function getReportTypes() {
   return request({
-    url: '/workflow/config/report/types',
+    url: '/sys/workflow/config/report/types',
     method: 'get'
   })
 }
@@ -516,7 +568,7 @@ export function getReportTypes() {
  */
 export function getReportStats() {
   return request({
-    url: '/workflow/config/report/stats',
+    url: '/sys/workflow/config/report/stats',
     method: 'get'
   })
 }
@@ -528,7 +580,7 @@ export function getReportStats() {
  */
 export function updateReportUsageCount(id) {
   return request({
-    url: `/workflow/config/report/usage/${id}`,
+    url: `/sys/workflow/config/report/usage/${id}`,
     method: 'put'
   })
 }
@@ -542,7 +594,7 @@ export function updateReportUsageCount(id) {
  */
 export function getInstanceList(params) {
   return request({
-    url: '/workflow/config/instance/list',
+    url: '/sys/workflow/config/instance/list',
     method: 'get',
     params
   })
@@ -555,7 +607,7 @@ export function getInstanceList(params) {
  */
 export function getInstanceStats(params) {
   return request({
-    url: '/workflow/config/instance/stats',
+    url: '/sys/workflow/config/instance/stats',
     method: 'get',
     params
   })
@@ -568,7 +620,7 @@ export function getInstanceStats(params) {
  */
 export function batchUpdateInstanceStatus(data) {
   return request({
-    url: '/workflow/config/instance/batch-status',
+    url: '/sys/workflow/config/instance/batch-status',
     method: 'put',
     data
   })
@@ -583,7 +635,7 @@ export function batchUpdateInstanceStatus(data) {
  */
 export function getTaskList(params) {
   return request({
-    url: '/workflow/config/task/list',
+    url: '/sys/workflow/config/task/list',
     method: 'get',
     params
   })
@@ -596,7 +648,7 @@ export function getTaskList(params) {
  */
 export function getTaskStats(params) {
   return request({
-    url: '/workflow/config/task/stats',
+    url: '/sys/workflow/config/task/stats',
     method: 'get',
     params
   })
@@ -609,7 +661,7 @@ export function getTaskStats(params) {
  */
 export function batchUpdateTaskStatus(data) {
   return request({
-    url: '/workflow/config/task/batch-status',
+    url: '/sys/workflow/config/task/batch-status',
     method: 'put',
     data
   })
@@ -620,9 +672,22 @@ export function batchUpdateTaskStatus(data) {
  * @param {Object} data 分配数据
  * @returns {Promise}
  */
+/**
+ * 获取流程定义列表
+ * @param {Object} params 查询参数
+ * @returns {Promise}
+ */
+export function getProcessDefinitionList(params) {
+  return request({
+    url: '/sys/workflow/config/process/definition/list',
+    method: 'get',
+    params
+  })
+}
+
 export function batchAssignTask(data) {
   return request({
-    url: '/workflow/config/task/batch-assign',
+    url: '/sys/workflow/config/task/batch-assign',
     method: 'post',
     data
   })

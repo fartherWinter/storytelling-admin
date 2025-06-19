@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfReportConfigMapper">
+
+    <!-- 工作流报表配置结果映射 -->
+    <resultMap id="WfReportConfigResult" type="com.chennian.storytelling.bean.model.workflow.WfReportConfig">
+        <id property="id" column="id"/>
+        <result property="reportCode" column="report_code"/>
+        <result property="reportName" column="report_name"/>
+        <result property="reportType" column="report_type"/>
+        <result property="reportDescription" column="report_description"/>
+        <result property="reportSql" column="report_sql"/>
+        <result property="reportParams" column="report_params"/>
+        <result property="reportColumns" column="report_columns"/>
+        <result property="chartType" column="chart_type"/>
+        <result property="chartConfig" column="chart_config"/>
+        <result property="dataSourceId" column="data_source_id"/>
+        <result property="dataSourceName" column="data_source_name"/>
+        <result property="refreshInterval" column="refresh_interval"/>
+        <result property="cacheEnabled" column="cache_enabled"/>
+        <result property="cacheTimeout" column="cache_timeout"/>
+        <result property="enabled" column="enabled"/>
+        <result property="sortOrder" column="sort_order"/>
+        <result property="category" column="category"/>
+        <result property="tags" column="tags"/>
+        <result property="accessLevel" column="access_level"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="lastExecuteTime" column="last_execute_time"/>
+        <result property="executeCount" column="execute_count"/>
+        <result property="tenantId" column="tenant_id"/>
+    </resultMap>
+
+    <!-- 报表统计结果映射 -->
+    <resultMap id="ReportStatisticsResult" type="com.chennian.storytelling.bean.dto.ReportStatisticsDTO">
+        <result property="reportType" column="report_type"/>
+        <result property="count" column="count"/>
+        <result property="enabled" column="enabled"/>
+        <result property="category" column="category"/>
+    </resultMap>
+
+    <!-- 报表执行历史结果映射 -->
+    <resultMap id="ReportExecutionHistoryResult" type="com.chennian.storytelling.bean.dto.ReportExecutionHistoryDTO">
+        <result property="reportId" column="report_id"/>
+        <result property="reportCode" column="report_code"/>
+        <result property="reportName" column="report_name"/>
+        <result property="executeTime" column="execute_time"/>
+        <result property="executeDuration" column="execute_duration"/>
+        <result property="executeStatus" column="execute_status"/>
+        <result property="executeUser" column="execute_user"/>
+        <result property="executeUserName" column="execute_user_name"/>
+        <result property="recordCount" column="record_count"/>
+        <result property="errorMessage" column="error_message"/>
+    </resultMap>
+
+    <!-- 基础列字段 -->
+    <sql id="Base_Column_List">
+        id, report_code, report_name, report_type, report_description, report_sql, report_params,
+        report_columns, chart_type, chart_config, data_source_id, data_source_name, refresh_interval,
+        cache_enabled, cache_timeout, enabled, sort_order, category, tags, access_level,
+        created_by, created_time, updated_by, updated_time, last_execute_time, execute_count, tenant_id
+    </sql>
+
+    <!-- 根据报表编码查询报表配置 -->
+    <select id="selectByReportCode" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE report_code = #{reportCode}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据报表类型查询报表配置列表 -->
+    <select id="selectByReportType" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE report_type = #{reportType}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 根据启用状态查询报表配置列表 -->
+    <select id="selectByEnabled" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE enabled = #{enabled}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 根据报表名称模糊查询 -->
+    <select id="selectByReportNameLike" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE report_name LIKE CONCAT('%', #{reportName}, '%')
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 检查报表编码是否存在 -->
+    <select id="existsByReportCode" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wf_report_config
+        WHERE report_code = #{reportCode}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+        AND deleted = 0
+    </select>
+
+    <!-- 检查报表名称是否存在 -->
+    <select id="existsByReportName" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM wf_report_config
+        WHERE report_name = #{reportName}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+        AND deleted = 0
+    </select>
+
+    <!-- 批量更新报表状态 -->
+    <update id="batchUpdateReportStatus">
+        UPDATE wf_report_config
+        SET enabled = #{enabled},
+            updated_time = NOW(),
+            updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="reportIds" item="reportId" open="(" separator="," close=")">
+            #{reportId}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 查询所有报表类型 -->
+    <select id="selectAllReportTypes" resultType="java.lang.String">
+        SELECT DISTINCT report_type
+        FROM wf_report_config
+        WHERE deleted = 0
+        ORDER BY report_type
+    </select>
+
+    <!-- 查询报表配置统计信息 -->
+    <select id="selectReportStatistics" resultType="java.util.Map">
+        SELECT 
+            report_type,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count,
+            SUM(CASE WHEN enabled = 0 THEN 1 ELSE 0 END) as disabled_count
+        FROM wf_report_config
+        WHERE deleted = 0
+        GROUP BY report_type
+        ORDER BY total_count DESC
+    </select>
+
+    <!-- 查询报表配置详情 -->
+    <select id="selectReportDetail" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE id = #{reportId}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据报表ID查询报表详情 -->
+    <select id="selectByReportId" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE id = #{reportId}
+        AND deleted = 0
+    </select>
+
+    <!-- 批量查询报表配置 -->
+    <select id="selectByReportIds" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE id IN
+        <foreach collection="reportIds" item="reportId" open="(" separator="," close=")">
+            #{reportId}
+        </foreach>
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 查询报表执行历史 -->
+    <select id="selectReportExecutionHistory" resultMap="ReportExecutionHistoryResult">
+        SELECT 
+            reh.report_id,
+            rc.report_code,
+            rc.report_name,
+            reh.execute_time,
+            reh.execute_duration,
+            reh.execute_status,
+            reh.execute_user,
+            reh.execute_user_name,
+            reh.record_count,
+            reh.error_message
+        FROM wf_report_execution_history reh
+        LEFT JOIN wf_report_config rc ON reh.report_id = rc.id
+        WHERE reh.report_id = #{reportId}
+        AND reh.deleted = 0
+        ORDER BY reh.execute_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询报表数据源配置 -->
+    <select id="selectReportDataSource" resultType="java.util.Map">
+        SELECT 
+            data_source_id,
+            data_source_name,
+            COUNT(*) as report_count
+        FROM wf_report_config
+        WHERE deleted = 0
+        GROUP BY data_source_id, data_source_name
+        ORDER BY report_count DESC
+    </select>
+
+    <!-- 更新报表最后执行时间 -->
+    <update id="updateLastExecuteTime">
+        UPDATE wf_report_config
+        SET last_execute_time = NOW(),
+            execute_count = execute_count + 1,
+            updated_time = NOW()
+        WHERE id = #{reportId}
+        AND deleted = 0
+    </update>
+
+    <!-- 根据报表类型统计报表数量 -->
+    <select id="selectReportCountByType" resultMap="ReportStatisticsResult">
+        SELECT 
+            report_type,
+            COUNT(*) as count
+        FROM wf_report_config
+        WHERE deleted = 0
+        GROUP BY report_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 查询最近使用的报表配置 -->
+    <select id="selectRecentUsedReports" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE last_execute_time IS NOT NULL
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY last_execute_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门报表配置 -->
+    <select id="selectPopularReports" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE execute_count > 0
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY execute_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 更新报表使用次数 -->
+    <update id="updateReportUsageCount">
+        UPDATE wf_report_config
+        SET execute_count = execute_count + 1,
+            last_execute_time = NOW(),
+            updated_time = NOW()
+        WHERE id = #{reportId}
+        AND deleted = 0
+    </update>
+
+    <!-- 根据分类查询报表配置列表 -->
+    <select id="selectByCategory" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE category = #{category}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 查询所有分类 -->
+    <select id="selectAllCategories" resultType="java.lang.String">
+        SELECT DISTINCT category
+        FROM wf_report_config
+        WHERE category IS NOT NULL
+        AND category != ''
+        AND deleted = 0
+        ORDER BY category
+    </select>
+
+    <!-- 根据标签查询报表配置列表 -->
+    <select id="selectByTags" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE FIND_IN_SET(#{tag}, tags)
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 根据访问级别查询报表配置列表 -->
+    <select id="selectByAccessLevel" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE access_level = #{accessLevel}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 根据租户ID查询报表配置列表 -->
+    <select id="selectByTenantId" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE tenant_id = #{tenantId}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 查询启用的缓存报表 -->
+    <select id="selectCacheEnabledReports" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE cache_enabled = 1
+        AND enabled = 1
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 根据图表类型查询报表配置列表 -->
+    <select id="selectByChartType" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE chart_type = #{chartType}
+        AND deleted = 0
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- 查询需要刷新的报表 -->
+    <select id="selectReportsNeedRefresh" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE enabled = 1
+        AND refresh_interval > 0
+        AND (last_execute_time IS NULL OR 
+             TIMESTAMPDIFF(MINUTE, last_execute_time, NOW()) >= refresh_interval)
+        AND deleted = 0
+        ORDER BY last_execute_time ASC
+    </select>
+
+    <!-- 复合条件查询报表配置列表 -->
+    <select id="selectByConditions" resultMap="WfReportConfigResult">
+        SELECT <include refid="Base_Column_List"/>
+        FROM wf_report_config
+        WHERE deleted = 0
+        <if test="reportCode != null and reportCode != ''">
+            AND report_code = #{reportCode}
+        </if>
+        <if test="reportType != null and reportType != ''">
+            AND report_type = #{reportType}
+        </if>
+        <if test="enabled != null">
+            AND enabled = #{enabled}
+        </if>
+        <if test="reportName != null and reportName != ''">
+            AND report_name LIKE CONCAT('%', #{reportName}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="accessLevel != null and accessLevel != ''">
+            AND access_level = #{accessLevel}
+        </if>
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId}
+        </if>
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+</mapper>

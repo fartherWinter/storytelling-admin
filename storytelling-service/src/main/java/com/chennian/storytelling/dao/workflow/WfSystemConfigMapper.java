@@ -80,4 +80,56 @@ public interface WfSystemConfigMapper extends BaseMapper<WfSystemConfig> {
      * @return 统计信息
      */
     List<java.util.Map<String, Object>> selectConfigStatistics();
+
+    /**
+     * 根据配置键列表批量查询配置
+     * 
+     * @param configKeys 配置键列表
+     * @return 配置列表
+     */
+    List<WfSystemConfig> selectByConfigKeys(@Param("configKeys") List<String> configKeys);
+
+    /**
+     * 查询系统配置详情
+     * 
+     * @param configId 配置ID
+     * @return 系统配置
+     */
+    WfSystemConfig selectConfigDetail(@Param("configId") String configId);
+
+    /**
+     * 重置配置为默认值
+     * 
+     * @param configKey 配置键
+     * @param updatedBy 更新人
+     * @return 更新行数
+     */
+    int resetConfigToDefault(@Param("configKey") String configKey, 
+                            @Param("updatedBy") String updatedBy);
+
+    /**
+     * 批量重置配置为默认值
+     * 
+     * @param configKeys 配置键列表
+     * @param updatedBy 更新人
+     * @return 更新行数
+     */
+    int batchResetConfigsToDefault(@Param("configKeys") List<String> configKeys, 
+                                  @Param("updatedBy") String updatedBy);
+
+    /**
+     * 导出系统配置
+     * 
+     * @param configGroup 配置分组
+     * @return 配置列表
+     */
+    List<WfSystemConfig> exportConfigs(@Param("configGroup") String configGroup);
+
+    /**
+     * 查询配置变更历史
+     * 
+     * @param configKey 配置键
+     * @return 变更历史
+     */
+    List<java.util.Map<String, Object>> selectConfigHistory(@Param("configKey") String configKey);
 }

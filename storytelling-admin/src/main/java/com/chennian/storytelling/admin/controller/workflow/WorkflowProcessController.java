@@ -1,5 +1,6 @@
 package com.chennian.storytelling.admin.controller.workflow;
 
+import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.WorkflowService;
 import com.chennian.storytelling.bean.dto.WorkflowBatchOperationDTO;
 import com.chennian.storytelling.bean.dto.WorkflowHistoryDTO;
@@ -27,7 +28,7 @@ import java.util.HashMap;
  */
 @Api(tags = "工作流流程管理")
 @RestController
-@RequestMapping("/workflow/processes")
+@RequestMapping("/sys/workflow/processes")
 @RequiredArgsConstructor
 public class WorkflowProcessController {
 
@@ -38,7 +39,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("高级流程实例查询")
     @GetMapping("/search")
-    public Map<String, Object> searchProcessInstances(
+    public ServerResponseEntity<Map<String, Object>> searchProcessInstances(
             @RequestParam(value = "processDefinitionKey", required = false) String processDefinitionKey,
             @RequestParam(value = "businessKey", required = false) String businessKey,
             @RequestParam(value = "startUserId", required = false) String startUserId,
@@ -60,7 +61,7 @@ public class WorkflowProcessController {
         result.put("total", 0);
         result.put("processes", List.of());
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -68,7 +69,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("启动流程实例")
     @PostMapping("/start")
-    public Map<String, Object> startProcess(
+    public ServerResponseEntity<Map<String, Object>> startProcess(
             @RequestParam("processKey") String processKey,
             @RequestParam("businessKey") String businessKey,
             @RequestParam("businessType") String businessType,
@@ -86,7 +87,7 @@ public class WorkflowProcessController {
         result.put("processDefinitionId", processInstance.getProcessDefinitionId());
         result.put("businessKey", processInstance.getBusinessKey());
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -94,7 +95,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("获取流程实例详情")
     @GetMapping("/{processInstanceId}/detail")
-    public Map<String, Object> getProcessDetail(@PathVariable("processInstanceId") String processInstanceId) {
+    public ServerResponseEntity<Map<String, Object>> getProcessDetail(@PathVariable("processInstanceId") String processInstanceId) {
         Map<String, Object> detail = new HashMap<>();
         
         // 获取流程历史
@@ -109,7 +110,7 @@ public class WorkflowProcessController {
         // List<Task> currentTasks = workflowService.findTasksByProcessInstanceId(processInstanceId);
         // detail.put("currentTasks", currentTasks);
         
-        return detail;
+        return ServerResponseEntity.success(detail);
     }
     
     /**
@@ -135,7 +136,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("终止流程实例")
     @PostMapping("/{processInstanceId}/terminate")
-    public Map<String, Object> terminateProcess(
+    public ServerResponseEntity<Map<String, Object>> terminateProcess(
             @PathVariable("processInstanceId") String processInstanceId,
             @RequestParam("reason") String reason) {
         
@@ -147,7 +148,7 @@ public class WorkflowProcessController {
         result.put("processInstanceId", processInstanceId);
         result.put("reason", reason);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -155,7 +156,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("挂起流程实例")
     @PostMapping("/{processInstanceId}/suspend")
-    public Map<String, Object> suspendProcess(@PathVariable("processInstanceId") String processInstanceId) {
+    public ServerResponseEntity<Map<String, Object>> suspendProcess(@PathVariable("processInstanceId") String processInstanceId) {
         workflowService.suspendProcessInstance(processInstanceId);
         
         Map<String, Object> result = new HashMap<>();
@@ -163,7 +164,7 @@ public class WorkflowProcessController {
         result.put("message", "流程挂起成功");
         result.put("processInstanceId", processInstanceId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -171,7 +172,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("激活流程实例")
     @PostMapping("/{processInstanceId}/activate")
-    public Map<String, Object> activateProcess(@PathVariable("processInstanceId") String processInstanceId) {
+    public ServerResponseEntity<Map<String, Object>> activateProcess(@PathVariable("processInstanceId") String processInstanceId) {
         workflowService.activateProcessInstance(processInstanceId);
         
         Map<String, Object> result = new HashMap<>();
@@ -179,7 +180,7 @@ public class WorkflowProcessController {
         result.put("message", "流程激活成功");
         result.put("processInstanceId", processInstanceId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -187,9 +188,9 @@ public class WorkflowProcessController {
      */
     @ApiOperation("批量操作流程实例")
     @PostMapping("/batch")
-    public WorkflowBatchOperationDTO.BatchOperationResult batchOperateProcesses(
+    public ServerResponseEntity<WorkflowBatchOperationDTO.BatchOperationResult> batchOperateProcesses(
             @RequestBody WorkflowBatchOperationDTO batchOperation) {
-        return workflowService.batchOperateProcessInstances(batchOperation);
+        return ServerResponseEntity.success(workflowService.batchOperateProcessInstances(batchOperation));
     }
     
     /**
@@ -197,7 +198,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("获取流程变量")
     @GetMapping("/{processInstanceId}/variables")
-    public Map<String, Object> getProcessVariables(@PathVariable("processInstanceId") String processInstanceId) {
+    public ServerResponseEntity<Map<String, Object>> getProcessVariables(@PathVariable("processInstanceId") String processInstanceId) {
         Map<String, Object> result = new HashMap<>();
         
         // 这里可以获取所有流程变量
@@ -206,7 +207,7 @@ public class WorkflowProcessController {
         
         result.put("processInstanceId", processInstanceId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -214,7 +215,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("设置流程变量")
     @PostMapping("/{processInstanceId}/variables")
-    public Map<String, Object> setProcessVariables(
+    public ServerResponseEntity<Map<String, Object>> setProcessVariables(
             @PathVariable("processInstanceId") String processInstanceId,
             @RequestBody Map<String, Object> variables) {
         
@@ -229,7 +230,7 @@ public class WorkflowProcessController {
         result.put("processInstanceId", processInstanceId);
         result.put("variableCount", variables.size());
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     // 获取流程历史记录已移至 WorkflowController 统一管理
@@ -240,7 +241,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("流程跳转")
     @PostMapping("/{processInstanceId}/jump")
-    public Map<String, Object> jumpToActivity(
+    public ServerResponseEntity<Map<String, Object>> jumpToActivity(
             @PathVariable("processInstanceId") String processInstanceId,
             @RequestParam("targetActivityId") String targetActivityId,
             @RequestParam(value = "comment", required = false) String comment) {
@@ -255,7 +256,7 @@ public class WorkflowProcessController {
         result.put("processInstanceId", processInstanceId);
         result.put("targetActivityId", targetActivityId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -263,7 +264,7 @@ public class WorkflowProcessController {
      */
     @ApiOperation("流程回退")
     @PostMapping("/{processInstanceId}/rollback")
-    public Map<String, Object> rollbackProcess(
+    public ServerResponseEntity<Map<String, Object>> rollbackProcess(
             @PathVariable("processInstanceId") String processInstanceId,
             @RequestParam("targetActivityId") String targetActivityId,
             @RequestParam(value = "comment", required = false) String comment) {
@@ -277,6 +278,6 @@ public class WorkflowProcessController {
         result.put("processInstanceId", processInstanceId);
         result.put("targetActivityId", targetActivityId);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
 }

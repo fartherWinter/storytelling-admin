@@ -1,5 +1,6 @@
 package com.chennian.storytelling.admin.controller.workflow;
 
+import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.WorkflowService;
 
 import com.chennian.storytelling.bean.dto.TaskDTO;
@@ -23,7 +24,7 @@ import java.util.HashMap;
  */
 @Api(tags = "工作流监控管理")
 @RestController
-@RequestMapping("/workflow/monitor")
+@RequestMapping("/sys/workflow/monitor")
 @RequiredArgsConstructor
 public class WorkflowMonitorController {
 
@@ -34,7 +35,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("获取工作流仪表板数据")
     @GetMapping("/dashboard")
-    public Map<String, Object> getDashboardData(
+    public ServerResponseEntity<Map<String, Object>> getDashboardData(
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam(value = "endTime", required = false) 
@@ -52,7 +53,7 @@ public class WorkflowMonitorController {
         // 获取待办任务统计（可以扩展）
         // dashboard.put("pendingTasksStats", pendingTasksStats);
         
-        return dashboard;
+        return ServerResponseEntity.success(dashboard);
     }
     
     /**
@@ -60,7 +61,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("获取详细统计报告")
     @GetMapping("/report")
-    public WorkflowStatisticsDTO getDetailedReport(
+    public ServerResponseEntity<WorkflowStatisticsDTO> getDetailedReport(
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam(value = "endTime", required = false) 
@@ -75,7 +76,7 @@ public class WorkflowMonitorController {
             endTime = LocalDateTime.now();
         }
         
-        return workflowService.getWorkflowStatistics(startTime, endTime);
+        return ServerResponseEntity.success(workflowService.getWorkflowStatistics(startTime, endTime));
     }
     
     /**
@@ -83,7 +84,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("获取流程性能分析")
     @GetMapping("/performance")
-    public Map<String, Object> getPerformanceAnalysis(
+    public ServerResponseEntity<Map<String, Object>> getPerformanceAnalysis(
             @RequestParam(value = "processDefinitionKey", required = false) String processDefinitionKey,
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -99,7 +100,7 @@ public class WorkflowMonitorController {
         // 这里可以添加更多性能分析逻辑
         // 比如：平均处理时间、瓶颈分析、异常流程分析等
         
-        return performance;
+        return ServerResponseEntity.success(performance);
     }
     
     /**
@@ -107,7 +108,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("获取用户工作负载分析")
     @GetMapping("/workload")
-    public Map<String, Object> getUserWorkloadAnalysis(
+    public ServerResponseEntity<Map<String, Object>> getUserWorkloadAnalysis(
             @RequestParam(value = "assignee", required = false) String assignee,
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -126,7 +127,7 @@ public class WorkflowMonitorController {
         // 这里可以添加更多工作负载分析
         // 比如：任务分布、处理效率、超时任务等
         
-        return workload;
+        return ServerResponseEntity.success(workload);
     }
     
     /**
@@ -134,7 +135,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("获取异常流程监控")
     @GetMapping("/exceptions")
-    public Map<String, Object> getExceptionMonitoring(
+    public ServerResponseEntity<Map<String, Object>> getExceptionMonitoring(
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam(value = "endTime", required = false) 
@@ -153,7 +154,7 @@ public class WorkflowMonitorController {
         exceptions.put("timeoutTasks", timeoutTasks);
         exceptions.put("statistics", statistics);
         
-        return exceptions;
+        return ServerResponseEntity.success(exceptions);
     }
     
     /**
@@ -161,7 +162,7 @@ public class WorkflowMonitorController {
      */
     @ApiOperation("导出统计报告")
     @GetMapping("/export")
-    public Map<String, Object> exportReport(
+    public ServerResponseEntity<Map<String, Object>> exportReport(
             @RequestParam(value = "format", defaultValue = "json") String format,
             @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -179,6 +180,6 @@ public class WorkflowMonitorController {
         // 根据格式返回不同的数据结构
         // 这里可以扩展支持Excel、PDF等格式
         
-        return exportData;
+        return ServerResponseEntity.success(exportData);
     }
 }

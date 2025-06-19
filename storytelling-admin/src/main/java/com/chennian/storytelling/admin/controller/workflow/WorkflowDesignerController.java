@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author chennian
  */
 @RestController
-@RequestMapping("/workflow/designer")
+@RequestMapping("/sys/workflow/designer")
 public class WorkflowDesignerController {
 
     @Autowired

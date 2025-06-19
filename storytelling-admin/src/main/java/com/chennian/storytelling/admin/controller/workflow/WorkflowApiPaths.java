@@ -18,7 +18,7 @@ public final class WorkflowApiPaths {
 
     // 版本管理
     public static final String API_VERSION = "v1";
-    public static final String BASE = "/api/" + API_VERSION + "/workflow";
+    public static final String BASE = "/sys/" + API_VERSION + "/workflow";
 
     // 参数验证正则表达式
     private static final Pattern TASK_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9-_]{1,64}$");

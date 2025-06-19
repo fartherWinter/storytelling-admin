@@ -1,11 +1,15 @@
 package com.chennian.storytelling.admin.controller.workflow;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.chennian.storytelling.bean.dto.workflow.WorkflowTaskDTO;
+import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.WorkflowService;
-import com.chennian.storytelling.bean.dto.TaskDTO;
-import com.chennian.storytelling.bean.dto.WorkflowBatchOperationDTO;
+import com.chennian.storytelling.service.WorkflowTaskService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.flowable.task.api.Task;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +29,14 @@ import static com.chennian.storytelling.admin.controller.workflow.WorkflowRespon
  */
 @Api(tags = "工作流任务管理")
 @RestController
-@RequestMapping("/workflow/tasks")
+@Slf4j
+@RequestMapping("/sys/workflow/tasks")
 @RequiredArgsConstructor
 public class WorkflowTaskController {
 
     private final WorkflowService workflowService;
+
+    private final WorkflowTaskService workflowTaskService;
 
     /**
      * 高级任务查询
@@ -64,26 +71,64 @@ public class WorkflowTaskController {
     }
     
     /**
-     * 获取任务详情
+     * 获取任务列表
      */
-    @ApiOperation("获取任务详情")
-    @GetMapping("/{taskId}/detail")
-    public Map<String, Object> getTaskDetail(@PathVariable("taskId") String taskId) {
-        Map<String, Object> detail = new HashMap<>();
+    @ApiOperation(value = "获取任务列表", notes = "分页查询任务列表")
+    @GetMapping("/list")
+    public ServerResponseEntity<Map<String, Object>> getTaskList(
+            @ApiParam("页码") @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @ApiParam("每页大小") @RequestParam(value = "size", defaultValue = "20") Integer size,
+            @ApiParam("任务状态") @RequestParam(value = "status", required = false) String status,
+            @ApiParam("处理人") @RequestParam(value = "assignee", required = false) String assignee) {
         
-        // 这里可以获取任务的详细信息
-        // 包括任务基本信息、流程变量、历史记录等
-        
-        detail.put("taskId", taskId);
-        // detail.put("taskInfo", taskInfo);
-        // detail.put("processVariables", processVariables);
-        // detail.put("comments", comments);
-        
-        return detail;
+        try {
+            // 构建查询条件
+            WorkflowTaskDTO.TaskQueryDTO queryDTO = new WorkflowTaskDTO.TaskQueryDTO();
+            queryDTO.setPage(page);
+            queryDTO.setSize(size);
+            queryDTO.setStatus(status);
+            queryDTO.setAssignee(assignee);
+            
+            // 查询任务列表
+            IPage<WorkflowTaskDTO.TaskInfoDTO> result = workflowTaskService.getTaskList(queryDTO);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", result.getRecords());
+            response.put("total", result.getTotal());
+            response.put("page", page);
+            response.put("size", size);
+            
+            return ServerResponseEntity.success(response);
+            
+        } catch (Exception e) {
+            log.error("获取任务列表失败", e);
+            return ServerResponseEntity.showFailMsg("获取任务列表失败: " + e.getMessage());
+        }
     }
     
-    // 批量任务操作已移至 WorkflowController 统一管理
-    // 路径: /workflow/tasks/batch
+    /**
+     * 获取任务详情
+     */
+    @ApiOperation(value = "获取任务详情", notes = "根据任务ID获取任务详细信息")
+    @GetMapping("/{taskId}")
+    public ServerResponseEntity<WorkflowTaskDTO.TaskDetailDTO> getTaskDetail(
+            @ApiParam("任务ID") @PathVariable String taskId) {
+        
+        try {
+            // 获取任务详情
+            WorkflowTaskDTO.TaskDetailDTO taskDetail = workflowTaskService.getTaskDetail(taskId);
+            
+            if (taskDetail == null) {
+                return ServerResponseEntity.showFailMsg("任务不存在");
+            }
+            
+            return ServerResponseEntity.success(taskDetail);
+            
+        } catch (Exception e) {
+            log.error("获取任务详情失败: taskId={}", taskId, e);
+            return ServerResponseEntity.showFailMsg("获取任务详情失败: " + e.getMessage());
+        }
+    }
 
     
     /**
@@ -91,23 +136,21 @@ public class WorkflowTaskController {
      */
     @ApiOperation("任务提醒设置")
     @PostMapping("/{taskId}/reminder")
-    public Map<String, Object> setTaskReminder(
+    public ServerResponseEntity<Map<String, Object>> setTaskReminder(
             @PathVariable("taskId") String taskId,
             @RequestParam("reminderTime") 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime reminderTime,
             @RequestParam(value = "message", required = false) String message) {
         
-        Map<String, Object> result = new HashMap<>();
-        
         // 这里可以实现任务提醒功能
         // 比如设置定时任务、发送通知等
         
-        result.put("success", true);
-        result.put("message", "任务提醒设置成功");
+        Map<String, Object> result = new HashMap<>();
         result.put("taskId", taskId);
         result.put("reminderTime", reminderTime);
+        result.put("message", message);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
     
     /**
@@ -115,20 +158,17 @@ public class WorkflowTaskController {
      */
     @ApiOperation("任务优先级设置")
     @PostMapping("/{taskId}/priority")
-    public Map<String, Object> setTaskPriority(
+    public ServerResponseEntity<Map<String, Object>> setTaskPriority(
             @PathVariable("taskId") String taskId,
             @RequestParam("priority") int priority) {
         
-        Map<String, Object> result = new HashMap<>();
-        
         // 这里可以实现任务优先级设置
-        // taskService.setPriority(taskId, priority);
+        workflowTaskService.setPriority(taskId, priority);
         
-        result.put("success", true);
-        result.put("message", "任务优先级设置成功");
+        Map<String, Object> result = new HashMap<>();
         result.put("taskId", taskId);
         result.put("priority", priority);
         
-        return result;
+        return ServerResponseEntity.success(result);
     }
 }

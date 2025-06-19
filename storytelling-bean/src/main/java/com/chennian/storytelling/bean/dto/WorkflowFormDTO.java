@@ -5,6 +5,8 @@ import io.swagger.annotations.ApiModelProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import jakarta.validation.constraints.NotNull;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +41,33 @@ public class WorkflowFormDTO {
         
         @ApiModelProperty("版本号")
         private Integer version;
+        
+        @ApiModelProperty("表单配置")
+        private String formConfig;
+        
+        @ApiModelProperty("表单字段JSON")
+        private String formFields;
+        
+        @ApiModelProperty("表单布局JSON")
+        private String formLayout;
+        
+        @ApiModelProperty("表单规则JSON")
+        private String formRules;
+        
+        @ApiModelProperty("是否启用")
+        private Boolean enabled;
+        
+        @ApiModelProperty("排序号")
+        private Integer sortOrder;
+        
+        @ApiModelProperty("备注")
+        private String remark;
+        
+        @ApiModelProperty("创建时间")
+        private LocalDateTime createdTime;
+        
+        @ApiModelProperty("更新时间")
+        private LocalDateTime updatedTime;
         
         @ApiModelProperty("状态")
         private String status; // active, inactive, draft
@@ -249,6 +278,39 @@ public class WorkflowFormDTO {
         
         @ApiModelProperty("模板分类")
         private String category;
+        
+        @ApiModelProperty("关联流程键")
+        private String processKey;
+        
+        @ApiModelProperty("版本号")
+        private Integer version;
+        
+        @ApiModelProperty("表单配置")
+        private String formConfig;
+        
+        @ApiModelProperty("表单字段")
+        private String formFields;
+        
+        @ApiModelProperty("表单布局")
+        private String formLayout;
+        
+        @ApiModelProperty("表单规则")
+        private String formRules;
+        
+        @ApiModelProperty("是否启用")
+        private Integer enabled;
+        
+        @ApiModelProperty("排序号")
+        private Integer sortOrder;
+        
+        @ApiModelProperty("备注")
+        private String remark;
+        
+        @ApiModelProperty("创建时间")
+        private LocalDateTime createdTime;
+        
+        @ApiModelProperty("更新时间")
+        private LocalDateTime updatedTime;
         
         @ApiModelProperty("模板内容")
         @NotNull

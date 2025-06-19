@@ -94,9 +94,82 @@ public interface WfInstanceMapper extends BaseMapper<WfInstance> {
     /**
      * 查询已完成的实例列表
      * 
+     * @param processDefinitionId 流程定义ID
+     * @param processDefinitionKey 流程定义键
+     * @param businessKey 业务键
+     * @param startUserId 发起人ID
+     * @param startDeptId 发起部门ID
+     * @param tenantId 租户ID
+     * @param startTime 开始时间
+     * @param endTime 结束时间
      * @return 实例列表
      */
-    List<WfInstance> selectCompletedInstances();
+    List<WfInstance> selectCompletedInstances(@Param("processDefinitionId") String processDefinitionId,
+                                             @Param("processDefinitionKey") String processDefinitionKey,
+                                             @Param("businessKey") String businessKey,
+                                             @Param("startUserId") String startUserId,
+                                             @Param("startDeptId") String startDeptId,
+                                             @Param("tenantId") String tenantId,
+                                             @Param("startTime") java.util.Date startTime,
+                                             @Param("endTime") java.util.Date endTime);
+
+    /**
+     * 查询实例详情
+     * 
+     * @param instanceId 实例ID
+     * @return 工作流实例
+     */
+    WfInstance selectInstanceDetail(@Param("instanceId") String instanceId);
+
+    /**
+     * 根据实例ID列表批量查询实例
+     * 
+     * @param instanceIds 实例ID列表
+     * @return 实例列表
+     */
+    List<WfInstance> selectByInstanceIds(@Param("instanceIds") List<String> instanceIds);
+
+    /**
+     * 查询实例统计信息
+     * 
+     * @param processDefinitionKey 流程定义键
+     * @param startTime 开始时间
+     * @param endTime 结束时间
+     * @return 统计信息
+     */
+    List<java.util.Map<String, Object>> selectInstanceStatistics(@Param("processDefinitionKey") String processDefinitionKey,
+                                                                 @Param("startTime") java.util.Date startTime,
+                                                                 @Param("endTime") java.util.Date endTime);
+
+    /**
+     * 查询超时实例
+     * 
+     * @param timeoutMinutes 超时分钟数
+     * @return 实例列表
+     */
+    List<WfInstance> selectTimeoutInstances(@Param("timeoutMinutes") Integer timeoutMinutes);
+
+    /**
+     * 更新实例状态
+     * 
+     * @param instanceId 实例ID
+     * @param status 状态
+     * @param updatedBy 更新人
+     * @return 更新行数
+     */
+    int updateInstanceStatus(@Param("instanceId") String instanceId, 
+                            @Param("status") String status, 
+                            @Param("updatedBy") String updatedBy);
+
+    /**
+     * 查询用户参与的实例
+     * 
+     * @param userId 用户ID
+     * @param status 实例状态
+     * @return 实例列表
+     */
+    List<WfInstance> selectUserInstances(@Param("userId") String userId, 
+                                        @Param("status") String status);
 
     /**
      * 查询已挂起的实例列表

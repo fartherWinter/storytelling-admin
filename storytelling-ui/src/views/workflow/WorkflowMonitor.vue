@@ -213,7 +213,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Monitor, 
@@ -223,6 +223,20 @@ import {
   Search, 
   Refresh 
 } from '@element-plus/icons-vue'
+import { 
+  getWorkflowOverview,
+  getInstanceTableData,
+  getProcessHistory,
+  getDashboardData,
+  getDetailedReport,
+  getProcessPerformance,
+  getProcessInstanceList,
+  getProcessInstanceDetail,
+  deleteProcessInstance,
+  suspendProcessInstance,
+  activateProcessInstance,
+  getProcessDiagram
+} from '@/api/workflow'
 
 const searchText = ref('')
 const statusFilter = ref('')
@@ -355,13 +369,44 @@ const getStatusType = (status) => {
   return typeMap[status] || 'info'
 }
 
-const refreshData = () => {
+// 加载流程数据
+const loadProcessData = async () => {
+  try {
+    // 获取流程实例数据
+    const response = await getProcessInstanceList({
+      page: 1,
+      size: 100,
+      status: statusFilter.value || undefined
+    })
+    
+    if (response.code === '200' && response.data) {
+      processes.value = response.data.records || response.data
+    }
+  } catch (error) {
+    console.error('加载流程数据失败:', error)
+    // 如果API调用失败，保持使用模拟数据
+    ElMessage.warning('无法连接到后端服务，显示模拟数据')
+  }
+}
+
+// 刷新数据
+const refreshData = async () => {
+  await loadProcessData()
   ElMessage.success('数据已刷新')
 }
 
-const viewProcess = (process) => {
-  selectedProcess.value = process
-  detailVisible.value = true
+const viewProcess = async (process) => {
+  try {
+    const response = await getProcessInstanceDetail(process.id)
+    selectedProcess.value = response.data || process
+    detailVisible.value = true
+  } catch (error) {
+    console.error('获取流程详情失败:', error)
+    ElMessage.error('获取流程详情失败: ' + (error.message || '未知错误'))
+    // 如果获取详情失败，使用列表中的基本信息
+    selectedProcess.value = process
+    detailVisible.value = true
+  }
 }
 
 const pauseProcess = async (process) => {
@@ -375,31 +420,60 @@ const pauseProcess = async (process) => {
         type: 'warning'
       }
     )
+    
+    await suspendProcessInstance(process.id)
     ElMessage.success('流程已暂停')
-  } catch {
-    ElMessage.info('已取消暂停')
+    await loadProcessData() // 刷新列表
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('暂停流程失败:', error)
+      ElMessage.error('暂停流程失败: ' + (error.message || '未知错误'))
+    } else {
+      ElMessage.info('已取消暂停')
+    }
   }
 }
 
 const terminateProcess = async (process) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要终止流程 "${process.name}" 吗？此操作不可恢复！`,
+    const { value: reason } = await ElMessageBox.prompt(
+      '请输入终止原因',
       '确认终止',
       {
-        confirmButtonText: '确定',
+        confirmButtonText: '终止',
         cancelButtonText: '取消',
-        type: 'warning'
+        inputType: 'textarea',
+        inputPlaceholder: '请输入终止原因',
+        inputValidator: (value) => {
+          if (!value || value.trim() === '') {
+            return '请输入终止原因'
+          }
+          return true
+        }
       }
     )
+    
+    await deleteProcessInstance(process.id, reason)
     ElMessage.success('流程已终止')
-  } catch {
-    ElMessage.info('已取消终止')
+    await loadProcessData() // 刷新列表
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('终止流程失败:', error)
+      ElMessage.error('终止流程失败: ' + (error.message || '未知错误'))
+    } else {
+      ElMessage.info('已取消终止')
+    }
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   // 初始化数据
+  await loadProcessData()
+})
+
+// 监听状态筛选变化
+watch(statusFilter, () => {
+  loadProcessData()
 })
 </script>
 
