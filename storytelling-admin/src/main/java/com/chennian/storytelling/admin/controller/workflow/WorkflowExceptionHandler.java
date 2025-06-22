@@ -1,14 +1,14 @@
 package com.chennian.storytelling.admin.controller.workflow;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 
-import java.util.Map;
+import com.chennian.storytelling.common.response.ServerResponseEntity;
+import com.chennian.storytelling.common.response.ResponseEnum;
 import java.util.stream.Collectors;
 
 /**
@@ -25,16 +25,16 @@ public class WorkflowExceptionHandler {
      * 处理工作流业务异常
      */
     @ExceptionHandler(WorkflowException.class)
-    public ResponseEntity<Map<String, Object>> handleWorkflowException(WorkflowException e) {
-        log.error("工作流业务异常: {}", e.getMessage(), e);
-        return ResponseEntity.ok(WorkflowResponse.error(e.getMessage()));
+    public ServerResponseEntity<Void> handleWorkflowException(WorkflowException e) {
+        log.error("工作流异常: {}", e.getMessage(), e);
+        return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
      * 处理参数验证异常
      */
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
-    public ResponseEntity<Map<String, Object>> handleValidationException(Exception e) {
+    public ServerResponseEntity<Void> handleValidationException(Exception e) {
         String errorMessage;
         
         if (e instanceof MethodArgumentNotValidException) {
@@ -52,43 +52,43 @@ public class WorkflowExceptionHandler {
         }
         
         log.warn("参数验证异常: {}", errorMessage);
-        return ResponseEntity.ok(WorkflowResponse.error("参数验证失败: " + errorMessage));
+        return ServerResponseEntity.fail(ResponseEnum.METHOD_ARGUMENT_NOT_VALID);
     }
 
     /**
      * 处理非法参数异常
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
-        log.warn("非法参数异常: {}", e.getMessage());
-        return ResponseEntity.ok(WorkflowResponse.error("参数错误: " + e.getMessage()));
+    public ServerResponseEntity<Void> handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("参数异常: {}", e.getMessage());
+        return ServerResponseEntity.fail(ResponseEnum.METHOD_ARGUMENT_NOT_VALID);
     }
 
     /**
      * 处理空指针异常
      */
     @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<Map<String, Object>> handleNullPointerException(NullPointerException e) {
+    public ServerResponseEntity<Void> handleNullPointerException(NullPointerException e) {
         log.error("空指针异常", e);
-        return ResponseEntity.ok(WorkflowResponse.error("系统内部错误，请联系管理员"));
+        return ServerResponseEntity.fail(ResponseEnum.EXCEPTION);
     }
 
     /**
      * 处理运行时异常
      */
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e) {
+    public ServerResponseEntity<Void> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常: {}", e.getMessage(), e);
-        return ResponseEntity.ok(WorkflowResponse.error("操作失败: " + e.getMessage()));
+        return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
      * 处理通用异常
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(Exception e) {
+    public ServerResponseEntity<Void> handleException(Exception e) {
         log.error("系统异常: {}", e.getMessage(), e);
-        return ResponseEntity.ok(WorkflowResponse.error("系统异常，请联系管理员"));
+        return ServerResponseEntity.fail(ResponseEnum.EXCEPTION);
     }
 
     /**

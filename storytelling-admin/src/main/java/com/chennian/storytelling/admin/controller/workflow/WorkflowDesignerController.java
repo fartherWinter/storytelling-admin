@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chennian.storytelling.service.WorkflowModelService;
+import com.chennian.storytelling.common.response.ServerResponseEntity;
+import com.chennian.storytelling.common.response.ResponseEnum;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -40,14 +42,14 @@ public class WorkflowDesignerController {
      * 获取流程设计器编辑器数据
      */
     @GetMapping("/editor/stencilset")
-    public JsonNode getStencilset() {
+    public ServerResponseEntity<JsonNode> getStencilset() {
         try {
             // 返回流程设计器所需的模型集合定义
             ObjectNode stencilNode = objectMapper.createObjectNode();
             stencilNode.put("namespace", "http://b3mn.org/stencilset/bpmn2.0#");
-            return stencilNode;
+            return ServerResponseEntity.success(stencilNode);
         } catch (Exception e) {
-            throw new RuntimeException("获取流程设计器模型集合失败", e);
+            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -130,24 +132,20 @@ public class WorkflowDesignerController {
      * 将模型转换为可部署的流程定义
      */
     @PostMapping("/model/{modelId}/convert-to-xml")
-    public Map<String, Object> convertToXml(@PathVariable String modelId) {
-        Map<String, Object> result = new HashMap<>();
+    public ServerResponseEntity<Map<String, Object>> convertToXml(@PathVariable String modelId) {
         try {
             // 获取模型的XML内容
             String xml = workflowModelService.getModelXml(modelId);
             if (xml == null) {
-                result.put("success", false);
-                result.put("message", "模型数据为空，无法转换");
-                return result;
+                return ServerResponseEntity.fail(ResponseEnum.PROCESS_INSTANCE_NOT_FOUND.getCode(), "模型数据为空，无法转换");
+
             }
             
-            result.put("success", true);
+            Map<String, Object> result = new HashMap<>();
             result.put("xml", xml);
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", "转换失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_MODEL_CONVERT_FAILED);
         }
     }
     
@@ -155,19 +153,16 @@ public class WorkflowDesignerController {
      * 部署模型为流程定义
      */
     @PostMapping("/model/{modelId}/deploy")
-    public Map<String, Object> deployModel(@PathVariable String modelId) {
-        Map<String, Object> result = new HashMap<>();
+    public ServerResponseEntity<Map<String, Object>> deployModel(@PathVariable String modelId) {
         try {
             // 部署模型
             String deploymentId = workflowModelService.deployModel(modelId);
             
-            result.put("success", true);
+            Map<String, Object> result = new HashMap<>();
             result.put("deploymentId", deploymentId);
-            return result;
+            return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            result.put("success", false);
-            result.put("message", "部署失败: " + e.getMessage());
-            return result;
+            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_DEPLOY_FAILED);
         }
     }
 }
