@@ -66,6 +66,14 @@ public interface SysUserRoleMapper extends BaseMapper<SysUserRole> {
      * 获取角色权限信息
      */
     List<String> getRoleList(@Param("userId") Long userId);
+
+    /**
+     * 批量新增用户角色关联信息
+     *
+     * @param userRoleList 用户角色关联列表
+     * @return 结果
+     */
+    public int batchInsertUserRole(List<SysUserRole> userRoleList);
 }
 
 

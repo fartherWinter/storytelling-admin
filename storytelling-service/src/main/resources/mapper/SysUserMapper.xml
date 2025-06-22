@@ -88,18 +88,18 @@
                r.data_scope,
                r.status as role_status,
                s.post_id
-        from th_sys_user u
-                 left join th_sys_dept d on u.dept_id = d.dept_id
-                 left join th_sys_user_role ur on u.user_id = ur.user_id
-                 left join th_sys_role r on r.role_id = ur.role_id
-                 left join th_sys_user_post s on s.user_id = u.user_id
+        from sys_user u
+                 left join sys_dept d on u.dept_id = d.dept_id
+                 left join sys_user_role ur on u.user_id = ur.user_id
+                 left join sys_role r on r.role_id = ur.role_id
+                 left join sys_user_post s on s.user_id = u.user_id
     </sql>
 
     <select id="selectUserList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
         select u.user_id, u.dept_id,  u.user_name, u.email, u.avatar, u.phone_number, u.sex, u.status,
         u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from
-        th_sys_user u
-        left join th_sys_dept d on u.dept_id = d.dept_id
+        sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
         where u.del_flag = '0'
         <if test="userId != null and userId != 0">
             AND u.user_id = #{userId}
@@ -120,7 +120,7 @@
             AND date_format(u.create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
         </if>
         <if test="deptId != null and deptId != 0">
-            AND (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM th_sys_dept t WHERE
+            AND (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE
             find_in_set(#{deptId}, ancestors) ))
         </if>
         <!-- 数据范围过滤 -->
@@ -129,10 +129,10 @@
 
     <select id="selectAllocatedList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
         select distinct u.user_id, u.dept_id, u.user_name,  u.email, u.phone_number, u.status, u.create_time
-        from th_sys_user u
-        left join th_sys_dept d on u.dept_id = d.dept_id
-        left join th_sys_user_role ur on u.user_id = ur.user_id
-        left join th_sys_role r on r.role_id = ur.role_id
+        from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        left join sys_user_role ur on u.user_id = ur.user_id
+        left join sys_role r on r.role_id = ur.role_id
         where u.del_flag = '0' and r.role_id = #{roleId}
         <if test="userName != null and userName != ''">
             AND u.user_name like concat('%', #{userName}, '%')
@@ -146,12 +146,12 @@
 
     <select id="selectUnallocatedList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
         select distinct u.user_id, u.dept_id, u.user_name,  u.email, u.phone_number, u.status, u.create_time
-        from th_sys_user u
-        left join th_sys_dept d on u.dept_id = d.dept_id
-        left join th_sys_user_role ur on u.user_id = ur.user_id
-        left join th_sys_role r on r.role_id = ur.role_id
+        from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        left join sys_user_role ur on u.user_id = ur.user_id
+        left join sys_role r on r.role_id = ur.role_id
         where u.del_flag = '0' and (r.role_id != #{roleId} or r.role_id IS NULL)
-        and u.user_id not in (select u.user_id from th_sys_user u inner join th_sys_user_role ur on u.user_id =
+        and u.user_id not in (select u.user_id from sys_user u inner join sys_user_role ur on u.user_id =
         ur.user_id and ur.role_id = #{roleId})
         <if test="userName != null and userName != ''">
             AND u.user_name like concat('%', #{userName}, '%')
@@ -175,28 +175,28 @@
 
     <select id="checkUserNameUnique" parameterType="string" resultMap="SysUserResult">
         select user_id, user_name
-        from th_sys_user
+        from sys_user
         where user_name = #{userName}
           and del_flag = '0' limit 1
     </select>
 
     <select id="checkPhoneUnique" parameterType="string" resultMap="SysUserResult">
         select user_id, phone_number
-        from th_sys_user
+        from sys_user
         where phone_number = #{phoneNumber}
           and del_flag = '0' limit 1
     </select>
 
     <select id="checkEmailUnique" parameterType="string" resultMap="SysUserResult">
         select user_id, email
-        from th_sys_user
+        from sys_user
         where email = #{email}
           and del_flag = '0' limit 1
     </select>
 
     <insert id="insertUser" parameterType="com.chennian.storytelling.bean.model.SysUser" useGeneratedKeys="true"
             keyProperty="userId">
-        insert into th_sys_user(
+        insert into sys_user(
         <if test="userId != null and userId != 0">user_id,</if>
         <if test="deptId != null and deptId != 0">dept_id,</if>
         <if test="userName != null and userName != ''">user_name,</if>
@@ -226,7 +226,7 @@
     </insert>
 
     <update id="updateUser" parameterType="com.chennian.storytelling.bean.model.SysUser">
-        update th_sys_user
+        update sys_user
         <set>
             <if test="deptId != null and deptId != 0">dept_id = #{deptId},</if>
             <if test="userName != null and userName != ''">user_name = #{userName},</if>
@@ -247,25 +247,25 @@
 
 
     <update id="updateUserAvatar" parameterType="com.chennian.storytelling.bean.model.SysUser">
-        update th_sys_user
+        update sys_user
         set avatar = #{avatar}
         where user_name = #{userName}
     </update>
 
     <update id="resetUserPwd" parameterType="com.chennian.storytelling.bean.model.SysUser">
-        update th_sys_user
+        update sys_user
         set password = #{password}
         where user_name = #{userName}
     </update>
 
     <delete id="deleteUserById" parameterType="long">
-        update th_sys_user
+        update sys_user
         set del_flag = '1'
         where user_id = #{userId}
     </delete>
 
     <delete id="deleteUserByIds" parameterType="long">
-        update th_sys_user set del_flag = '1' where user_id in
+        update sys_user set del_flag = '1' where user_id in
         <foreach collection="array" item="userId" open="(" separator="," close=")">
             #{userId}
         </foreach>
@@ -273,15 +273,15 @@
 
     <select id="selectUserByName" resultType="com.chennian.storytelling.bean.model.SysUser">
         select *
-        from th_sys_user
+        from sys_user
         where user_name = #{username} and del_flag = '0'
     </select>
     <select id="findByPage" resultType="com.chennian.storytelling.bean.model.SysUser">
         select u.user_id, u.dept_id,  u.user_name, u.email, u.avatar, u.phone_number, u.sex, u.status,
         u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from
-        th_sys_user
+        sys_user
         u
-        left join th_sys_dept d on u.dept_id = d.dept_id
+        left join sys_dept d on u.dept_id = d.dept_id
         where u.del_flag = '0'
         <if test="params.userName != null and params.userName != ''">
             AND u.user_name like concat('%', #{params.userName}, '%')
@@ -310,8 +310,8 @@
                a.dept_id,
                b.dept_name,
                a.password
-        from th_sys_user a
-                 left join th_sys_dept b on a.dept_id = b.dept_id
+        from sys_user a
+                 left join sys_dept b on a.dept_id = b.dept_id
         where a.user_id = #{userId}
     </select>
 </mapper>

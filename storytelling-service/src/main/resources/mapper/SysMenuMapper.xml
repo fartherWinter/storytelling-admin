@@ -50,7 +50,7 @@
                ifnull(perms, '') as perms,
                icon,
                create_time
-        from th_sys_menu
+        from sys_menu
     </sql>
 
     <select id="selectMenuList" parameterType="com.chennian.storytelling.bean.model.SysMenu" resultMap="SysMenuResult">
@@ -72,10 +72,10 @@
     <select id="selectMenuListByUserId" parameterType="com.chennian.storytelling.bean.model.SysMenu" resultMap="SysMenuResult">
         select distinct m.menu_id, m.parent_id, m.menu_name, m.path, m.component, m.`query`, m.visible, m.status,
         ifnull(m.perms,'') as perms, m.is_frame, m.is_cache, m.menu_type, m.icon, m.order_num, m.create_time
-        from th_sys_menu m
-        left join th_sys_role_menu rm on m.menu_id = rm.menu_id
-        left join th_sys_user_role ur on rm.role_id = ur.role_id
-        left join th_sys_role ro on ur.role_id = ro.role_id
+        from sys_menu m
+        left joinsys_role_menu rm on m.menu_id = rm.menu_id
+        left joinsys_user_role ur on rm.role_id = ur.role_id
+        left joinsys_role ro on ur.role_id = ro.role_id
         where ur.user_id = #{params.userId}
         <if test="menuName != null and menuName != ''">
             AND m.menu_name like concat('%', #{menuName}, '%')
@@ -105,11 +105,11 @@
                         m.icon,
                         m.order_num,
                         m.create_time
-        from th_sys_menu m
-                 left join th_sys_role_menu rm on m.menu_id = rm.menu_id
-                 left join th_sys_user_role ur on rm.role_id = ur.role_id
-                 left join th_sys_role ro on ur.role_id = ro.role_id
-                 left join th_sys_user u on ur.user_id = u.user_id
+        from sys_menu m
+                 left joinsys_role_menu rm on m.menu_id = rm.menu_id
+                 left joinsys_user_role ur on rm.role_id = ur.role_id
+                 left joinsys_role ro on ur.role_id = ro.role_id
+                 left joinsys_user u on ur.user_id = u.user_id
         where u.user_id = #{userId}
           and m.menu_type in ('M', 'C')
           and m.status = 1
@@ -133,8 +133,8 @@
                         m.icon,
                         m.order_num,
                         m.create_time
-        from th_sys_menu m
-                 left join th_sys_partition_menu tspm on m.menu_id = tspm.menu_id
+        from sys_menu m
+                 left joinsys_partition_menu tspm on m.menu_id = tspm.menu_id
         where tspm.partition_id = #{partitionId}
           and m.menu_type in ('M', 'C')
           and m.status = 1
@@ -143,11 +143,11 @@
 
     <select id="selectMenuListByRoleId" parameterType="com.chennian.storytelling.bean.model.SysMenu" resultMap="SysMenuResult">
         select m.menu_id, m.parent_id
-        from th_sys_menu m
-        left join th_sys_role_menu rm on m.menu_id = rm.menu_id
+        from sys_menu m
+        left joinsys_role_menu rm on m.menu_id = rm.menu_id
         where rm.role_id = #{roleId}
         <!--        <if test="menuCheckStrictly">-->
-        <!--            and m.menu_id not in (select m.parent_id from th_sys_menu m inner join th_sys_role_menu rm on m.menu_id =-->
+        <!--            and m.menu_id not in (select m.parent_id from sys_menu m inner joinsys_role_menu rm on m.menu_id =-->
         <!--            rm.menu_id and rm.role_id = #{roleId})-->
         <!--        </if>-->
         order by m.parent_id, m.order_num
@@ -155,17 +155,17 @@
 
     <select id="selectMenuPerms" resultType="String">
         select distinct m.perms
-        from th_sys_menu m
-                 left join th_sys_role_menu rm on m.menu_id = rm.menu_id
-                 left join th_sys_user_role ur on rm.role_id = ur.role_id
+        from sys_menu m
+                 left joinsys_role_menu rm on m.menu_id = rm.menu_id
+                 left joinsys_user_role ur on rm.role_id = ur.role_id
     </select>
 
     <select id="selectMenuPermsByUserId" parameterType="Long" resultType="String">
         select distinct m.perms
-        from th_sys_menu m
-                 left join th_sys_role_menu rm on m.menu_id = rm.menu_id
-                 left join th_sys_user_role ur on rm.role_id = ur.role_id
-                 left join th_sys_role r on r.role_id = ur.role_id
+        from sys_menu m
+                 left joinsys_role_menu rm on m.menu_id = rm.menu_id
+                 left joinsys_user_role ur on rm.role_id = ur.role_id
+                 left joinsys_role r on r.role_id = ur.role_id
         where m.status = '0'
           and r.status = '0'
           and ur.user_id = #{userId}
@@ -173,8 +173,8 @@
 
     <select id="selectMenuPermsByRoleId" parameterType="Long" resultType="String">
         select distinct m.perms
-        from th_sys_menu m
-                 left join th_sys_role_menu rm on m.menu_id = rm.menu_id
+        from sys_menu m
+                 left joinsys_role_menu rm on m.menu_id = rm.menu_id
         where m.status = '1'
           and rm.role_id = #{roleId}
     </select>
@@ -186,7 +186,7 @@
 
     <select id="hasChildByMenuId" resultType="Integer">
         select count(1)
-        from th_sys_menu
+        from sys_menu
         where parent_id = #{menuId}
     </select>
 
@@ -196,10 +196,10 @@
     </select>
     <select id="getPermissionList" resultType="java.lang.String">
         select d.perms
-        from th_sys_user a
-                 left join th_sys_user_role b on a.user_id = b.user_id
-                 left join th_sys_role_menu c on b.role_id = c.role_id
-                 left join th_sys_menu d on c.menu_id = d.menu_id;
+        from sys_user a
+                 left joinsys_user_role b on a.user_id = b.user_id
+                 left joinsys_role_menu c on b.role_id = c.role_id
+                 left joinsys_menu d on c.menu_id = d.menu_id;
     </select>
     <select id="selectMenuTreeAll" resultType="com.chennian.storytelling.bean.model.SysMenu">
         select distinct m.menu_id,
@@ -217,14 +217,14 @@
                         m.icon,
                         m.order_num,
                         m.create_time
-        from th_sys_menu m
+        from sys_menu m
         where m.menu_type in ('M', 'C')
           and m.status = 1
         order by m.parent_id, m.order_num
     </select>
 
     <update id="updateMenu" parameterType="com.chennian.storytelling.bean.model.SysMenu">
-        update th_sys_menu
+        updatesys_menu
         <set>
             <if test="menuName != null and menuName != ''">menu_name = #{menuName},</if>
             <if test="parentId != null">parent_id = #{parentId},</if>
@@ -247,7 +247,7 @@
     </update>
 
     <insert id="insertMenu" parameterType="com.chennian.storytelling.bean.model.SysMenu">
-        insert into th_sys_menu(
+        insert intosys_menu(
         <if test="menuId != null and menuId != 0">menu_id,</if>
         <if test="parentId != null and parentId != 0">parent_id,</if>
         <if test="menuName != null and menuName != ''">menu_name,</if>
@@ -288,7 +288,7 @@
 
     <delete id="deleteMenuById" parameterType="Long">
         delete
-        from th_sys_menu
+        from sys_menu
         where menu_id = #{menuId}
     </delete>
 

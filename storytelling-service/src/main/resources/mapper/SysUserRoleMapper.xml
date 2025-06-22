@@ -14,30 +14,30 @@
     </sql>
     <delete id="deleteUserRoleByUserId" parameterType="long">
         delete
-        from th_sys_user_role
+        from sys_user_role
         where user_id = #{userId}
     </delete>
 
     <select id="countUserRoleByRoleId" resultType="integer">
         select count(1)
-        from th_sys_user_role
+        from sys_user_role
         where role_id = #{roleId}
     </select>
     <select id="getRoleList" resultType="java.lang.String">
         select b.role_key
-        from th_sys_user_role a
-                 left join th_sys_role b on a.role_id = b.role_id where a.user_id=#{userId};
+        from sys_user_role a
+                 left joinsys_role b on a.role_id = b.role_id where a.user_id=#{userId};
     </select>
 
     <delete id="deleteUserRole" parameterType="long">
-        delete from th_sys_user_role where user_id in
+        delete from sys_user_role where user_id in
         <foreach collection="array" item="userId" open="(" separator="," close=")">
             #{userId}
         </foreach>
     </delete>
 
     <insert id="batchUserRole">
-        insert into th_sys_user_role(user_id, role_id) values
+        insert intosys_user_role(user_id, role_id) values
         <foreach item="item" index="index" collection="list" separator=",">
             (#{item.userId},#{item.roleId})
         </foreach>
@@ -45,13 +45,13 @@
 
     <delete id="deleteUserRoleInfo" parameterType="com.chennian.storytelling.bean.model.SysUserRole">
         delete
-        from th_sys_user_role
+        from sys_user_role
         where user_id = #{userId}
           and role_id = #{roleId}
     </delete>
 
     <delete id="deleteUserRoleInfos">
-        delete from th_sys_user_role where role_id=#{roleId} and user_id in
+        delete from sys_user_role where role_id=#{roleId} and user_id in
         <foreach collection="userIds" item="userId" open="(" separator="," close=")">
             #{userId}
         </foreach>

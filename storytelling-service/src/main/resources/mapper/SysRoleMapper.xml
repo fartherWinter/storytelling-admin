@@ -37,10 +37,10 @@
                         r.del_flag,
                         r.create_time,
                         r.remark
-        from th_sys_role r
-                 left join th_sys_user_role ur on ur.role_id = r.role_id
-                 left join th_sys_user u on u.user_id = ur.user_id
-                 left join th_sys_dept d on u.dept_id = d.dept_id
+        from sys_role r
+                 left joinsys_user_role ur on ur.role_id = r.role_id
+                 left joinsys_user u on u.user_id = ur.user_id
+                 left joinsys_dept d on u.dept_id = d.dept_id
     </sql>
 
     <select id="selectRoleList" parameterType="com.chennian.storytelling.bean.model.SysRole" resultMap="SysRoleResult">
@@ -80,7 +80,7 @@
 
     <select id="selectRoleListByUserId" parameterType="Long" resultType="Long">
         select r.role_id
-        from th_sys_role r
+        from sys_role r
                  left join sys_user_role ur on ur.role_id = r.role_id
                  left join sys_user u on u.user_id = ur.user_id
         where u.user_id = #{userId}
@@ -107,7 +107,7 @@
     </select>
 
     <insert id="insertRole" parameterType="com.chennian.storytelling.bean.model.SysRole" useGeneratedKeys="true" keyProperty="roleId">
-        insert into th_sys_role(
+        insert intosys_role(
         <if test="roleId != null and roleId != 0">role_id,</if>
         <if test="roleName != null and roleName != ''">role_name,</if>
         <if test="roleKey != null and roleKey != ''">role_key,</if>
@@ -135,7 +135,7 @@
     </insert>
 
     <update id="updateRole" parameterType="com.chennian.storytelling.bean.model.SysRole">
-        update th_sys_role
+        updatesys_role
         <set>
             <if test="roleName != null and roleName != ''">role_name = #{roleName},</if>
             <if test="roleKey != null and roleKey != ''">role_key = #{roleKey},</if>
@@ -152,13 +152,13 @@
     </update>
 
     <delete id="deleteRoleById" parameterType="Long">
-        update th_sys_role
+        updatesys_role
         set del_flag = '2'
         where role_id = #{roleId}
     </delete>
 
     <delete id="deleteRoleByIds" parameterType="Long">
-        update th_sys_role set del_flag = '1' where role_id in
+        updatesys_role set del_flag = '1' where role_id in
         <foreach collection="array" item="roleId" open="(" separator="," close=")">
             #{roleId}
         </foreach>

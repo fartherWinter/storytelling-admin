@@ -1,4 +1,4 @@
-package com.chennian.storytelling.workflow.domain;
+package com.chennian.storytelling.bean.dto;
 
 import java.io.Serializable;
 import java.util.Date;

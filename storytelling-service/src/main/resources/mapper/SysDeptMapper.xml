@@ -42,7 +42,7 @@
                d.del_flag,
                d.create_by,
                d.create_time
-        from th_sys_dept d
+        from sys_dept d
     </sql>
 
     <select id="selectDeptList" parameterType="com.chennian.storytelling.bean.model.SysDept" resultMap="SysDeptResult">
@@ -65,11 +65,11 @@
 
     <select id="selectDeptListByRoleId" resultType="long">
         select d.dept_id
-        from th_sys_dept d
-        left join th_sys_role_dept rd on d.dept_id = rd.dept_id
+        from sys_dept d
+        left joinsys_role_dept rd on d.dept_id = rd.dept_id
         where rd.role_id = #{roleId}
         <if test="deptCheckStrictly">
-            and d.dept_id not in (select d.parent_id from th_sys_dept d inner join th_sys_role_dept rd on d.dept_id =
+            and d.dept_id not in (select d.parent_id from sys_dept d inner joinsys_role_dept rd on d.dept_id =
             rd.dept_id and rd.role_id = #{roleId})
         </if>
         order by d.parent_id, d.order_num
@@ -85,34 +85,34 @@
                d.phone,
                d.email,
                d.status,
-               (select dept_name from th_sys_dept where dept_id = d.parent_id) parent_name
-        from th_sys_dept d
+               (select dept_name from sys_dept where dept_id = d.parent_id) parent_name
+        from sys_dept d
         where d.dept_id = #{deptId}
     </select>
 
     <select id="checkDeptExistUser" parameterType="long" resultType="int">
         select count(1)
-        from th_sys_user
+        from sys_user
         where dept_id = #{deptId}
           and del_flag = '0'
     </select>
 
     <select id="hasChildByDeptId" parameterType="long" resultType="int">
         select count(1)
-        from th_sys_dept
+        from sys_dept
         where del_flag = '0'
           and parent_id = #{deptId} limit 1
     </select>
 
     <select id="selectChildrenDeptById" parameterType="long" resultMap="SysDeptResult">
         select *
-        from th_sys_dept
+        from sys_dept
         where find_in_set(#{deptId}, ancestors)
     </select>
 
     <select id="selectNormalChildrenDeptById" parameterType="long" resultType="int">
         select count(*)
-        from th_sys_dept
+        from sys_dept
         where status = 1
           and del_flag = '0'
           and find_in_set(#{deptId}, ancestors)
@@ -124,7 +124,7 @@
     </select>
 
     <insert id="insertDept" parameterType="com.chennian.storytelling.bean.model.SysDept">
-        insert into th_sys_dept(
+        insert intosys_dept(
         <if test="deptId != null and deptId != 0">dept_id,</if>
         <if test="parentId != null and parentId != 0">parent_id,</if>
         <if test="deptName != null and deptName != ''">dept_name,</if>
@@ -152,7 +152,7 @@
     </insert>
 
     <update id="updateDept" parameterType="com.chennian.storytelling.bean.model.SysDept">
-        update th_sys_dept
+        updatesys_dept
         <set>
             <if test="parentId != null and parentId != 0">parent_id = #{parentId},</if>
             <if test="deptName != null and deptName != ''">dept_name = #{deptName},</if>
@@ -169,7 +169,7 @@
     </update>
 
     <update id="updateDeptChildren" parameterType="java.util.List">
-        update th_sys_dept set ancestors =
+        updatesys_dept set ancestors =
         <foreach collection="depts" item="item" index="index"
                  separator=" " open="case dept_id" close="end">
             when #{item.deptId} then #{item.ancestors}
@@ -182,20 +182,20 @@
     </update>
 
     <update id="updateDeptStatusNormal" parameterType="long">
-        update th_sys_dept set status = '1' where dept_id in
+        updatesys_dept set status = '1' where dept_id in
         <foreach collection="array" item="deptId" open="(" separator="," close=")">
             #{deptId}
         </foreach>
     </update>
     <update id="quickEnable">
-        update th_sys_dept
+        updatesys_dept
         set status=#{status}
         where dept_id=#{deptId}
     </update>
 
     <delete id="deleteDeptById" parameterType="long">
         delete
-        from th_sys_dept
+        from sys_dept
         where dept_id = #{deptId}
     </delete>
 </mapper>

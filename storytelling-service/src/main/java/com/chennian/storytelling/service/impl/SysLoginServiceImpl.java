@@ -1,7 +1,9 @@
 package com.chennian.storytelling.service.impl;
 
+import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.stp.SaTokenInfo;
 import cn.dev33.satoken.stp.StpUtil;
+import com.chennian.security.admin.util.SecurityUtils;
 import com.chennian.storytelling.bean.model.SysUser;
 import com.chennian.storytelling.common.bean.Token;
 import com.chennian.storytelling.common.constant.CacheConstants;
@@ -54,9 +56,10 @@ public class SysLoginServiceImpl implements SysLoginService {
         if (StringUtils.isNull(sysUser)) {
             throw new StorytellingBindException("该账号不存在");
         }
-        if (sysUser.getStatus().equals(UserConstants.NORMAL)) {
+        if (!sysUser.getStatus().equals(UserConstants.NORMAL)) {
             throw new StorytellingBindException("当前账户无效");
         }
+        password = SecurityUtils.secureMd5(password+sysUser.getSalt());
         if (!password.equals(sysUser.getPassword())) {
             throw new StorytellingBindException("密码错误");
         }
@@ -64,10 +67,7 @@ public class SysLoginServiceImpl implements SysLoginService {
         sysUser.setLoginDate(DateUtils.currentTime());
         sysUserMapper.updateById(sysUser);
         StpUtil.login(sysUser.getUserId());
-//        StpUtil.login(sysUser.getUserId(),
-//                SaLoginConfig.setExtra("name", "hello"));
-//        Object name = StpUtil.getExtra("name");
-//        System.out.println(name);
+
         SaTokenInfo tokenInfo = StpUtil.getTokenInfo();
         long outTime = (long) ArithUtils.add(System.currentTimeMillis(), timeout * 1000);
         Token token = new Token();

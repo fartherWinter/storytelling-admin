@@ -28,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author by chennian
@@ -110,7 +111,9 @@ public class SysUserController {
 //        }
         //todo 设置操作人员
         sysUser.setPassword("123456");
-        sysUser.setPassword(SecurityUtils.secureMd5(sysUser.getPassword()));
+        Random random = new Random();
+        sysUser.setSalt(String.valueOf(random.nextInt()));
+        sysUser.setPassword(SecurityUtils.secureMd5(sysUser.getPassword() + sysUser.getSalt()));
         return ServerResponseEntity.success(sysUserService.insertUser(sysUser));
     }
 

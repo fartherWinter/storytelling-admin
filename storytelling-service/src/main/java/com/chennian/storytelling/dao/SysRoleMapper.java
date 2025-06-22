@@ -1,8 +1,10 @@
 package com.chennian.storytelling.dao;
 
+import com.chennian.storytelling.bean.dto.RoleDTO;
 import com.chennian.storytelling.bean.model.SysRole;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -78,6 +80,24 @@ public interface SysRoleMapper extends BaseMapper<SysRole> {
     public SysRole checkRoleKeyUnique(String roleKey);
 
     /**
+     * 校验角色名称是否唯一（排除指定角色ID）
+     *
+     * @param roleName 角色名称
+     * @param roleId 排除的角色ID
+     * @return 重复数量
+     */
+    public int checkRoleNameUnique(@Param("roleName") String roleName, @Param("roleId") Long roleId);
+
+    /**
+     * 校验角色权限字符是否唯一（排除指定角色ID）
+     *
+     * @param roleKey 角色权限字符
+     * @param roleId 排除的角色ID
+     * @return 重复数量
+     */
+    public int checkRoleKeyUnique(@Param("roleKey") String roleKey, @Param("roleId") Long roleId);
+
+    /**
      * 修改角色信息
      *
      * @param role 角色信息
@@ -108,6 +128,37 @@ public interface SysRoleMapper extends BaseMapper<SysRole> {
      * @return 结果
      */
     public int deleteRoleByIds(Long[] roleIds);
+
+    /**
+     * 根据条件分页查询角色数据（使用RoleDTO）
+     *
+     * @param roleDTO 角色查询条件
+     * @return 角色数据集合信息
+     */
+    public List<SysRole> selectRoleList(RoleDTO roleDTO);
+
+    /**
+     * 根据条件统计角色数量
+     *
+     * @param roleDTO 角色查询条件
+     * @return 角色数量
+     */
+    public int countRoleList(RoleDTO roleDTO);
+
+    /**
+     * 根据用户ID查询角色列表
+     *
+     * @param userId 用户ID
+     * @return 角色列表
+     */
+    public List<SysRole> selectRolesByUserId(Long userId);
+
+    /**
+     * 查询工作流角色列表
+     *
+     * @return 工作流角色列表
+     */
+    public List<SysRole> selectWorkflowRoles();
 }
 
 

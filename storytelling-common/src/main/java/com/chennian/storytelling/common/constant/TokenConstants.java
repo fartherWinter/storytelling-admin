@@ -8,7 +8,7 @@ public class TokenConstants {
     /**
      * 商城系统管理token前缀
      */
-    public static final String TH_MALL_ADMIN_TOKEN="storytelling-admin:login:token:";
+    public static final String MALL_ADMIN_TOKEN="storytelling-admin:login:token:";
     /**
      * 登录token前缀
      */

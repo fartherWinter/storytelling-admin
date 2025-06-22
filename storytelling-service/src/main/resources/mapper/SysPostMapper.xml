@@ -33,10 +33,10 @@
                create_by,
                create_time,
                remark
-        from th_sys_post
+        from sys_post
     </sql>
     <delete id="deletePostByIds">
-        delete from th_sys_post where post_id in
+        delete from sys_post where post_id in
         <foreach collection="array" item="postId" open="(" separator="," close=")">
             #{postId}
         </foreach>
@@ -46,7 +46,7 @@
     </select>
 
     <insert id="insertPost">
-        insert into th_sys_post(
+        insert intosys_post(
         <if test="postId != null and postId != 0">post_id,</if>
         <if test="postCode != null and postCode != ''">post_code,</if>
         <if test="postName != null and postName != ''">post_name,</if>
@@ -67,7 +67,7 @@
         )
     </insert>
     <update id="updatePost" parameterType="com.chennian.storytelling.bean.model.SysPost">
-        update th_sys_post
+        updatesys_post
         <set>
             <if test="postCode != null and postCode != ''">post_code = #{postCode},</if>
             <if test="postName != null and postName != ''">post_name = #{postName},</if>
@@ -80,7 +80,7 @@
         where post_id = #{postId}
     </update>
     <update id="quickEnable">
-        update th_sys_post
+        updatesys_post
         set status=#{status}
         where post_id = #{postId}
     </update>
