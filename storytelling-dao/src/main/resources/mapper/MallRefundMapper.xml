@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallRefundMapper">
+
+    <!-- MallRefund结果映射 -->
+    <resultMap id="MallRefundResult" type="com.chennian.storytelling.bean.model.MallRefund">
+        <id property="id" column="id" />
+        <result property="orderId" column="order_id" />
+        <result property="subOrderId" column="sub_order_id" />
+        <result property="userId" column="user_id" />
+        <result property="refundAmount" column="refund_amount" />
+        <result property="refundReason" column="refund_reason" />
+        <result property="refundDescription" column="refund_description" />
+        <result property="refundProof" column="refund_proof" />
+        <result property="status" column="status" />
+        <result property="handler" column="handler" />
+        <result property="handleTime" column="handle_time" />
+        <result property="handleRemark" column="handle_remark" />
+        <result property="refundMethod" column="refund_method" />
+        <result property="refundNo" column="refund_no" />
+        <result property="refundTime" column="refund_time" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallRefundVo">
+        SELECT id, order_id, sub_order_id, user_id, refund_amount, refund_reason, refund_description, refund_proof, status, handler, handle_time, handle_remark, refund_method, refund_no, refund_time, create_time, update_time, create_by, update_by
+        FROM mall_refund
+    </sql>
+
+    <!-- selectByOrderId -->
+    <select id="selectByOrderId" resultMap="MallRefundResult">
+        <include refid="selectMallRefundVo"/>
+        WHERE order_id = #{orderId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectBySubOrderId -->
+    <select id="selectBySubOrderId" resultMap="MallRefundResult">
+        <include refid="selectMallRefundVo"/>
+        WHERE sub_order_id = #{subOrderId} AND del_flag = '0'
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- selectPendingRefunds -->
+    <select id="selectPendingRefunds" resultMap="MallRefundResult">
+        <include refid="selectMallRefundVo"/>
+        WHERE status = 0 AND del_flag = '0'
+        ORDER BY create_time ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- selectTimeoutRefunds -->
+    <select id="selectTimeoutRefunds" resultMap="MallRefundResult">
+        <include refid="selectMallRefundVo"/>
+        WHERE status = 0 
+            AND create_time < DATE_SUB(NOW(), INTERVAL #{timeoutHours} HOUR)
+            AND del_flag = '0'
+        ORDER BY create_time ASC
+    </select>
+
+</mapper>

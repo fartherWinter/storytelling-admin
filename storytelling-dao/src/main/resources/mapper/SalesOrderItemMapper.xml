@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SalesOrderItemMapper">
+
+    <!-- SalesOrderItem结果映射 -->
+    <resultMap id="SalesOrderItemResult" type="com.chennian.storytelling.bean.model.SalesOrderItem">
+        <id property="itemId" column="item_id" />
+        <result property="orderId" column="order_id" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="productCode" column="product_code" />
+        <result property="quantity" column="quantity" />
+        <result property="unitPrice" column="unit_price" />
+        <result property="subtotal" column="subtotal" />
+        <result property="discountRate" column="discount_rate" />
+        <result property="discountedAmount" column="discounted_amount" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="productImage" column="product_image" />
+        <result property="productSpec" column="product_spec" />
+    </resultMap>
+
+</mapper>

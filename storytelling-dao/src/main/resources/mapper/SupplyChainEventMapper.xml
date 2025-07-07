@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SupplyChainEventMapper">
+
+    <!-- SupplyChainEvent结果映射 -->
+    <resultMap id="SupplyChainEventResult" type="com.chennian.storytelling.bean.model.SupplyChainEvent">
+        <id property="eventId" column="event_id" />
+        <result property="eventType" column="event_type" />
+        <result property="description" column="description" />
+        <result property="eventTime" column="event_time" />
+        <result property="relatedId" column="related_id" />
+        <result property="status" column="status" />
+        <result property="handler" column="handler" />
+        <result property="handleTime" column="handle_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectSupplyChainEventVo">
+        SELECT event_id, event_type, description, event_time, related_id, status, handler, handle_time
+        FROM supply_chain_event
+    </sql>
+
+</mapper>

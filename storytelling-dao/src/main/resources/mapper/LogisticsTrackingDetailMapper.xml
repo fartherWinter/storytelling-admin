@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.LogisticsTrackingDetailMapper">
+
+    <!-- LogisticsTrackingDetail结果映射 -->
+    <resultMap id="LogisticsTrackingDetailResult" type="com.chennian.storytelling.bean.model.LogisticsTrackingDetail">
+        <id property="id" column="id" />
+        <result property="trackingId" column="tracking_id" />
+        <result property="trackingNumber" column="tracking_number" />
+        <result property="trackTime" column="track_time" />
+        <result property="description" column="description" />
+        <result property="location" column="location" />
+        <result property="operationType" column="operation_type" />
+        <result property="operator" column="operator" />
+        <result property="contactPhone" column="contact_phone" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectLogisticsTrackingDetailVo">
+        SELECT id, tracking_id, tracking_number, track_time, description, location, operation_type, operator, contact_phone, remark, create_time
+        FROM mall_logistics_tracking_detail
+    </sql>
+
+    <!-- selectByTrackingId -->
+    <select id="selectByTrackingId" resultMap="LogisticsTrackingDetailResult">
+        <include refid="selectLogisticsTrackingDetailVo"/>
+        WHERE tracking_id = #{trackingId}
+        ORDER BY track_time DESC
+    </select>
+
+    <!-- insertBatch -->
+    <insert id="insertBatch">
+        INSERT INTO mall_logistics_tracking_detail (
+            tracking_id, tracking_number, track_time, description, location, 
+            operation_type, operator, contact_phone, remark, create_time
+        ) VALUES
+        <foreach collection="details" item="detail" separator=",">
+            (
+                #{detail.trackingId}, #{detail.trackingNumber}, #{detail.trackTime}, 
+                #{detail.description}, #{detail.location}, #{detail.operationType}, 
+                #{detail.operator}, #{detail.contactPhone}, #{detail.remark}, 
+                #{detail.createTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- deleteByTrackingId -->
+    <delete id="deleteByTrackingId">
+        DELETE FROM mall_logistics_tracking_detail 
+        WHERE tracking_id = #{trackingId}
+    </delete>
+
+    <!-- selectLatestByTrackingId -->
+    <select id="selectLatestByTrackingId" resultMap="LogisticsTrackingDetailResult">
+        <include refid="selectLogisticsTrackingDetailVo"/>
+        WHERE tracking_id = #{trackingId}
+        ORDER BY track_time DESC
+        LIMIT 1
+    </select>
+
+</mapper>

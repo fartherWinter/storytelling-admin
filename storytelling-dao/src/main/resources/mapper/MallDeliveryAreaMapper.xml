@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.MallDeliveryAreaMapper">
+
+    <!-- MallDeliveryArea结果映射 -->
+    <resultMap id="MallDeliveryAreaResult" type="com.chennian.storytelling.bean.model.MallDeliveryArea">
+        <id property="id" column="id" />
+        <result property="areaCode" column="area_code" />
+        <result property="areaName" column="area_name" />
+        <result property="parentCode" column="parent_code" />
+        <result property="areaLevel" column="area_level" />
+        <result property="areaType" column="area_type" />
+        <result property="zipCode" column="zip_code" />
+        <result property="cityCode" column="city_code" />
+        <result property="areaCode2" column="area_code2" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="sortNo" column="sort_no" />
+        <result property="status" column="status" />
+        <result property="supportDelivery" column="support_delivery" />
+        <result property="deliveryLimit" column="delivery_limit" />
+        <result property="deliveryHours" column="delivery_hours" />
+        <result property="freightFactor" column="freight_factor" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallDeliveryAreaVo">
+        SELECT id, area_code, area_name, parent_code, area_level, area_type, zip_code, city_code, area_code2, longitude, latitude, sort_no, status, support_delivery, delivery_limit, delivery_hours, freight_factor, remark, create_time, update_time, create_by, update_by
+        FROM mall_delivery_area
+    </sql>
+
+    <!-- selectAreaTree -->
+    <select id="selectAreaTree" resultMap="MallDeliveryAreaResult">
+        <include refid="selectMallDeliveryAreaVo"/>
+        WHERE del_flag = '0'
+        <if test="parentCode != null and parentCode != ''">
+            AND parent_code = #{parentCode}
+        </if>
+        <if test="parentCode == null or parentCode == ''">
+            AND (parent_code IS NULL OR parent_code = '')
+        </if>
+        ORDER BY sort_no ASC, area_code ASC
+    </select>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE mall_delivery_area 
+        SET status = #{status}, 
+            update_time = NOW()
+        WHERE area_code IN
+        <foreach collection="areaCodes" item="areaCode" open="(" separator="," close=")">
+            #{areaCode}
+        </foreach>
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectAreaStatistics -->
+    <select id="selectAreaStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as enabledCount,
+            SUM(CASE WHEN support_delivery = 1 THEN 1 ELSE 0 END) as deliveryCount,
+            AVG(delivery_hours) as avgDeliveryHours,
+            AVG(freight_factor) as avgFreightFactor
+        FROM mall_delivery_area
+        WHERE area_code = #{areaCode} AND del_flag = '0'
+    </select>
+
+    <!-- selectChildAreas -->
+    <select id="selectChildAreas" resultMap="MallDeliveryAreaResult">
+        <include refid="selectMallDeliveryAreaVo"/>
+        WHERE parent_code = #{areaCode} AND del_flag = '0'
+        ORDER BY sort_no ASC, area_code ASC
+    </select>
+
+    <!-- selectAreaPath -->
+    <select id="selectAreaPath" resultType="String">
+        WITH RECURSIVE area_path AS (
+            SELECT area_code, area_name, parent_code, area_name as path
+            FROM mall_delivery_area
+            WHERE area_code = #{areaCode} AND del_flag = '0'
+            UNION ALL
+            SELECT p.area_code, p.area_name, p.parent_code, CONCAT(p.area_name, '/', ap.path)
+            FROM mall_delivery_area p
+            INNER JOIN area_path ap ON p.area_code = ap.parent_code
+            WHERE p.del_flag = '0'
+        )
+        SELECT path FROM area_path WHERE parent_code IS NULL OR parent_code = ''
+    </select>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO mall_delivery_area(
+            area_code, area_name, parent_code, area_level, area_type, zip_code, city_code, 
+            area_code2, longitude, latitude, sort_no, status, support_delivery, 
+            delivery_limit, delivery_hours, freight_factor, remark, create_time, update_time, create_by, update_by
+        ) VALUES
+        <foreach collection="areas" item="item" separator=",">
+            (
+                #{item.areaCode}, #{item.areaName}, #{item.parentCode}, #{item.areaLevel}, 
+                #{item.areaType}, #{item.zipCode}, #{item.cityCode}, #{item.areaCode2}, 
+                #{item.longitude}, #{item.latitude}, #{item.sortNo}, #{item.status}, 
+                #{item.supportDelivery}, #{item.deliveryLimit}, #{item.deliveryHours}, 
+                #{item.freightFactor}, #{item.remark}, #{item.createTime}, #{item.updateTime}, 
+                #{item.createBy}, #{item.updateBy}
+            )
+        </foreach>
+    </insert>
+
+    <!-- selectDeliveryCoverageStats -->
+    <select id="selectDeliveryCoverageStats" resultType="java.util.Map">
+        SELECT 
+            area_level,
+            COUNT(*) as totalAreas,
+            SUM(CASE WHEN support_delivery = 1 THEN 1 ELSE 0 END) as supportedAreas,
+            ROUND(SUM(CASE WHEN support_delivery = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as coverageRate,
+            AVG(delivery_hours) as avgDeliveryHours,
+            AVG(freight_factor) as avgFreightFactor
+        FROM mall_delivery_area
+        WHERE area_level = #{areaLevel} AND del_flag = '0'
+        GROUP BY area_level
+    </select>
+
+    <!-- selectAreasByDeliveryMethod -->
+    <select id="selectAreasByDeliveryMethod" resultMap="MallDeliveryAreaResult">
+        SELECT da.id, da.area_code, da.area_name, da.parent_code, da.area_level, da.area_type, 
+               da.zip_code, da.city_code, da.area_code2, da.longitude, da.latitude, da.sort_no, 
+               da.status, da.support_delivery, da.delivery_limit, da.delivery_hours, da.freight_factor, 
+               da.remark, da.create_time, da.update_time, da.create_by, da.update_by
+        FROM mall_delivery_area da
+        INNER JOIN mall_delivery_method_area dma ON da.area_code = dma.area_code
+        WHERE dma.delivery_method_id = #{deliveryMethodId} 
+            AND da.del_flag = '0' 
+            AND dma.del_flag = '0'
+        ORDER BY da.sort_no ASC, da.area_code ASC
+    </select>
+
+</mapper>

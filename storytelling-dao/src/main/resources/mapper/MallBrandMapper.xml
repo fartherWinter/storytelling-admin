@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallBrandMapper">
+
+    <!-- MallBrand结果映射 -->
+    <resultMap id="MallBrandResult" type="com.chennian.storytelling.bean.model.mall.MallBrand">
+        <id property="id" column="id" />
+        <result property="brandName" column="brand_name" />
+        <result property="brandCode" column="brand_code" />
+        <result property="logo" column="logo" />
+        <result property="description" column="description" />
+        <result property="website" column="website" />
+        <result property="country" column="country" />
+        <result property="status" column="status" />
+        <result property="isRecommend" column="is_recommend" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallBrandVo">
+        SELECT id, brand_name, brand_code, logo, description, website, country, status, is_recommend, create_time, update_time
+        FROM mall_brand
+    </sql>
+
+    <!-- 分页查询品牌列表 -->
+    <select id="selectBrandPage" resultMap="MallBrandResult">
+        <include refid="selectMallBrandVo"/>
+        <where>
+            <if test="brandName != null and brandName != ''">
+                AND brand_name LIKE CONCAT('%', #{brandName}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="isRecommend != null">
+                AND is_recommend = #{isRecommend}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询品牌列表 -->
+    <select id="selectByStatus" resultMap="MallBrandResult">
+        <include refid="selectMallBrandVo"/>
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据推荐状态查询品牌列表 -->
+    <select id="selectRecommendBrands" resultMap="MallBrandResult">
+        <include refid="selectMallBrandVo"/>
+        WHERE is_recommend = #{isRecommend}
+        ORDER BY create_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据品牌名称模糊查询 -->
+    <select id="selectByBrandNameLike" resultMap="MallBrandResult">
+        <include refid="selectMallBrandVo"/>
+        WHERE brand_name LIKE CONCAT('%', #{brandName}, '%')
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取品牌统计信息 -->
+    <select id="selectBrandStatistics" resultMap="MallBrandResult">
+        SELECT 
+            status,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN is_recommend = 1 THEN 1 ELSE 0 END) as recommend_count
+        FROM mall_brand
+        GROUP BY status
+        ORDER BY status
+    </select>
+
+    <!-- 批量更新品牌状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE mall_brand
+        SET status = #{status}, update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

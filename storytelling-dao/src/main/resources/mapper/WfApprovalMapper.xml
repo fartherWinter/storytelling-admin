@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfApprovalMapper">
+
+    <!-- WfApproval结果映射 -->
+    <resultMap id="WfApprovalResult" type="com.chennian.storytelling.bean.model.WfApproval">
+        <id property="id" column="id" />
+        <result property="processInstanceId" column="process_instance_id" />
+        <result property="processKey" column="process_key" />
+        <result property="processName" column="process_name" />
+        <result property="taskId" column="task_id" />
+        <result property="taskName" column="task_name" />
+        <result property="taskDefinitionKey" column="task_definition_key" />
+        <result property="approverId" column="approver_id" />
+        <result property="approverName" column="approver_name" />
+        <result property="status" column="status" />
+        <result property="comment" column="comment" />
+        <result property="approvalTime" column="approval_time" />
+        <result property="dueTime" column="due_time" />
+        <result property="delegatorId" column="delegator_id" />
+        <result property="delegatorName" column="delegator_name" />
+        <result property="previousHandlerId" column="previous_handler_id" />
+        <result property="previousHandlerName" column="previous_handler_name" />
+        <result property="ccUserIds" column="cc_user_ids" />
+        <result property="ccUserNames" column="cc_user_names" />
+        <result property="businessKey" column="business_key" />
+        <result property="businessType" column="business_type" />
+        <result property="formData" column="form_data" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfApprovalVo">
+        SELECT id, process_instance_id, process_key, process_name, task_id, task_name, task_definition_key, approver_id, approver_name, status, comment, approval_time, due_time, delegator_id, delegator_name, previous_handler_id, previous_handler_name, cc_user_ids, cc_user_names, business_key, business_type, form_data, create_time, update_time, create_by, update_by, remark
+        FROM wf_approval
+    </sql>
+
+    <!-- selectApprovalPage -->
+    <select id="selectApprovalPage" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE 1=1
+        <if test="params != null">
+            <if test="params.processKey != null and params.processKey != ''">
+                AND process_key = #{params.processKey}
+            </if>
+            <if test="params.processName != null and params.processName != ''">
+                AND process_name LIKE CONCAT('%', #{params.processName}, '%')
+            </if>
+            <if test="params.approverId != null">
+                AND approver_id = #{params.approverId}
+            </if>
+            <if test="params.approverName != null and params.approverName != ''">
+                AND approver_name LIKE CONCAT('%', #{params.approverName}, '%')
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND status = #{params.status}
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                AND business_type = #{params.businessType}
+            </if>
+            <if test="params.startTime != null">
+                AND create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND create_time <= #{params.endTime}
+            </if>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectUserApprovals -->
+    <select id="selectUserApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE approver_id = #{userId}
+        <if test="params != null">
+            <if test="params.processKey != null and params.processKey != ''">
+                AND process_key = #{params.processKey}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND status = #{params.status}
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                AND business_type = #{params.businessType}
+            </if>
+            <if test="params.startTime != null">
+                AND create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND create_time <= #{params.endTime}
+            </if>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectProcessApprovals -->
+    <select id="selectProcessApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE process_instance_id = #{processInstanceId}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- selectTaskApprovals -->
+    <select id="selectTaskApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE task_id = #{taskId}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO wf_approval(
+            process_instance_id, process_key, process_name, task_id, task_name, task_definition_key,
+            approver_id, approver_name, status, comment, approval_time, due_time,
+            delegator_id, delegator_name, previous_handler_id, previous_handler_name,
+            cc_user_ids, cc_user_names, business_key, business_type, form_data,
+            create_time, update_time, create_by, update_by, remark
+        ) VALUES
+        <foreach collection="approvals" item="item" separator=",">
+            (
+                #{item.processInstanceId}, #{item.processKey}, #{item.processName},
+                #{item.taskId}, #{item.taskName}, #{item.taskDefinitionKey},
+                #{item.approverId}, #{item.approverName}, #{item.status},
+                #{item.comment}, #{item.approvalTime}, #{item.dueTime},
+                #{item.delegatorId}, #{item.delegatorName},
+                #{item.previousHandlerId}, #{item.previousHandlerName},
+                #{item.ccUserIds}, #{item.ccUserNames},
+                #{item.businessKey}, #{item.businessType}, #{item.formData},
+                #{item.createTime}, #{item.updateTime}, #{item.createBy}, #{item.updateBy}, #{item.remark}
+            )
+        </foreach>
+    </insert>
+
+    <!-- updateStatus -->
+    <update id="updateStatus">
+        UPDATE wf_approval 
+        SET status = #{status}, 
+            update_time = NOW(), 
+            update_by = #{updateBy}
+        WHERE id = #{approvalId}
+    </update>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE wf_approval 
+        SET status = #{status}, 
+            update_time = NOW(), 
+            update_by = #{updateBy}
+        WHERE id IN
+        <foreach collection="approvalIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- addComment -->
+    <update id="addComment">
+        UPDATE wf_approval 
+        SET comment = #{comment}, 
+            update_time = NOW(), 
+            update_by = #{updateBy}
+        WHERE id = #{approvalId}
+    </update>
+
+    <!-- selectCommentHistory -->
+    <select id="selectCommentHistory" resultType="java.util.Map">
+        SELECT 
+            id,
+            approver_id,
+            approver_name,
+            comment,
+            approval_time,
+            status,
+            create_time
+        FROM wf_approval
+        WHERE id = #{approvalId} AND comment IS NOT NULL AND comment != ''
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- countUserApprovals -->
+    <select id="countUserApprovals" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approvedCount,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedCount,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingCount,
+            AVG(CASE WHEN approval_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, create_time, approval_time) ELSE NULL END) as avgProcessHours
+        FROM wf_approval
+        WHERE approver_id = #{userId}
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+    </select>
+
+    <!-- countProcessApprovals -->
+    <select id="countProcessApprovals" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approvedCount,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedCount,
+            SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingCount,
+            AVG(CASE WHEN approval_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, create_time, approval_time) ELSE NULL END) as avgProcessHours
+        FROM wf_approval
+        WHERE process_key = #{processKey}
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+    </select>
+
+    <!-- selectTodoApprovals -->
+    <select id="selectTodoApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE approver_id = #{userId} AND status = 'pending'
+        <if test="params != null">
+            <if test="params.processKey != null and params.processKey != ''">
+                AND process_key = #{params.processKey}
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                AND business_type = #{params.businessType}
+            </if>
+            <if test="params.urgent != null and params.urgent == true">
+                AND due_time IS NOT NULL AND due_time < NOW()
+            </if>
+        </if>
+        ORDER BY 
+            CASE WHEN due_time IS NOT NULL AND due_time < NOW() THEN 0 ELSE 1 END,
+            due_time ASC,
+            create_time ASC
+    </select>
+
+    <!-- selectDoneApprovals -->
+    <select id="selectDoneApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE approver_id = #{userId} AND status IN ('approved', 'rejected')
+        <if test="params != null">
+            <if test="params.processKey != null and params.processKey != ''">
+                AND process_key = #{params.processKey}
+            </if>
+            <if test="params.status != null and params.status != ''">
+                AND status = #{params.status}
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                AND business_type = #{params.businessType}
+            </if>
+            <if test="params.startTime != null">
+                AND approval_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND approval_time <= #{params.endTime}
+            </if>
+        </if>
+        ORDER BY approval_time DESC
+    </select>
+
+    <!-- selectCcApprovals -->
+    <select id="selectCcApprovals" resultMap="WfApprovalResult">
+        <include refid="selectWfApprovalVo"/>
+        WHERE FIND_IN_SET(#{userId}, cc_user_ids) > 0
+        <if test="params != null">
+            <if test="params.processKey != null and params.processKey != ''">
+                AND process_key = #{params.processKey}
+            </if>
+            <if test="params.businessType != null and params.businessType != ''">
+                AND business_type = #{params.businessType}
+            </if>
+            <if test="params.startTime != null">
+                AND create_time >= #{params.startTime}
+            </if>
+            <if test="params.endTime != null">
+                AND create_time <= #{params.endTime}
+            </if>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectApprovalDurationStats -->
+    <select id="selectApprovalDurationStats" resultType="java.util.Map">
+        SELECT 
+            process_key,
+            process_name,
+            COUNT(*) as totalCount,
+            AVG(CASE WHEN approval_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, create_time, approval_time) ELSE NULL END) as avgDurationHours,
+            MIN(CASE WHEN approval_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, create_time, approval_time) ELSE NULL END) as minDurationHours,
+            MAX(CASE WHEN approval_time IS NOT NULL AND create_time IS NOT NULL 
+                THEN TIMESTAMPDIFF(HOUR, create_time, approval_time) ELSE NULL END) as maxDurationHours,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approvedCount,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedCount
+        FROM wf_approval
+        WHERE approval_time IS NOT NULL
+        <if test="processKey != null and processKey != ''">
+            AND process_key = #{processKey}
+        </if>
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+        GROUP BY process_key, process_name
+        ORDER BY avgDurationHours DESC
+    </select>
+
+    <!-- selectApprovalRejectStats -->
+    <select id="selectApprovalRejectStats" resultType="java.util.Map">
+        SELECT 
+            process_key,
+            process_name,
+            approver_id,
+            approver_name,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedCount,
+            ROUND(SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as rejectRate
+        FROM wf_approval
+        WHERE status IN ('approved', 'rejected')
+        <if test="processKey != null and processKey != ''">
+            AND process_key = #{processKey}
+        </if>
+        <if test="approverId != null">
+            AND approver_id = #{approverId}
+        </if>
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+        GROUP BY process_key, process_name, approver_id, approver_name
+        HAVING COUNT(*) >= 5
+        ORDER BY rejectRate DESC, totalCount DESC
+    </select>
+
+    <!-- selectApprovalTimeoutStats -->
+    <select id="selectApprovalTimeoutStats" resultType="java.util.Map">
+        SELECT 
+            process_key,
+            process_name,
+            approver_id,
+            approver_name,
+            COUNT(*) as totalCount,
+            SUM(CASE WHEN due_time IS NOT NULL AND 
+                (approval_time IS NULL OR approval_time > due_time) THEN 1 ELSE 0 END) as timeoutCount,
+            ROUND(SUM(CASE WHEN due_time IS NOT NULL AND 
+                (approval_time IS NULL OR approval_time > due_time) THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as timeoutRate,
+            AVG(CASE WHEN due_time IS NOT NULL AND approval_time IS NOT NULL AND approval_time > due_time 
+                THEN TIMESTAMPDIFF(HOUR, due_time, approval_time) ELSE NULL END) as avgOverdueHours
+        FROM wf_approval
+        WHERE due_time IS NOT NULL
+        <if test="processKey != null and processKey != ''">
+            AND process_key = #{processKey}
+        </if>
+        <if test="approverId != null">
+            AND approver_id = #{approverId}
+        </if>
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+        GROUP BY process_key, process_name, approver_id, approver_name
+        HAVING COUNT(*) >= 3
+        ORDER BY timeoutRate DESC, totalCount DESC
+    </select>
+
+    <!-- selectDelegateRecords -->
+    <select id="selectDelegateRecords" resultType="java.util.Map">
+        SELECT 
+            id,
+            process_instance_id,
+            process_key,
+            process_name,
+            original_approver_id,
+            original_approver_name,
+            delegate_approver_id,
+            delegate_approver_name,
+            delegate_reason,
+            delegate_time,
+            status,
+            create_time
+        FROM wf_approval
+        WHERE delegate_approver_id IS NOT NULL
+        <if test="originalApproverId != null">
+            AND original_approver_id = #{originalApproverId}
+        </if>
+        <if test="delegateApproverId != null">
+            AND delegate_approver_id = #{delegateApproverId}
+        </if>
+        <if test="processKey != null and processKey != ''">
+            AND process_key = #{processKey}
+        </if>
+        <if test="startTime != null">
+            AND delegate_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND delegate_time <= #{endTime}
+        </if>
+        ORDER BY delegate_time DESC
+    </select>
+
+    <!-- selectTransferRecords -->
+    <select id="selectTransferRecords" resultType="java.util.Map">
+        SELECT 
+            id,
+            process_instance_id,
+            process_key,
+            process_name,
+            original_approver_id,
+            original_approver_name,
+            transfer_approver_id,
+            transfer_approver_name,
+            transfer_reason,
+            transfer_time,
+            status,
+            create_time
+        FROM wf_approval
+        WHERE transfer_approver_id IS NOT NULL
+        <if test="originalApproverId != null">
+            AND original_approver_id = #{originalApproverId}
+        </if>
+        <if test="transferApproverId != null">
+            AND transfer_approver_id = #{transferApproverId}
+        </if>
+        <if test="processKey != null and processKey != ''">
+            AND process_key = #{processKey}
+        </if>
+        <if test="startTime != null">
+            AND transfer_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND transfer_time <= #{endTime}
+        </if>
+        ORDER BY transfer_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.LogisticsTrackingMapper">
+
+    <!-- LogisticsTracking结果映射 -->
+    <resultMap id="LogisticsTrackingResult" type="com.chennian.storytelling.bean.model.LogisticsTracking">
+        <id property="id" column="id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderSn" column="order_sn" />
+        <result property="logisticsCompanyCode" column="logistics_company_code" />
+        <result property="logisticsCompanyName" column="logistics_company_name" />
+        <result property="trackingNumber" column="tracking_number" />
+        <result property="status" column="status" />
+        <result property="statusDescription" column="status_description" />
+        <result property="currentLocation" column="current_location" />
+        <result property="estimatedDeliveryTime" column="estimated_delivery_time" />
+        <result property="actualDeliveryTime" column="actual_delivery_time" />
+        <result property="signedBy" column="signed_by" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectLogisticsTrackingVo">
+        SELECT id, order_id, order_sn, logistics_company_code, logistics_company_name, tracking_number, status, status_description, current_location, estimated_delivery_time, actual_delivery_time, signed_by, remark, create_time, update_time
+        FROM mall_logistics_tracking
+    </sql>
+
+
+
+    <!-- selectByOrderNumber -->
+    <select id="selectByOrderNumber" resultMap="LogisticsTrackingResult">
+        <include refid="selectLogisticsTrackingVo"/>
+        WHERE order_sn = #{orderNumber}
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- selectByTrackingNumber -->
+    <select id="selectByTrackingNumber" resultMap="LogisticsTrackingResult">
+        <include refid="selectLogisticsTrackingVo"/>
+        WHERE tracking_number = #{trackingNumber}
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- updateStatusBatch -->
+    <update id="updateStatusBatch">
+        UPDATE mall_logistics_tracking 
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectByLogisticsCompany -->
+    <select id="selectByLogisticsCompany" resultMap="LogisticsTrackingResult">
+        <include refid="selectLogisticsTrackingVo"/>
+        WHERE logistics_company_code = #{logisticsCompany}
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

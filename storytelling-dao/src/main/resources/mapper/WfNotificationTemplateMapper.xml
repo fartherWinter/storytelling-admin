@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfNotificationTemplateMapper">
+
+    <!-- WfNotificationTemplate结果映射 -->
+    <resultMap id="WfNotificationTemplateResult" type="com.chennian.storytelling.bean.model.WfNotificationTemplate">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="code" column="code" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="templateType" column="template_type" />
+        <result property="eventType" column="event_type" />
+        <result property="variables" column="variables" />
+        <result property="enabled" column="enabled" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="createdTime" column="created_time" />
+        <result property="updatedTime" column="updated_time" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfNotificationTemplateVo">
+        SELECT id, name, code, title, content, template_type, event_type, variables, enabled, sort_order, created_time, updated_time, created_by, updated_by
+        FROM wf_notification_template
+    </sql>
+
+    <!-- selectByTemplateCode -->
+    <select id="selectByTemplateCode" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE code = #{templateCode}
+        AND del_flag = '0'
+        LIMIT 1
+    </select>
+
+    <!-- selectByTemplateType -->
+    <select id="selectByTemplateType" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE template_type = #{templateType}
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- selectByEventType -->
+    <select id="selectByEventType" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE event_type = #{eventType}
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- selectByEnabled -->
+    <select id="selectByEnabled" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE enabled = #{enabled}
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+
+
+    <!-- selectByTemplateNameLike -->
+    <select id="selectByTemplateNameLike" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE name LIKE CONCAT('%', #{templateName}, '%')
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+
+
+
+
+
+
+    <!-- selectTemplateDetail -->
+    <select id="selectTemplateDetail" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE id = #{templateId}
+        AND del_flag = '0'
+        LIMIT 1
+    </select>
+
+    <!-- selectByTemplateIds -->
+    <select id="selectByTemplateIds" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE id IN
+        <foreach collection="templateIds" item="templateId" open="(" separator="," close=")">
+            #{templateId}
+        </foreach>
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+    </select>
+
+    <!-- selectAllEventTypes -->
+    <select id="selectAllEventTypes" resultType="java.lang.String">
+        SELECT DISTINCT event_type
+        FROM wf_notification_template
+        WHERE del_flag = '0'
+        AND event_type IS NOT NULL
+        AND event_type != ''
+        ORDER BY event_type ASC
+    </select>
+
+    <!-- selectTemplateStatistics -->
+    <select id="selectTemplateStatistics" resultType="java.util.Map">
+        SELECT 
+            template_type,
+            COUNT(*) as templateCount,
+            COUNT(CASE WHEN enabled = 1 THEN 1 END) as enabledCount,
+            COUNT(CASE WHEN enabled = 0 THEN 1 END) as disabledCount
+        FROM wf_notification_template
+        WHERE del_flag = '0'
+        GROUP BY template_type
+        ORDER BY templateCount DESC
+    </select>
+
+    <!-- selectDefaultTemplateByEventType -->
+    <select id="selectDefaultTemplateByEventType" resultMap="WfNotificationTemplateResult">
+        <include refid="selectWfNotificationTemplateVo"/>
+        WHERE event_type = #{eventType}
+        AND enabled = 1
+        AND del_flag = '0'
+        ORDER BY sort_order ASC, created_time ASC
+        LIMIT 1
+    </select>
+
+    <!-- countTemplateUsage -->
+    <select id="countTemplateUsage" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM wf_notification_log
+        WHERE template_id = #{templateId}
+        AND del_flag = '0'
+    </select>
+
+    <!-- selectAllTemplateTypes -->
+    <select id="selectAllTemplateTypes" resultType="java.lang.String">
+        SELECT DISTINCT template_type
+        FROM wf_notification_template
+        WHERE del_flag = '0'
+        AND template_type IS NOT NULL
+        AND template_type != ''
+        ORDER BY template_type ASC
+    </select>
+
+    <!-- selectTemplateCountByType -->
+    <select id="selectTemplateCountByType" resultType="java.util.Map">
+        SELECT 
+            template_type,
+            COUNT(*) as count
+        FROM wf_notification_template
+        WHERE del_flag = '0'
+        GROUP BY template_type
+        ORDER BY count DESC, template_type ASC
+    </select>
+
+</mapper>

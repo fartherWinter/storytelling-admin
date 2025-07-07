@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfFormTemplateMapper">
+
+    <!-- WfFormTemplate结果映射 -->
+    <resultMap id="WfFormTemplateResult" type="com.chennian.storytelling.bean.model.WfFormTemplate">
+        <id property="id" column="id" />
+        <result property="formId" column="form_id" />
+        <result property="formName" column="form_name" />
+        <result property="formDescription" column="form_description" />
+        <result property="processKey" column="process_key" />
+        <result property="version" column="version" />
+        <result property="formConfig" column="form_config" />
+        <result property="formFields" column="form_fields" />
+        <result property="formLayout" column="form_layout" />
+        <result property="formRules" column="form_rules" />
+        <result property="category" column="category" />
+        <result property="enabled" column="enabled" />
+        <result property="isPublic" column="is_public" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="remark" column="remark" />
+        <result property="creatorId" column="creator_id" />
+        <result property="creatorName" column="creator_name" />
+        <result property="createdTime" column="created_time" />
+        <result property="updaterId" column="updater_id" />
+        <result property="updaterName" column="updater_name" />
+        <result property="updatedTime" column="updated_time" />
+        <result property="deleted" column="deleted" />
+        <result property="tenantId" column="tenant_id" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfFormTemplateVo">
+        SELECT id, form_id, form_name, form_description, process_key, version, form_config, form_fields, form_layout, form_rules, category, enabled, is_public, sort_order, remark, creator_id, creator_name, created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+    </sql>
+
+    <!-- selectTemplatePage -->
+    <select id="selectTemplatePage" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0
+        <if test="params.formName != null and params.formName != ''">
+            AND form_name LIKE CONCAT('%', #{params.formName}, '%')
+        </if>
+        <if test="params.processKey != null and params.processKey != ''">
+            AND process_key = #{params.processKey}
+        </if>
+        <if test="params.category != null and params.category != ''">
+            AND category = #{params.category}
+        </if>
+        <if test="params.enabled != null">
+            AND enabled = #{params.enabled}
+        </if>
+        <if test="params.isPublic != null">
+            AND is_public = #{params.isPublic}
+        </if>
+        <if test="params.creatorId != null">
+            AND creator_id = #{params.creatorId}
+        </if>
+        <if test="params.startTime != null">
+            AND created_time >= #{params.startTime}
+        </if>
+        <if test="params.endTime != null">
+            AND created_time <= #{params.endTime}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByFormId -->
+    <select id="selectByFormId" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND form_id = #{formId}
+        <if test="version != null">
+            AND version = #{version}
+        </if>
+        <if test="version == null">
+            ORDER BY version DESC
+            LIMIT 1
+        </if>
+    </select>
+
+    <!-- selectByProcessKey -->
+    <select id="selectByProcessKey" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND process_key = #{processKey}
+        <if test="enabled != null">
+            AND enabled = #{enabled}
+        </if>
+        ORDER BY version DESC
+    </select>
+
+    <!-- selectByCategory -->
+    <select id="selectByCategory" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND category = #{category}
+        <if test="enabled != null">
+            AND enabled = #{enabled}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectEnabledTemplates -->
+    <select id="selectEnabledTemplates" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND enabled = 1
+        AND (is_public = 1 OR creator_id = #{userId})
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectPublicTemplates -->
+    <select id="selectPublicTemplates" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND enabled = 1 AND is_public = 1
+        <if test="keyword != null and keyword != ''">
+            AND (form_name LIKE CONCAT('%', #{keyword}, '%')
+            OR form_description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectTemplatesByCreator -->
+    <select id="selectTemplatesByCreator" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND creator_id = #{creatorId}
+        <if test="enabled != null">
+            AND enabled = #{enabled}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- checkFormIdExists -->
+    <select id="checkFormIdExists" resultType="int">
+        SELECT COUNT(1)
+        FROM wf_form_template
+        WHERE deleted = 0 AND form_id = #{formId}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- getMaxVersion -->
+    <select id="getMaxVersion" resultType="int">
+        SELECT COALESCE(MAX(version), 0)
+        FROM wf_form_template
+        WHERE deleted = 0 AND form_id = #{formId}
+    </select>
+
+    <!-- selectVersionHistory -->
+    <select id="selectVersionHistory" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND form_id = #{formId}
+        ORDER BY version DESC
+    </select>
+
+    <!-- selectLatestVersion -->
+    <select id="selectLatestVersion" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND form_id = #{formId}
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <!-- selectByIds -->
+    <select id="selectByIds" resultMap="WfFormTemplateResult">
+        SELECT
+            id, form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, sort_order, remark, creator_id, creator_name,
+            created_time, updater_id, updater_name, updated_time, deleted, tenant_id
+        FROM wf_form_template
+        WHERE deleted = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- selectTemplateStatistics -->
+    <select id="selectTemplateStatistics" resultType="java.util.Map">
+        SELECT
+            category,
+            COUNT(*) as template_count,
+            COUNT(CASE WHEN enabled = 1 THEN 1 END) as enabled_count,
+            COUNT(CASE WHEN is_public = 1 THEN 1 END) as public_count
+        FROM wf_form_template
+        WHERE deleted = 0
+        GROUP BY category
+        ORDER BY template_count DESC
+    </select>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE wf_form_template
+        SET enabled = #{enabled},
+            updater_id = #{updaterId},
+            updater_name = #{updaterName},
+            updated_time = NOW()
+        WHERE deleted = 0 AND id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- copyFormTemplate -->
+    <insert id="copyFormTemplate" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO wf_form_template (
+            form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, creator_id, creator_name,
+            created_time, deleted, tenant_id
+        )
+        SELECT
+            #{newFormId}, #{newFormName}, form_description, process_key, 1,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, #{creatorId}, #{creatorName},
+            NOW(), 0, tenant_id
+        FROM wf_form_template
+        WHERE id = #{sourceId} AND deleted = 0
+    </insert>
+
+    <!-- createNewVersion -->
+    <insert id="createNewVersion" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO wf_form_template (
+            form_id, form_name, form_description, process_key, version,
+            form_config, form_fields, form_layout, form_rules,
+            category, enabled, is_public, creator_id, creator_name,
+            created_time, remark, deleted, tenant_id
+        )
+        SELECT
+            #{formId}, form_name, form_description, process_key, #{version},
+            #{formConfig}, form_fields, form_layout, form_rules,
+            category, enabled, is_public, #{creatorId}, #{creatorName},
+            NOW(), #{remark}, 0, tenant_id
+        FROM wf_form_template
+        WHERE form_id = #{formId} AND deleted = 0
+        ORDER BY version DESC
+        LIMIT 1
+    </insert>
+
+    <!-- countByCategory -->
+    <select id="countByCategory" resultType="java.util.Map">
+        SELECT
+            category,
+            COUNT(*) as count
+        FROM wf_form_template
+        WHERE deleted = 0
+        <if test="startTime != null">
+            AND created_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_time <= #{endTime}
+        </if>
+        GROUP BY category
+        ORDER BY count DESC
+    </select>
+
+    <!-- countTemplateUsage -->
+    <select id="countTemplateUsage" resultType="java.util.Map">
+        SELECT
+            t.form_id,
+            t.form_name,
+            COUNT(d.id) as usage_count
+        FROM wf_form_template t
+        LEFT JOIN wf_form_data d ON t.form_id = d.form_id
+        WHERE t.deleted = 0
+        <if test="startTime != null">
+            AND d.created_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND d.created_time <= #{endTime}
+        </if>
+        GROUP BY t.form_id, t.form_name
+        ORDER BY usage_count DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- countTemplatesByCreator -->
+    <select id="countTemplatesByCreator" resultType="java.util.Map">
+        SELECT
+            creator_id,
+            creator_name,
+            COUNT(*) as template_count
+        FROM wf_form_template
+        WHERE deleted = 0
+        <if test="startTime != null">
+            AND created_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND created_time <= #{endTime}
+        </if>
+        GROUP BY creator_id, creator_name
+        ORDER BY template_count DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+</mapper>

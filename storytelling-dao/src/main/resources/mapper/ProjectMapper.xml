@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.project.ProjectMapper">
+
+    <!-- Project结果映射 -->
+    <resultMap id="ProjectResult" type="com.chennian.storytelling.bean.model.Project">
+        <id property="id" column="id" />
+        <result property="projectNo" column="project_no" />
+        <result property="projectName" column="project_name" />
+        <result property="description" column="description" />
+        <result property="projectType" column="project_type" />
+        <result property="status" column="status" />
+        <result property="priority" column="priority" />
+        <result property="managerId" column="manager_id" />
+        <result property="managerName" column="manager_name" />
+        <result property="deptId" column="dept_id" />
+        <result property="deptName" column="dept_name" />
+        <result property="plannedStartTime" column="planned_start_time" />
+        <result property="plannedEndTime" column="planned_end_time" />
+        <result property="actualStartTime" column="actual_start_time" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="progress" column="progress" />
+        <result property="budgetAmount" column="budget_amount" />
+        <result property="actualCost" column="actual_cost" />
+        <result property="objectives" column="objectives" />
+        <result property="scope" column="scope" />
+        <result property="riskAssessment" column="risk_assessment" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProjectVo">
+        SELECT id, project_no, project_name, description, project_type, status, priority, manager_id, manager_name, dept_id, dept_name, planned_start_time, planned_end_time, actual_start_time, actual_end_time, progress, budget_amount, actual_cost, objectives, scope, risk_assessment, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM project
+    </sql>
+
+    <!-- selectProjectList -->
+    <select id="selectProjectList" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE del_flag = '0'
+        <if test="project != null">
+            <if test="project.projectName != null and project.projectName != ''">
+                AND project_name LIKE CONCAT('%', #{project.projectName}, '%')
+            </if>
+            <if test="project.projectNo != null and project.projectNo != ''">
+                AND project_no = #{project.projectNo}
+            </if>
+            <if test="project.status != null">
+                AND status = #{project.status}
+            </if>
+            <if test="project.projectType != null">
+                AND project_type = #{project.projectType}
+            </if>
+            <if test="project.priority != null">
+                AND priority = #{project.priority}
+            </if>
+            <if test="project.managerId != null">
+                AND manager_id = #{project.managerId}
+            </if>
+            <if test="project.deptId != null">
+                AND dept_id = #{project.deptId}
+            </if>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByProjectNo -->
+    <select id="selectByProjectNo" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE project_no = #{projectNo} AND del_flag = '0'
+    </select>
+
+    <!-- selectByManagerId -->
+    <select id="selectByManagerId" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE manager_id = #{managerId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByDeptId -->
+    <select id="selectByDeptId" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE dept_id = #{deptId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByProjectType -->
+    <select id="selectByProjectType" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE project_type = #{projectType} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByPriority -->
+    <select id="selectByPriority" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE priority = #{priority} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectOverdueProjects -->
+    <select id="selectOverdueProjects" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE del_flag = '0' 
+        AND planned_end_time &lt; NOW() 
+        AND status NOT IN ('4', '5')
+        ORDER BY planned_end_time ASC
+    </select>
+
+    <!-- selectUpcomingDeadlineProjects -->
+    <select id="selectUpcomingDeadlineProjects" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE del_flag = '0' 
+        AND planned_end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
+        AND status NOT IN ('4', '5')
+        ORDER BY planned_end_time ASC
+    </select>
+
+    <!-- selectProjectOverviewStatistics -->
+    <select id="selectProjectOverviewStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalProjects,
+            SUM(CASE WHEN status = '1' THEN 1 ELSE 0 END) as planningProjects,
+            SUM(CASE WHEN status = '2' THEN 1 ELSE 0 END) as inProgressProjects,
+            SUM(CASE WHEN status = '3' THEN 1 ELSE 0 END) as pausedProjects,
+            SUM(CASE WHEN status = '4' THEN 1 ELSE 0 END) as completedProjects,
+            SUM(CASE WHEN status = '5' THEN 1 ELSE 0 END) as cancelledProjects,
+            COALESCE(SUM(budget_amount), 0) as totalBudget,
+            COALESCE(SUM(actual_cost), 0) as totalActualCost
+        FROM project 
+        WHERE del_flag = '0'
+    </select>
+
+    <!-- selectProjectProgressAnalysis -->
+    <select id="selectProjectProgressAnalysis" resultType="java.util.Map">
+        SELECT 
+            id,
+            project_name,
+            project_no,
+            progress,
+            planned_start_time,
+            planned_end_time,
+            status
+        FROM project
+        WHERE del_flag = '0'
+        ORDER BY progress DESC, planned_end_time ASC
+    </select>
+
+    <!-- selectProjectCostAnalysis -->
+    <select id="selectProjectCostAnalysis" resultType="java.util.Map">
+        SELECT 
+            id,
+            project_name,
+            project_no,
+            COALESCE(budget_amount, 0) as budget,
+            COALESCE(actual_cost, 0) as actualCost,
+            CASE 
+                WHEN budget_amount > 0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
+                ELSE 0
+            END as costRatio
+        FROM project
+        WHERE del_flag = '0'
+        ORDER BY costRatio DESC
+    </select>
+
+    <!-- selectProjectPerformanceAnalysis -->
+    <select id="selectProjectPerformanceAnalysis" resultType="java.util.Map">
+        SELECT 
+            id,
+            project_name,
+            project_no,
+            progress,
+            status,
+            planned_start_time,
+            planned_end_time,
+            actual_start_time,
+            actual_end_time
+        FROM project
+        WHERE del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectProjectDeliverableAnalysis -->
+    <select id="selectProjectDeliverableAnalysis" resultType="java.util.Map">
+        SELECT 
+            p.id,
+            p.project_name,
+            p.project_no,
+            p.status,
+            p.progress,
+            p.planned_end_time,
+            COUNT(pd.id) as totalDeliverables,
+            SUM(CASE WHEN pd.status = '2' THEN 1 ELSE 0 END) as completedDeliverables,
+            CASE 
+                WHEN COUNT(pd.id) > 0 THEN ROUND((SUM(CASE WHEN pd.status = '2' THEN 1 ELSE 0 END) / COUNT(pd.id)) * 100, 2)
+                ELSE 0
+            END as deliverableCompletionRate
+        FROM project p
+        LEFT JOIN project_deliverable pd ON p.id = pd.project_id AND pd.del_flag = '0'
+        WHERE p.del_flag = '0'
+        <if test="projectId != null">
+            AND p.id = #{projectId}
+        </if>
+        GROUP BY p.id, p.project_name, p.project_no, p.status, p.progress, p.planned_end_time
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- selectProjectCountByStatus -->
+    <select id="selectProjectCountByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            CASE status
+                WHEN '1' THEN '规划中'
+                WHEN '2' THEN '进行中'
+                WHEN '3' THEN '暂停'
+                WHEN '4' THEN '已完成'
+                WHEN '5' THEN '已取消'
+                ELSE '未知'
+            END as statusName
+        FROM project 
+        WHERE del_flag = '0'
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+        GROUP BY status
+        ORDER BY status
+    </select>
+
+    <!-- selectProjectCountByType -->
+    <select id="selectProjectCountByType" resultType="java.util.Map">
+        SELECT 
+            project_type as type,
+            COUNT(*) as count,
+            CASE project_type
+                WHEN '1' THEN '研发项目'
+                WHEN '2' THEN '运营项目'
+                WHEN '3' THEN '市场项目'
+                WHEN '4' THEN '其他项目'
+                ELSE '未知类型'
+            END as typeName
+        FROM project 
+        WHERE del_flag = '0'
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+        GROUP BY project_type
+        ORDER BY project_type
+    </select>
+
+    <!-- selectProjectCountByPriority -->
+    <select id="selectProjectCountByPriority" resultType="java.util.Map">
+        SELECT 
+            priority,
+            COUNT(*) as count,
+            CASE priority
+                WHEN '1' THEN '低'
+                WHEN '2' THEN '中'
+                WHEN '3' THEN '高'
+                WHEN '4' THEN '紧急'
+                ELSE '未知'
+            END as priorityName
+        FROM project 
+        WHERE del_flag = '0'
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+        GROUP BY priority
+        ORDER BY priority
+    </select>
+
+    <!-- selectProjectCountByDept -->
+    <select id="selectProjectCountByDept" resultType="java.util.Map">
+        SELECT 
+            dept_id,
+            dept_name,
+            COUNT(*) as count
+        FROM project 
+        WHERE del_flag = '0'
+        GROUP BY dept_id, dept_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectProjectProgressTrend -->
+    <select id="selectProjectProgressTrend" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(update_time, '%Y-%m') as month,
+            AVG(progress) as avgProgress,
+            COUNT(*) as projectCount
+        FROM project 
+        WHERE del_flag = '0'
+        <if test="startDate != null and endDate != null">
+            AND update_time BETWEEN #{startDate} AND #{endDate}
+        </if>
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+        GROUP BY DATE_FORMAT(update_time, '%Y-%m')
+        ORDER BY month
+    </select>
+
+    <!-- selectProjectCostTrend -->
+    <select id="selectProjectCostTrend" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(create_time, '%Y-%m') as month,
+            SUM(COALESCE(budget_amount, 0)) as totalBudget,
+            SUM(COALESCE(actual_cost, 0)) as totalActualCost,
+            COUNT(*) as projectCount
+        FROM project 
+        WHERE del_flag = '0'
+        <if test="startDate != null and endDate != null">
+            AND create_time BETWEEN #{startDate} AND #{endDate}
+        </if>
+        <if test="deptId != null">
+            AND dept_id = #{deptId}
+        </if>
+        GROUP BY DATE_FORMAT(create_time, '%Y-%m')
+        ORDER BY month
+    </select>
+
+    <!-- checkProjectNoExists -->
+    <select id="checkProjectNoExists" resultType="int">
+        SELECT COUNT(*) FROM project 
+        WHERE project_no = #{projectNo} AND del_flag = '0'
+    </select>
+
+    <!-- insertProject -->
+    <insert id="insertProject" parameterType="com.chennian.storytelling.bean.model.Project">
+        INSERT INTO project(
+            project_no, project_name, description, project_type, status, priority,
+            manager_id, manager_name, dept_id, dept_name, planned_start_time, planned_end_time,
+            progress, budget_amount, objectives, scope, risk_assessment, remarks,
+            create_by, create_time, update_by, update_time, del_flag
+        ) VALUES (
+            #{projectNo}, #{projectName}, #{description}, #{projectType}, #{status}, #{priority},
+            #{managerId}, #{managerName}, #{deptId}, #{deptName}, #{plannedStartTime}, #{plannedEndTime},
+            #{progress}, #{budgetAmount}, #{objectives}, #{scope}, #{riskAssessment}, #{remarks},
+            #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, '0'
+        )
+    </insert>
+
+    <!-- updateProject -->
+    <update id="updateProject" parameterType="com.chennian.storytelling.bean.model.Project">
+        UPDATE project
+        <set>
+            <if test="projectName != null and projectName != ''">project_name = #{projectName},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="projectType != null">project_type = #{projectType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="managerName != null">manager_name = #{managerName},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="plannedStartTime != null">planned_start_time = #{plannedStartTime},</if>
+            <if test="plannedEndTime != null">planned_end_time = #{plannedEndTime},</if>
+            <if test="actualStartTime != null">actual_start_time = #{actualStartTime},</if>
+            <if test="actualEndTime != null">actual_end_time = #{actualEndTime},</if>
+            <if test="progress != null">progress = #{progress},</if>
+            <if test="budgetAmount != null">budget_amount = #{budgetAmount},</if>
+            <if test="actualCost != null">actual_cost = #{actualCost},</if>
+            <if test="objectives != null">objectives = #{objectives},</if>
+            <if test="scope != null">scope = #{scope},</if>
+            <if test="riskAssessment != null">risk_assessment = #{riskAssessment},</if>
+            <if test="remarks != null">remarks = #{remarks},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- deleteProjectById -->
+    <update id="deleteProjectById">
+        UPDATE project SET del_flag = '1' WHERE id = #{id}
+    </update>
+
+    <!-- selectProjectResourceAnalysis -->
+    <select id="selectProjectResourceAnalysis" resultType="java.util.Map">
+        SELECT 
+            p.id,
+            p.project_name,
+            p.project_no,
+            p.status,
+            p.manager_id,
+            p.manager_name,
+            p.dept_id,
+            p.dept_name,
+            COUNT(pr.id) as totalResources,
+            SUM(CASE WHEN pr.resource_type = '1' THEN 1 ELSE 0 END) as humanResources,
+            SUM(CASE WHEN pr.resource_type = '2' THEN 1 ELSE 0 END) as materialResources,
+            SUM(CASE WHEN pr.resource_type = '3' THEN 1 ELSE 0 END) as equipmentResources,
+            COALESCE(SUM(pr.allocated_amount), 0) as totalAllocatedAmount,
+            COALESCE(SUM(pr.used_amount), 0) as totalUsedAmount,
+            CASE 
+                WHEN SUM(pr.allocated_amount) > 0 THEN ROUND((SUM(pr.used_amount) / SUM(pr.allocated_amount)) * 100, 2)
+                ELSE 0
+            END as resourceUtilizationRate
+        FROM project p
+        LEFT JOIN project_resource pr ON p.id = pr.project_id AND pr.del_flag = '0'
+        WHERE p.del_flag = '0'
+        <if test="projectId != null">
+            AND p.id = #{projectId}
+        </if>
+        <if test="deptId != null">
+            AND p.dept_id = #{deptId}
+        </if>
+        GROUP BY p.id, p.project_name, p.project_no, p.status, p.manager_id, p.manager_name, p.dept_id, p.dept_name
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- selectAllProjectsProgress -->
+    <select id="selectAllProjectsProgress" resultType="java.util.Map">
+        SELECT 
+            id,
+            project_name,
+            project_no,
+            status,
+            progress,
+            planned_start_time,
+            planned_end_time,
+            actual_start_time,
+            actual_end_time,
+            manager_name,
+            dept_name,
+            CASE 
+                WHEN planned_end_time < NOW() AND status NOT IN ('4', '5') THEN 'overdue'
+                WHEN progress >= 90 THEN 'near_completion'
+                WHEN progress < 30 AND DATEDIFF(planned_end_time, NOW()) < 30 THEN 'at_risk'
+                ELSE 'on_track'
+            END as progress_status
+        FROM project
+        WHERE del_flag = '0'
+        ORDER BY progress DESC, planned_end_time ASC
+    </select>
+
+    <!-- selectAllProjectsCost -->
+    <select id="selectAllProjectsCost" resultType="java.util.Map">
+        SELECT 
+            id,
+            project_name,
+            project_no,
+            status,
+            COALESCE(budget_amount, 0) as budget,
+            COALESCE(actual_cost, 0) as actualCost,
+            CASE 
+                WHEN budget_amount > 0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
+                ELSE 0
+            END as costRatio,
+            CASE 
+                WHEN actual_cost > budget_amount THEN 'over_budget'
+                WHEN actual_cost > budget_amount * 0.9 THEN 'near_budget'
+                ELSE 'within_budget'
+            END as budget_status,
+            manager_name,
+            dept_name
+        FROM project
+        WHERE del_flag = '0'
+        ORDER BY costRatio DESC
+    </select>
+
+    <!-- selectProjectsByDateRange -->
+    <select id="selectProjectsByDateRange" resultMap="ProjectResult">
+        <include refid="selectProjectVo"/>
+        WHERE del_flag = '0'
+        <if test="startDate != null and endDate != null">
+            AND (
+                (planned_start_time BETWEEN #{startDate} AND #{endDate})
+                OR (planned_end_time BETWEEN #{startDate} AND #{endDate})
+                OR (planned_start_time <= #{startDate} AND planned_end_time >= #{endDate})
+            )
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY planned_start_time ASC
+    </select>
+
+</mapper>

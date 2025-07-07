@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.project.ProjectMilestoneMapper">
+
+    <!-- ProjectMilestone结果映射 -->
+    <resultMap id="ProjectMilestoneResult" type="com.chennian.storytelling.bean.model.ProjectMilestone">
+        <id property="id" column="id" />
+        <result property="projectId" column="project_id" />
+        <result property="milestoneName" column="milestone_name" />
+        <result property="description" column="description" />
+        <result property="milestoneType" column="milestone_type" />
+        <result property="status" column="status" />
+        <result property="importance" column="importance" />
+        <result property="plannedCompletionTime" column="planned_completion_time" />
+        <result property="actualCompletionTime" column="actual_completion_time" />
+        <result property="responsibleId" column="responsible_id" />
+        <result property="responsibleName" column="responsible_name" />
+        <result property="completionCriteria" column="completion_criteria" />
+        <result property="deliverables" column="deliverables" />
+        <result property="achievementNotes" column="achievement_notes" />
+        <result property="riskAssessment" column="risk_assessment" />
+        <result property="dependencies" column="dependencies" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProjectMilestoneVo">
+        SELECT id, project_id, milestone_name, description, milestone_type, status, importance, planned_completion_time, actual_completion_time, responsible_id, responsible_name, completion_criteria, deliverables, achievement_notes, risk_assessment, dependencies, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM project_milestone
+    </sql>
+
+    <!-- selectMilestoneList -->
+    <select id="selectMilestoneList" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        <where>
+            del_flag = '0'
+            <if test="milestone.projectId != null">
+                AND project_id = #{milestone.projectId}
+            </if>
+            <if test="milestone.milestoneName != null and milestone.milestoneName != ''">
+                AND milestone_name LIKE CONCAT('%', #{milestone.milestoneName}, '%')
+            </if>
+            <if test="milestone.status != null">
+                AND status = #{milestone.status}
+            </if>
+            <if test="milestone.milestoneType != null">
+                AND milestone_type = #{milestone.milestoneType}
+            </if>
+            <if test="milestone.responsibleId != null">
+                AND responsible_id = #{milestone.responsibleId}
+            </if>
+        </where>
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectMilestonesByProjectId -->
+    <select id="selectMilestonesByProjectId" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectByMilestoneName -->
+    <select id="selectByMilestoneName" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE milestone_name = #{milestoneName} AND project_id = #{projectId} AND del_flag = '0'
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectByMilestoneType -->
+    <select id="selectByMilestoneType" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE milestone_type = #{milestoneType} AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectOverdueMilestones -->
+    <select id="selectOverdueMilestones" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE planned_completion_time &lt; NOW() 
+        AND status != 'COMPLETED' 
+        AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectUpcomingDeadlineMilestones -->
+    <select id="selectUpcomingDeadlineMilestones" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE planned_completion_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
+        AND status != 'COMPLETED'
+        AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectAchievedMilestones -->
+    <select id="selectAchievedMilestones" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE status = 'COMPLETED' AND del_flag = '0'
+        ORDER BY actual_completion_time DESC
+    </select>
+
+    <!-- selectPendingMilestones -->
+    <select id="selectPendingMilestones" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE status IN ('PENDING', 'IN_PROGRESS') AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectMilestoneCountByStatus -->
+    <select id="selectMilestoneCountByStatus" resultType="java.util.Map">
+        SELECT status, COUNT(*) as count
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        GROUP BY status
+    </select>
+
+    <!-- selectMilestoneCountByType -->
+    <select id="selectMilestoneCountByType" resultType="java.util.Map">
+        SELECT milestone_type, COUNT(*) as count
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        GROUP BY milestone_type
+    </select>
+
+    <!-- selectMilestoneById -->
+    <select id="selectMilestoneById" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE id = #{id} AND del_flag = '0'
+    </select>
+
+    <!-- selectMilestoneDelayAnalysis -->
+    <select id="selectMilestoneDelayAnalysis" resultType="java.util.Map">
+        SELECT 
+            id as milestone_id,
+            milestone_name,
+            planned_completion_time,
+            actual_completion_time,
+            CASE 
+                WHEN actual_completion_time IS NOT NULL THEN DATEDIFF(actual_completion_time, planned_completion_time)
+                WHEN status != 'COMPLETED' AND planned_completion_time &lt; NOW() THEN DATEDIFF(NOW(), planned_completion_time)
+                ELSE 0
+            END as delay_days
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        HAVING delay_days > 0
+        ORDER BY delay_days DESC
+    </select>
+
+    <!-- selectCriticalMilestones -->
+    <select id="selectCriticalMilestones" resultMap="ProjectMilestoneResult">
+        <include refid="selectProjectMilestoneVo"/>
+        WHERE importance = 'HIGH' AND del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectMilestoneTimeline -->
+    <select id="selectMilestoneTimeline" resultType="java.util.Map">
+        SELECT 
+            id as milestone_id,
+            milestone_name,
+            planned_completion_time,
+            actual_completion_time,
+            status,
+            milestone_type
+        FROM project_milestone
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+    <!-- selectMilestoneDependencies -->
+    <select id="selectMilestoneDependencies" resultType="java.util.Map">
+        SELECT 
+            id as milestone_id,
+            milestone_name,
+            dependencies,
+            status,
+            planned_completion_time
+        FROM project_milestone
+        WHERE id = #{milestoneId} AND del_flag = '0'
+    </select>
+
+    <!-- checkMilestoneNameExists -->
+    <select id="checkMilestoneNameExists" resultType="int">
+        SELECT COUNT(*)
+        FROM project_milestone
+        WHERE milestone_name = #{milestoneName} 
+        AND project_id = #{projectId} 
+        AND del_flag = '0'
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <!-- selectMilestoneCompletionStatistics -->
+    <select id="selectMilestoneCompletionStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_milestones,
+            SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_milestones,
+            SUM(CASE WHEN status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as in_progress_milestones,
+            SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending_milestones,
+            ROUND(SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completion_rate
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+    </select>
+
+    <!-- selectMilestoneRiskAssessment -->
+    <select id="selectMilestoneRiskAssessment" resultType="java.util.Map">
+        SELECT 
+            id as milestone_id,
+            milestone_name,
+            risk_assessment,
+            importance,
+            status,
+            planned_completion_time,
+            CASE 
+                WHEN planned_completion_time &lt; NOW() AND status != 'COMPLETED' THEN 'HIGH'
+                WHEN DATEDIFF(planned_completion_time, NOW()) &lt;= 7 AND status != 'COMPLETED' THEN 'MEDIUM'
+                ELSE 'LOW'
+            END as risk_level
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        ORDER BY risk_level DESC, planned_completion_time ASC
+    </select>
+
+    <!-- selectMilestoneProgressByProject -->
+    <select id="selectMilestoneProgressByProject" resultType="java.util.Map">
+        SELECT 
+            project_id,
+            COUNT(*) as total_milestones,
+            SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_milestones,
+            ROUND(SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as progress_percentage
+        FROM project_milestone
+        WHERE del_flag = '0'
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        GROUP BY project_id
+        ORDER BY progress_percentage DESC
+    </select>
+
+</mapper>

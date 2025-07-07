@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SupplyChainPlanMapper">
+
+    <!-- SupplyChainPlan结果映射 -->
+    <resultMap id="SupplyChainPlanResult" type="com.chennian.storytelling.bean.model.SupplyChainPlan">
+        <id property="planId" column="plan_id" />
+        <result property="planName" column="plan_name" />
+        <result property="startDate" column="start_date" />
+        <result property="endDate" column="end_date" />
+        <result property="description" column="description" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectSupplyChainPlanVo">
+        SELECT plan_id, plan_name, start_date, end_date, description, status, create_time, update_time
+        FROM supply_chain_plan
+    </sql>
+
+</mapper>

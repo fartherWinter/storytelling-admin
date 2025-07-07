@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.BomTemplateMapper">
+
+    <!-- BomTemplate结果映射 -->
+    <resultMap id="BomTemplateResult" type="com.chennian.storytelling.bean.model.BomTemplate">
+        <id property="bomId" column="bom_id" />
+        <result property="bomCode" column="bom_code" />
+        <result property="bomName" column="bom_name" />
+        <result property="bomVersion" column="bom_version" />
+        <result property="bomType" column="bom_type" />
+        <result property="bomStatus" column="bom_status" />
+        <result property="productId" column="product_id" />
+        <result property="productCode" column="product_code" />
+        <result property="productName" column="product_name" />
+        <result property="productSpec" column="product_spec" />
+        <result property="productUnit" column="product_unit" />
+        <result property="baseQuantity" column="base_quantity" />
+        <result property="batchSize" column="batch_size" />
+        <result property="lossRate" column="loss_rate" />
+        <result property="routingId" column="routing_id" />
+        <result property="routingName" column="routing_name" />
+        <result property="lineId" column="line_id" />
+        <result property="lineName" column="line_name" />
+        <result property="workshopId" column="workshop_id" />
+        <result property="workshopName" column="workshop_name" />
+        <result property="designDeptId" column="design_dept_id" />
+        <result property="designDeptName" column="design_dept_name" />
+        <result property="designerId" column="designer_id" />
+        <result property="designerName" column="designer_name" />
+        <result property="processDeptId" column="process_dept_id" />
+        <result property="processDeptName" column="process_dept_name" />
+        <result property="processEngineerId" column="process_engineer_id" />
+        <result property="processEngineerName" column="process_engineer_name" />
+        <result property="reviewerId" column="reviewer_id" />
+        <result property="reviewerName" column="reviewer_name" />
+        <result property="reviewTime" column="review_time" />
+        <result property="reviewComment" column="review_comment" />
+        <result property="publisherId" column="publisher_id" />
+        <result property="publisherName" column="publisher_name" />
+        <result property="publishTime" column="publish_time" />
+        <result property="effectiveDate" column="effective_date" />
+        <result property="expiryDate" column="expiry_date" />
+        <result property="parentBomId" column="parent_bom_id" />
+        <result property="parentBomCode" column="parent_bom_code" />
+        <result property="bomLevel" column="bom_level" />
+        <result property="isLeaf" column="is_leaf" />
+        <result property="totalMaterialCost" column="total_material_cost" />
+        <result property="totalLaborCost" column="total_labor_cost" />
+        <result property="manufacturingCost" column="manufacturing_cost" />
+        <result property="totalCost" column="total_cost" />
+        <result property="standardHours" column="standard_hours" />
+        <result property="setupHours" column="setup_hours" />
+        <result property="processHours" column="process_hours" />
+        <result property="qualityRequirements" column="quality_requirements" />
+        <result property="technicalRequirements" column="technical_requirements" />
+        <result property="processRequirements" column="process_requirements" />
+        <result property="safetyRequirements" column="safety_requirements" />
+        <result property="environmentalRequirements" column="environmental_requirements" />
+        <result property="changeReason" column="change_reason" />
+        <result property="changeDescription" column="change_description" />
+        <result property="description" column="description" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectBomTemplateVo">
+        SELECT bom_id, bom_code, bom_name, bom_version, bom_type, bom_status, product_id, product_code, product_name, product_spec, product_unit, base_quantity, batch_size, loss_rate, routing_id, routing_name, line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name, designer_id, designer_name, process_dept_id, process_dept_name, process_engineer_id, process_engineer_name, reviewer_id, reviewer_name, review_time, review_comment, publisher_id, publisher_name, publish_time, effective_date, expiry_date, parent_bom_id, parent_bom_code, bom_level, is_leaf, total_material_cost, total_labor_cost, manufacturing_cost, total_cost, standard_hours, setup_hours, process_hours, quality_requirements, technical_requirements, process_requirements, safety_requirements, environmental_requirements, change_reason, change_description, description, remark, create_by, create_time, update_by, update_time, del_flag
+        FROM bom_template
+    </sql>
+
+    <!-- updateTemplateStatus -->
+    <update id="updateTemplateStatus">
+        UPDATE bom_template 
+        SET bom_status = #{status},
+            update_time = NOW()
+        WHERE bom_id = #{templateId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectByProductId -->
+    <select id="selectByProductId" resultMap="BomTemplateResult">
+        <include refid="selectBomTemplateVo"/>
+        WHERE product_id = #{productId}
+        AND del_flag = '0'
+        ORDER BY bom_version DESC, create_time DESC
+    </select>
+
+    <!-- selectByProductCode -->
+    <select id="selectByProductCode" resultMap="BomTemplateResult">
+        <include refid="selectBomTemplateVo"/>
+        WHERE product_code = #{productCode}
+        AND del_flag = '0'
+        ORDER BY bom_version DESC, create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="BomTemplateResult">
+        <include refid="selectBomTemplateVo"/>
+        WHERE bom_status = #{status}
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTemplateStatistics -->
+    <select id="selectTemplateStatistics" resultType="java.util.Map">
+        SELECT 
+            bom_id as templateId,
+            bom_name as templateName,
+            product_name as productName,
+            COUNT(*) as usageCount,
+            COUNT(CASE WHEN bom_status = 1 THEN 1 END) as activeCount,
+            COUNT(CASE WHEN bom_status = 2 THEN 1 END) as frozenCount,
+            AVG(CAST(total_cost AS DECIMAL(10,2))) as avgTotalCost,
+            AVG(CAST(standard_hours AS DECIMAL(8,2))) as avgStandardHours
+        FROM bom_template
+        WHERE del_flag = '0'
+        <if test="productId != null">
+            AND product_id = #{productId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(create_time) <= #{endDate}
+        </if>
+        GROUP BY bom_id, bom_name, product_name
+        ORDER BY usageCount DESC
+    </select>
+
+    <!-- approveTemplate -->
+    <update id="approveTemplate">
+        UPDATE bom_template 
+        SET bom_status = 1,
+            reviewer_id = #{reviewerId},
+            reviewer_name = #{reviewerName},
+            review_time = #{reviewTime},
+            update_time = NOW()
+        WHERE bom_id = #{templateId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- publishTemplate -->
+    <update id="publishTemplate">
+        UPDATE bom_template 
+        SET bom_status = 2,
+            publisher_id = #{publisherId},
+            publisher_name = #{publisherName},
+            publish_time = #{publishTime},
+            update_time = NOW()
+        WHERE bom_id = #{templateId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- freezeTemplate -->
+    <update id="freezeTemplate">
+        UPDATE bom_template 
+        SET bom_status = 3,
+            update_time = NOW()
+        WHERE bom_id = #{templateId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- obsoleteTemplate -->
+    <update id="obsoleteTemplate">
+        UPDATE bom_template 
+        SET bom_status = 4,
+            update_time = NOW()
+        WHERE bom_id = #{templateId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- copyTemplate -->
+    <insert id="copyTemplate" useGeneratedKeys="true" keyProperty="bomId">
+        INSERT INTO bom_template (
+            bom_code, bom_name, bom_version, bom_type, bom_status, product_id, product_code, product_name, 
+            product_spec, product_unit, base_quantity, batch_size, loss_rate, routing_id, routing_name, 
+            line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name, 
+            designer_id, designer_name, process_dept_id, process_dept_name, process_engineer_id, 
+            process_engineer_name, parent_bom_id, parent_bom_code, bom_level, is_leaf, 
+            total_material_cost, total_labor_cost, manufacturing_cost, total_cost, standard_hours, 
+            setup_hours, process_hours, quality_requirements, technical_requirements, 
+            process_requirements, safety_requirements, environmental_requirements, 
+            description, remark, create_by, create_time, del_flag
+        )
+        SELECT 
+            #{newBomCode}, #{newBomName}, '1.0', bom_type, 0, product_id, product_code, product_name, 
+            product_spec, product_unit, base_quantity, batch_size, loss_rate, routing_id, routing_name, 
+            line_id, line_name, workshop_id, workshop_name, design_dept_id, design_dept_name, 
+            #{creatorId}, #{creatorName}, process_dept_id, process_dept_name, process_engineer_id, 
+            process_engineer_name, parent_bom_id, parent_bom_code, bom_level, is_leaf, 
+            total_material_cost, total_labor_cost, manufacturing_cost, total_cost, standard_hours, 
+            setup_hours, process_hours, quality_requirements, technical_requirements, 
+            process_requirements, safety_requirements, environmental_requirements, 
+            description, remark, #{creatorId}, NOW(), '0'
+        FROM bom_template 
+        WHERE bom_id = #{sourceTemplateId} AND del_flag = '0'
+    </insert>
+
+    <!-- selectTemplateUsage -->
+    <select id="selectTemplateUsage" resultType="java.util.Map">
+        SELECT 
+            bt.bom_id as templateId,
+            bt.bom_name as templateName,
+            bt.product_name as productName,
+            COUNT(b.bom_id) as usageCount,
+            COUNT(CASE WHEN b.bom_status = 1 THEN 1 END) as activeUsageCount,
+            MAX(b.create_time) as lastUsedTime,
+            AVG(CAST(b.total_cost AS DECIMAL(10,2))) as avgUsageCost
+        FROM bom_template bt
+        LEFT JOIN bom b ON bt.bom_id = b.template_id AND b.del_flag = '0'
+        WHERE bt.bom_id = #{templateId}
+        AND bt.del_flag = '0'
+        GROUP BY bt.bom_id, bt.bom_name, bt.product_name
+    </select>
+
+    <!-- selectPopularTemplates -->
+    <select id="selectPopularTemplates" resultMap="BomTemplateResult">
+        SELECT bt.* FROM (
+            SELECT 
+                bt.*,
+                COUNT(b.bom_id) as usage_count
+            FROM bom_template bt
+            LEFT JOIN bom b ON bt.bom_id = b.template_id AND b.del_flag = '0'
+            WHERE bt.del_flag = '0'
+            AND bt.bom_status IN (1, 2)
+            GROUP BY bt.bom_id
+            ORDER BY usage_count DESC, bt.create_time DESC
+            LIMIT #{limit}
+        ) bt
+    </select>
+
+    <!-- selectRecentlyUsedTemplates -->
+    <select id="selectRecentlyUsedTemplates" resultMap="BomTemplateResult">
+        SELECT DISTINCT bt.* 
+        FROM bom_template bt
+        INNER JOIN bom b ON bt.bom_id = b.template_id
+        WHERE bt.del_flag = '0'
+        AND b.del_flag = '0'
+        AND b.create_by = #{userId}
+        ORDER BY b.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

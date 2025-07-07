@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.BOMItemMapper">
+
+    <!-- BOMItem结果映射 -->
+    <resultMap id="BOMItemResult" type="com.chennian.storytelling.bean.model.BOMItem">
+        <id property="bomItemId" column="bom_item_id" />
+        <result property="bomId" column="bom_id" />
+        <result property="materialId" column="material_id" />
+        <result property="materialCode" column="material_code" />
+        <result property="materialName" column="material_name" />
+        <result property="materialSpec" column="material_spec" />
+        <result property="materialUnit" column="material_unit" />
+        <result property="materialType" column="material_type" />
+        <result property="requiredQuantity" column="required_quantity" />
+        <result property="baseUsage" column="base_usage" />
+        <result property="lossRate" column="loss_rate" />
+        <result property="actualUsage" column="actual_usage" />
+        <result property="substituteMaterialId" column="substitute_material_id" />
+        <result property="substituteMaterialCode" column="substitute_material_code" />
+        <result property="substituteMaterialName" column="substitute_material_name" />
+        <result property="substituteRatio" column="substitute_ratio" />
+        <result property="isKeyMaterial" column="is_key_material" />
+        <result property="isOptional" column="is_optional" />
+        <result property="processCode" column="process_code" />
+        <result property="processName" column="process_name" />
+        <result property="processSequence" column="process_sequence" />
+        <result property="feedingTime" column="feeding_time" />
+        <result property="feedingMethod" column="feeding_method" />
+        <result property="storageLocation" column="storage_location" />
+        <result property="supplierId" column="supplier_id" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="purchaseCycle" column="purchase_cycle" />
+        <result property="minStock" column="min_stock" />
+        <result property="maxStock" column="max_stock" />
+        <result property="safetyStock" column="safety_stock" />
+        <result property="standardCost" column="standard_cost" />
+        <result property="currentCost" column="current_cost" />
+        <result property="effectiveDate" column="effective_date" />
+        <result property="expiryDate" column="expiry_date" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectBOMItemVo">
+        SELECT bom_item_id, bom_id, material_id, material_code, material_name, material_spec, material_unit, material_type, required_quantity, base_usage, loss_rate, actual_usage, substitute_material_id, substitute_material_code, substitute_material_name, substitute_ratio, is_key_material, is_optional, process_code, process_name, process_sequence, feeding_time, feeding_method, storage_location, supplier_id, supplier_name, purchase_cycle, min_stock, max_stock, safety_stock, standard_cost, current_cost, effective_date, expiry_date, remark, create_by, create_time, update_by, update_time
+        FROM bom_item
+    </sql>
+
+    <!-- selectByBomId -->
+    <select id="selectByBomId" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE bom_id = #{bomId}
+        AND del_flag = '0'
+        ORDER BY process_sequence ASC, material_code ASC
+    </select>
+
+    <!-- selectByMaterialId -->
+    <select id="selectByMaterialId" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE material_id = #{materialId}
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByMaterialType -->
+    <select id="selectByMaterialType" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE bom_id = #{bomId}
+        AND material_type = #{materialType}
+        AND del_flag = '0'
+        ORDER BY process_sequence ASC, material_code ASC
+    </select>
+
+    <!-- selectCostAnalysisData -->
+    <select id="selectCostAnalysisData" resultType="java.util.Map">
+        SELECT 
+            bi.bom_item_id as id,
+            bi.material_id,
+            bi.material_code,
+            bi.material_name,
+            bi.material_type,
+            bi.required_quantity,
+            bi.standard_cost,
+            bi.current_cost,
+            (CAST(bi.standard_cost AS DECIMAL(10,2)) * CAST(bi.required_quantity AS DECIMAL(10,2))) as totalStandardCost,
+            (CAST(bi.current_cost AS DECIMAL(10,2)) * CAST(bi.required_quantity AS DECIMAL(10,2))) as totalCurrentCost,
+            bi.create_time
+        FROM bom_item bi
+        WHERE bi.del_flag = '0'
+        <if test="bomId != null">
+            AND bi.bom_id = #{bomId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(bi.create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(bi.create_time) <= #{endDate}
+        </if>
+        ORDER BY bi.create_time DESC
+    </select>
+
+    <!-- selectKeyMaterials -->
+    <select id="selectKeyMaterials" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE bom_id = #{bomId}
+        AND is_key_material = 1
+        AND del_flag = '0'
+        ORDER BY process_sequence ASC, material_code ASC
+    </select>
+
+    <!-- selectOptionalMaterials -->
+    <select id="selectOptionalMaterials" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE bom_id = #{bomId}
+        AND is_optional = 1
+        AND del_flag = '0'
+        ORDER BY process_sequence ASC, material_code ASC
+    </select>
+
+    <!-- selectByProcess -->
+    <select id="selectByProcess" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE bom_id = #{bomId}
+        AND process_code = #{processCode}
+        AND del_flag = '0'
+        ORDER BY process_sequence ASC, material_code ASC
+    </select>
+
+    <!-- selectBomItemStatistics -->
+    <select id="selectBomItemStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as totalItems,
+            COUNT(CASE WHEN is_key_material = 1 THEN 1 END) as keyMaterialCount,
+            COUNT(CASE WHEN is_optional = 1 THEN 1 END) as optionalMaterialCount,
+            SUM(CAST(required_quantity AS DECIMAL(10,2))) as totalQuantity,
+            SUM(CAST(standard_cost AS DECIMAL(10,2)) * CAST(required_quantity AS DECIMAL(10,2))) as totalStandardCost,
+            SUM(CAST(current_cost AS DECIMAL(10,2)) * CAST(required_quantity AS DECIMAL(10,2))) as totalCurrentCost,
+            AVG(CAST(loss_rate AS DECIMAL(5,2))) as avgLossRate
+        FROM bom_item
+        WHERE bom_id = #{bomId}
+        AND del_flag = '0'
+    </select>
+
+    <!-- selectMaterialUsageStatistics -->
+    <select id="selectMaterialUsageStatistics" resultType="java.util.Map">
+        SELECT 
+            material_id as materialId,
+            COUNT(*) as usageCount,
+            SUM(CAST(required_quantity AS DECIMAL(10,2))) as totalRequiredQuantity,
+            SUM(CAST(actual_usage AS DECIMAL(10,2))) as totalActualUsage,
+            AVG(CAST(required_quantity AS DECIMAL(10,2))) as avgRequiredQuantity,
+            AVG(CAST(actual_usage AS DECIMAL(10,2))) as avgActualUsage
+        FROM bom_item
+        WHERE del_flag = '0'
+        <if test="materialId != null">
+            AND material_id = #{materialId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(create_time) <= #{endDate}
+        </if>
+        GROUP BY material_id
+        ORDER BY totalActualUsage DESC
+    </select>
+
+    <!-- selectMaterialCostStatistics -->
+    <select id="selectMaterialCostStatistics" resultType="java.util.Map">
+        SELECT 
+            material_type,
+            COUNT(*) as materialCount,
+            SUM(CAST(required_quantity AS DECIMAL(10,2))) as totalQuantity,
+            SUM(CAST(standard_cost AS DECIMAL(10,2)) * CAST(required_quantity AS DECIMAL(10,2))) as totalStandardCost,
+            SUM(CAST(current_cost AS DECIMAL(10,2)) * CAST(required_quantity AS DECIMAL(10,2))) as totalCurrentCost,
+            AVG(CAST(standard_cost AS DECIMAL(10,2))) as avgStandardCost,
+            AVG(CAST(current_cost AS DECIMAL(10,2))) as avgCurrentCost
+        FROM bom_item
+        WHERE bom_id = #{bomId}
+        AND del_flag = '0'
+        GROUP BY material_type
+        ORDER BY totalCurrentCost DESC
+    </select>
+
+    <!-- deleteByBomId -->
+    <delete id="deleteByBomId">
+        UPDATE bom_item 
+        SET del_flag = '1', 
+            update_time = NOW()
+        WHERE bom_id = #{bomId}
+        AND del_flag = '0'
+    </delete>
+
+    <!-- updateMaterialUsage -->
+    <update id="updateMaterialUsage">
+        UPDATE bom_item 
+        SET required_quantity = #{requiredQuantity},
+            actual_usage = #{actualUsage},
+            update_time = NOW()
+        WHERE bom_item_id = #{bomItemId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- updateMaterialCost -->
+    <update id="updateMaterialCost">
+        UPDATE bom_item 
+        SET standard_cost = #{standardCost},
+            current_cost = #{currentCost},
+            update_time = NOW()
+        WHERE bom_item_id = #{bomItemId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectSubstituteMaterials -->
+    <select id="selectSubstituteMaterials" resultMap="BOMItemResult">
+        <include refid="selectBOMItemVo"/>
+        WHERE substitute_material_id = #{materialId}
+        AND del_flag = '0'
+        ORDER BY substitute_ratio DESC, material_code ASC
+    </select>
+
+    <!-- selectMaterialStockRequirement -->
+    <select id="selectMaterialStockRequirement" resultType="java.util.Map">
+        SELECT 
+            material_id as materialId,
+            material_code,
+            material_name,
+            material_unit,
+            SUM(CAST(required_quantity AS DECIMAL(10,2)) * #{productionQuantity}) as totalRequiredQuantity,
+            min_stock,
+            max_stock,
+            safety_stock
+        FROM bom_item
+        WHERE bom_id = #{bomId}
+        AND del_flag = '0'
+        GROUP BY material_id, material_code, material_name, material_unit, min_stock, max_stock, safety_stock
+        ORDER BY totalRequiredQuantity DESC
+    </select>
+
+    <!-- selectCostStatistics -->
+    <select id="selectCostStatistics" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(bi.create_time, '%Y-%m') as month,
+            COUNT(*) as itemCount,
+            SUM(CAST(bi.standard_cost AS DECIMAL(10,2)) * CAST(bi.required_quantity AS DECIMAL(10,2))) as totalStandardCost,
+            SUM(CAST(bi.current_cost AS DECIMAL(10,2)) * CAST(bi.required_quantity AS DECIMAL(10,2))) as totalCurrentCost,
+            AVG(CAST(bi.standard_cost AS DECIMAL(10,2))) as avgStandardCost,
+            AVG(CAST(bi.current_cost AS DECIMAL(10,2))) as avgCurrentCost
+        FROM bom_item bi
+        INNER JOIN bom b ON bi.bom_id = b.bom_id
+        WHERE bi.del_flag = '0'
+        AND b.del_flag = '0'
+        <if test="productId != null">
+            AND b.product_id = #{productId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(bi.create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(bi.create_time) <= #{endDate}
+        </if>
+        GROUP BY DATE_FORMAT(bi.create_time, '%Y-%m')
+        ORDER BY month DESC
+    </select>
+
+    <!-- selectMaterialConsumption -->
+    <select id="selectMaterialConsumption" resultType="java.util.Map">
+        SELECT 
+            material_id as materialId,
+            material_code,
+            material_name,
+            material_type,
+            COUNT(*) as usageCount,
+            SUM(CAST(actual_usage AS DECIMAL(10,2))) as totalConsumption,
+            AVG(CAST(actual_usage AS DECIMAL(10,2))) as avgConsumption,
+            SUM(CAST(current_cost AS DECIMAL(10,2)) * CAST(actual_usage AS DECIMAL(10,2))) as totalCost
+        FROM bom_item
+        WHERE del_flag = '0'
+        <if test="materialId != null">
+            AND material_id = #{materialId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(create_time) <= #{endDate}
+        </if>
+        GROUP BY material_id, material_code, material_name, material_type
+        ORDER BY totalConsumption DESC
+    </select>
+
+    <!-- selectInventoryTurnover -->
+    <select id="selectInventoryTurnover" resultType="java.util.Map">
+        SELECT 
+            bi.material_id as materialId,
+            bi.material_code,
+            bi.material_name,
+            COUNT(*) as usageFrequency,
+            SUM(CAST(bi.actual_usage AS DECIMAL(10,2))) as totalUsage,
+            AVG(CAST(bi.safety_stock AS DECIMAL(10,2))) as avgSafetyStock,
+            (SUM(CAST(bi.actual_usage AS DECIMAL(10,2))) / NULLIF(AVG(CAST(bi.safety_stock AS DECIMAL(10,2))), 0)) as turnoverRatio
+        FROM bom_item bi
+        INNER JOIN bom b ON bi.bom_id = b.bom_id
+        WHERE bi.del_flag = '0'
+        AND b.del_flag = '0'
+        <if test="productId != null">
+            AND b.product_id = #{productId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(bi.create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(bi.create_time) <= #{endDate}
+        </if>
+        GROUP BY bi.material_id, bi.material_code, bi.material_name
+        ORDER BY turnoverRatio DESC
+    </select>
+
+    <!-- selectSupplierPerformance -->
+    <select id="selectSupplierPerformance" resultType="java.util.Map">
+        SELECT 
+            supplier_id as supplierId,
+            supplier_name,
+            COUNT(*) as materialCount,
+            SUM(CAST(required_quantity AS DECIMAL(10,2))) as totalQuantity,
+            SUM(CAST(current_cost AS DECIMAL(10,2)) * CAST(required_quantity AS DECIMAL(10,2))) as totalCost,
+            AVG(CAST(current_cost AS DECIMAL(10,2))) as avgCost,
+            AVG(CAST(purchase_cycle AS DECIMAL(5,2))) as avgPurchaseCycle
+        FROM bom_item
+        WHERE del_flag = '0'
+        <if test="supplierId != null">
+            AND supplier_id = #{supplierId}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(create_time) >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(create_time) <= #{endDate}
+        </if>
+        GROUP BY supplier_id, supplier_name
+        ORDER BY totalCost DESC
+    </select>
+
+</mapper>

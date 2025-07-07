@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.WarehouseMapper">
+
+    <!-- Warehouse结果映射 -->
+    <resultMap id="WarehouseResult" type="com.chennian.storytelling.bean.model.Warehouse">
+        <id property="id" column="id" />
+        <result property="warehouseCode" column="warehouse_code" />
+        <result property="warehouseName" column="warehouse_name" />
+        <result property="warehouseType" column="warehouse_type" />
+        <result property="address" column="address" />
+        <result property="contactPerson" column="contact_person" />
+        <result property="contactPhone" column="contact_phone" />
+        <result property="area" column="area" />
+        <result property="capacity" column="capacity" />
+        <result property="status" column="status" />
+        <result property="isDefault" column="is_default" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWarehouseVo">
+        SELECT id, warehouse_code, warehouse_name, warehouse_type, address, contact_person, contact_phone, area, capacity, status, is_default, remark, create_by, create_time, update_by, update_time
+        FROM erp_warehouse
+    </sql>
+
+    <!-- selectByWarehouseCode -->
+    <select id="selectByWarehouseCode" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE warehouse_code = #{warehouseCode}
+    </select>
+
+    <!-- selectByWarehouseName -->
+    <select id="selectByWarehouseName" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE warehouse_name = #{warehouseName}
+    </select>
+
+    <!-- selectActiveWarehouses -->
+    <select id="selectActiveWarehouses" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE status = 1 
+        ORDER BY is_default DESC, warehouse_code ASC
+    </select>
+
+    <!-- selectByWarehouseType -->
+    <select id="selectByWarehouseType" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE warehouse_type = #{warehouseType} AND status = 1 
+        ORDER BY warehouse_code ASC
+    </select>
+
+    <!-- selectDefaultWarehouse -->
+    <select id="selectDefaultWarehouse" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE is_default = 1 AND status = 1 
+        LIMIT 1
+    </select>
+
+    <!-- setDefaultWarehouse -->
+    <update id="setDefaultWarehouse">
+        UPDATE erp_warehouse SET is_default = CASE WHEN id = #{warehouseId} THEN 1 ELSE 0 END
+    </update>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE erp_warehouse SET status = #{status}, update_time = NOW() 
+        WHERE id IN 
+        <foreach collection="warehouseIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- selectWarehouseStatistics -->
+    <select id="selectWarehouseStatistics" resultType="java.util.Map">
+        SELECT 
+            warehouse_type, 
+            COUNT(*) as warehouse_count, 
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active_count, 
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactive_count, 
+            SUM(area) as total_area, 
+            SUM(capacity) as total_capacity 
+        FROM erp_warehouse 
+        GROUP BY warehouse_type 
+        ORDER BY warehouse_type
+    </select>
+
+    <!-- searchWarehouses -->
+    <select id="searchWarehouses" resultMap="WarehouseResult">
+        <include refid="selectWarehouseVo"/>
+        WHERE status = 1 
+        <if test="keyword != null and keyword != ''">
+            AND (warehouse_code LIKE CONCAT('%', #{keyword}, '%') 
+            OR warehouse_name LIKE CONCAT('%', #{keyword}, '%') 
+            OR address LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY is_default DESC, warehouse_code ASC
+    </select>
+
+    <!-- checkWarehouseCodeExists -->
+    <select id="checkWarehouseCodeExists" resultType="int">
+        SELECT COUNT(*) FROM erp_warehouse 
+        WHERE warehouse_code = #{warehouseCode} 
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- checkWarehouseNameExists -->
+    <select id="checkWarehouseNameExists" resultType="int">
+        SELECT COUNT(*) FROM erp_warehouse 
+        WHERE warehouse_name = #{warehouseName} 
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- selectWarehouseInventoryOverview -->
+    <select id="selectWarehouseInventoryOverview" resultType="java.util.Map">
+        SELECT 
+            w.id as warehouse_id, 
+            w.warehouse_name, 
+            w.warehouse_code, 
+            COUNT(i.id) as product_count, 
+            SUM(i.quantity) as total_quantity, 
+            SUM(CASE WHEN i.quantity <= p.min_stock THEN 1 ELSE 0 END) as low_stock_count, 
+            SUM(CASE WHEN i.quantity >= p.max_stock THEN 1 ELSE 0 END) as high_stock_count 
+        FROM erp_warehouse w 
+        LEFT JOIN erp_inventory i ON w.id = i.warehouse_id 
+        LEFT JOIN erp_product p ON i.product_id = p.id 
+        WHERE w.id = #{warehouseId} 
+        GROUP BY w.id, w.warehouse_name, w.warehouse_code
+    </select>
+
+</mapper>

@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfInstanceMapper">
+
+    <!-- WfInstance结果映射 -->
+    <resultMap id="WfInstanceResult" type="com.chennian.storytelling.bean.model.WfInstance">
+        <id property="id" column="id" />
+        <result property="processDefinitionId" column="process_definition_id" />
+        <result property="processDefinitionKey" column="process_definition_key" />
+        <result property="processDefinitionName" column="process_definition_name" />
+        <result property="processDefinitionVersion" column="process_definition_version" />
+        <result property="businessKey" column="business_key" />
+        <result property="instanceName" column="instance_name" />
+        <result property="instanceDescription" column="instance_description" />
+        <result property="startUserId" column="start_user_id" />
+        <result property="startUserName" column="start_user_name" />
+        <result property="startDeptId" column="start_dept_id" />
+        <result property="startDeptName" column="start_dept_name" />
+        <result property="instanceStatus" column="instance_status" />
+        <result property="currentNodeId" column="current_node_id" />
+        <result property="currentNodeName" column="current_node_name" />
+        <result property="processVariables" column="process_variables" />
+        <result property="priority" column="priority" />
+        <result property="expectedEndTime" column="expected_end_time" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="startTime" column="start_time" />
+        <result property="endTime" column="end_time" />
+        <result property="duration" column="duration" />
+        <result property="deleteReason" column="delete_reason" />
+        <result property="tenantId" column="tenant_id" />
+        <result property="createdTime" column="created_time" />
+        <result property="updatedTime" column="updated_time" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfInstanceVo">
+        SELECT id, process_definition_id, process_definition_key, process_definition_name, process_definition_version, business_key, instance_name, instance_description, start_user_id, start_user_name, start_dept_id, start_dept_name, instance_status, current_node_id, current_node_name, process_variables, priority, expected_end_time, actual_end_time, start_time, end_time, duration, delete_reason, tenant_id, created_time, updated_time, created_by, updated_by
+        FROM wf_instance
+    </sql>
+
+    <!-- selectByBusinessKey -->
+    <select id="selectByBusinessKey" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE business_key = #{businessKey}
+    </select>
+
+    <!-- selectByProcessDefinitionId -->
+    <select id="selectByProcessDefinitionId" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE process_definition_id = #{processDefinitionId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByProcessDefinitionKey -->
+    <select id="selectByProcessDefinitionKey" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE process_definition_key = #{processDefinitionKey}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByInstanceStatus -->
+    <select id="selectByInstanceStatus" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status = #{instanceStatus}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByStartUserId -->
+    <select id="selectByStartUserId" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE start_user_id = #{startUserId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByStartDeptId -->
+    <select id="selectByStartDeptId" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE start_dept_id = #{startDeptId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByPriority -->
+    <select id="selectByPriority" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE priority = #{priority}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByTenantId -->
+    <select id="selectByTenantId" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE tenant_id = #{tenantId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectRunningInstances -->
+    <select id="selectRunningInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status IN ('RUNNING', 'ACTIVE', 'SUSPENDED')
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectCompletedInstances -->
+    <select id="selectCompletedInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status = 'COMPLETED'
+        <if test="processDefinitionId != null and processDefinitionId != ''">
+            AND process_definition_id = #{processDefinitionId}
+        </if>
+        <if test="processDefinitionKey != null and processDefinitionKey != ''">
+            AND process_definition_key = #{processDefinitionKey}
+        </if>
+        <if test="businessKey != null and businessKey != ''">
+            AND business_key = #{businessKey}
+        </if>
+        <if test="startUserId != null and startUserId != ''">
+            AND start_user_id = #{startUserId}
+        </if>
+        <if test="startDeptId != null and startDeptId != ''">
+            AND start_dept_id = #{startDeptId}
+        </if>
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId}
+        </if>
+        <if test="startTime != null">
+            AND start_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND end_time <= #{endTime}
+        </if>
+        ORDER BY end_time DESC
+    </select>
+
+    <!-- selectInstanceDetail -->
+    <select id="selectInstanceDetail" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE id = #{instanceId}
+    </select>
+
+    <!-- selectByInstanceIds -->
+    <select id="selectByInstanceIds" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE id IN
+        <foreach collection="instanceIds" item="instanceId" open="(" separator="," close=")">
+            #{instanceId}
+        </foreach>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectTimeoutInstances -->
+    <select id="selectTimeoutInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status IN ('RUNNING', 'ACTIVE')
+        AND TIMESTAMPDIFF(MINUTE, start_time, NOW()) > #{timeoutMinutes}
+        ORDER BY start_time ASC
+    </select>
+
+    <!-- updateInstanceStatus -->
+    <update id="updateInstanceStatus">
+        UPDATE wf_instance SET
+            instance_status = #{status},
+            updated_by = #{updatedBy},
+            updated_time = NOW()
+        WHERE id = #{instanceId}
+    </update>
+
+    <!-- selectUserInstances -->
+    <select id="selectUserInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE start_user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND instance_status = #{status}
+        </if>
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectSuspendedInstances -->
+    <select id="selectSuspendedInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status = 'SUSPENDED'
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectTerminatedInstances -->
+    <select id="selectTerminatedInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status = 'TERMINATED'
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByTimeRange -->
+    <select id="selectByTimeRange" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE start_time >= #{startTime}
+        AND start_time <= #{endTime}
+        ORDER BY start_time DESC
+    </select>
+
+    <!-- selectOverdueInstances -->
+    <select id="selectOverdueInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status IN ('RUNNING', 'ACTIVE')
+        AND expected_end_time IS NOT NULL
+        AND expected_end_time < NOW()
+        ORDER BY expected_end_time ASC
+    </select>
+
+    <!-- selectSoonOverdueInstances -->
+    <select id="selectSoonOverdueInstances" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_status IN ('RUNNING', 'ACTIVE')
+        AND expected_end_time IS NOT NULL
+        AND expected_end_time > NOW()
+        AND TIMESTAMPDIFF(HOUR, NOW(), expected_end_time) <= #{hours}
+        ORDER BY expected_end_time ASC
+    </select>
+
+    <!-- selectByInstanceNameLike -->
+    <select id="selectByInstanceNameLike" resultMap="WfInstanceResult">
+        <include refid="selectWfInstanceVo"/>
+        WHERE instance_name LIKE CONCAT('%', #{instanceName}, '%')
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectInstanceStatistics -->
+    <select id="selectInstanceStatistics" resultType="map">
+        SELECT 
+            COUNT(*) as total_count,
+            SUM(CASE WHEN instance_status = 'RUNNING' THEN 1 ELSE 0 END) as running_count,
+            SUM(CASE WHEN instance_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed_count,
+            SUM(CASE WHEN instance_status = 'SUSPENDED' THEN 1 ELSE 0 END) as suspended_count,
+            SUM(CASE WHEN instance_status = 'TERMINATED' THEN 1 ELSE 0 END) as terminated_count,
+            AVG(CASE WHEN duration IS NOT NULL THEN duration ELSE NULL END) as avg_duration
+        FROM wf_instance
+        <where>
+            <if test="processDefinitionKey != null and processDefinitionKey != ''">
+                AND process_definition_key = #{processDefinitionKey}
+            </if>
+            <if test="startTime != null">
+                AND start_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND start_time <= #{endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- selectInstanceCountByStatus -->
+    <select id="selectInstanceCountByStatus" resultType="com.chennian.storytelling.bean.dto.InstanceStatisticsDTO">
+        SELECT 
+            instance_status as status,
+            COUNT(*) as count
+        FROM wf_instance
+        GROUP BY instance_status
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectInstanceCountByProcessDefinition -->
+    <select id="selectInstanceCountByProcessDefinition" resultType="com.chennian.storytelling.bean.dto.InstanceStatisticsDTO">
+        SELECT 
+            process_definition_name as name,
+            process_definition_key as key,
+            COUNT(*) as count
+        FROM wf_instance
+        GROUP BY process_definition_key, process_definition_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectInstanceCountByStartUser -->
+    <select id="selectInstanceCountByStartUser" resultType="com.chennian.storytelling.bean.dto.InstanceStatisticsDTO">
+        SELECT 
+            start_user_name as name,
+            start_user_id as key,
+            COUNT(*) as count
+        FROM wf_instance
+        WHERE start_user_name IS NOT NULL
+        GROUP BY start_user_id, start_user_name
+        ORDER BY count DESC
+        LIMIT 20
+    </select>
+
+    <!-- selectInstanceCountByDept -->
+    <select id="selectInstanceCountByDept" resultType="com.chennian.storytelling.bean.dto.InstanceStatisticsDTO">
+        SELECT 
+            start_dept_name as name,
+            start_dept_id as key,
+            COUNT(*) as count
+        FROM wf_instance
+        WHERE start_dept_name IS NOT NULL
+        GROUP BY start_dept_id, start_dept_name
+        ORDER BY count DESC
+        LIMIT 20
+    </select>
+
+    <!-- selectAverageDuration -->
+    <select id="selectAverageDuration" resultType="java.lang.Long">
+        SELECT AVG(duration)
+        FROM wf_instance
+        WHERE instance_status = 'COMPLETED'
+        AND duration IS NOT NULL
+    </select>
+
+    <!-- selectAverageDurationByProcessDefinition -->
+    <select id="selectAverageDurationByProcessDefinition" resultType="java.lang.Long">
+        SELECT AVG(duration)
+        FROM wf_instance
+        WHERE instance_status = 'COMPLETED'
+        AND duration IS NOT NULL
+        AND process_definition_key = #{processDefinitionKey}
+    </select>
+
+    <!-- batchUpdateInstanceStatus -->
+    <update id="batchUpdateInstanceStatus">
+        UPDATE wf_instance SET
+            instance_status = #{instanceStatus},
+            updated_by = #{updatedBy},
+            updated_time = NOW()
+        WHERE id IN
+        <foreach collection="instanceIds" item="instanceId" open="(" separator="," close=")">
+            #{instanceId}
+        </foreach>
+    </update>
+
+    <!-- selectTodayCompletedInstances -->
+    <select id="selectTodayCompletedInstances" resultType="com.chennian.storytelling.bean.dto.TodayCompletedInstanceDTO">
+        SELECT 
+            process_definition_name as processName,
+            process_definition_key as processKey,
+            COUNT(*) as completedCount,
+            AVG(duration) as avgDuration
+        FROM wf_instance
+        WHERE instance_status = 'COMPLETED'
+        AND DATE(end_time) = CURDATE()
+        GROUP BY process_definition_key, process_definition_name
+        ORDER BY completedCount DESC
+    </select>
+
+    <!-- selectAverageProcessingTime -->
+    <select id="selectAverageProcessingTime" resultType="com.chennian.storytelling.bean.dto.AverageProcessingTimeDTO">
+        SELECT 
+            process_definition_name as processName,
+            process_definition_key as processKey,
+            AVG(duration) as avgDuration,
+            COUNT(*) as instanceCount
+        FROM wf_instance
+        WHERE instance_status = 'COMPLETED'
+        AND duration IS NOT NULL
+        AND end_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        GROUP BY process_definition_key, process_definition_name
+        HAVING instanceCount >= 5
+        ORDER BY avgDuration DESC
+    </select>
+
+</mapper>

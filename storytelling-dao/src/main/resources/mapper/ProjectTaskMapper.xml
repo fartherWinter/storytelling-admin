@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.project.ProjectTaskMapper">
+
+    <!-- ProjectTask结果映射 -->
+    <resultMap id="ProjectTaskResult" type="com.chennian.storytelling.bean.model.ProjectTask">
+        <id property="id" column="id" />
+        <result property="projectId" column="project_id" />
+        <result property="taskNo" column="task_no" />
+        <result property="taskName" column="task_name" />
+        <result property="description" column="description" />
+        <result property="taskType" column="task_type" />
+        <result property="status" column="status" />
+        <result property="priority" column="priority" />
+        <result property="parentId" column="parent_id" />
+        <result property="assigneeId" column="assignee_id" />
+        <result property="assigneeName" column="assignee_name" />
+        <result property="plannedStartTime" column="planned_start_time" />
+        <result property="plannedEndTime" column="planned_end_time" />
+        <result property="actualStartTime" column="actual_start_time" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="progress" column="progress" />
+        <result property="estimatedHours" column="estimated_hours" />
+        <result property="actualHours" column="actual_hours" />
+        <result property="cost" column="cost" />
+        <result property="completionNotes" column="completion_notes" />
+        <result property="dependencies" column="dependencies" />
+        <result property="tags" column="tags" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProjectTaskVo">
+        SELECT id, project_id, task_no, task_name, description, task_type, status, priority, parent_id, assignee_id, assignee_name, planned_start_time, planned_end_time, actual_start_time, actual_end_time, progress, estimated_hours, actual_hours, cost, completion_notes, dependencies, tags, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM project_task
+    </sql>
+
+    <!-- selectTaskList -->
+    <select id="selectTaskList" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE del_flag = '0'
+        <if test="task != null">
+            <if test="task.projectId != null">
+                AND project_id = #{task.projectId}
+            </if>
+            <if test="task.taskName != null and task.taskName != ''">
+                AND task_name LIKE CONCAT('%', #{task.taskName}, '%')
+            </if>
+            <if test="task.taskNo != null and task.taskNo != ''">
+                AND task_no = #{task.taskNo}
+            </if>
+            <if test="task.status != null">
+                AND status = #{task.status}
+            </if>
+            <if test="task.taskType != null">
+                AND task_type = #{task.taskType}
+            </if>
+            <if test="task.priority != null">
+                AND priority = #{task.priority}
+            </if>
+            <if test="task.assigneeId != null">
+                AND assignee_id = #{task.assigneeId}
+            </if>
+            <if test="task.assigneeName != null and task.assigneeName != ''">
+                AND assignee_name LIKE CONCAT('%', #{task.assigneeName}, '%')
+            </if>
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTasksByProjectId -->
+    <select id="selectTasksByProjectId" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTaskNo -->
+    <select id="selectByTaskNo" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE task_no = #{taskNo} AND del_flag = '0'
+    </select>
+
+    <!-- selectByAssigneeId -->
+    <select id="selectByAssigneeId" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE assignee_id = #{assigneeId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTaskType -->
+    <select id="selectByTaskType" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE task_type = #{taskType} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByPriority -->
+    <select id="selectByPriority" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE priority = #{priority} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectSubTasksByParentId -->
+    <select id="selectSubTasksByParentId" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE parent_id = #{parentId} AND del_flag = '0'
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- selectOverdueTasks -->
+    <select id="selectOverdueTasks" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE planned_end_time < NOW() 
+              AND status IN (0, 1, 2) 
+              AND del_flag = '0'
+        ORDER BY planned_end_time ASC
+    </select>
+
+    <!-- selectUpcomingDeadlineTasks -->
+    <select id="selectUpcomingDeadlineTasks" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE planned_end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY)
+              AND status IN (0, 1, 2) 
+              AND del_flag = '0'
+        ORDER BY planned_end_time ASC
+    </select>
+
+    <!-- selectTaskGanttData -->
+    <select id="selectTaskGanttData" resultType="java.util.Map">
+        SELECT 
+            id as taskId,
+            task_name as taskName,
+            planned_start_time as startTime,
+            planned_end_time as endTime,
+            actual_start_time as actualStartTime,
+            actual_end_time as actualEndTime,
+            progress,
+            status,
+            priority,
+            assignee_name as assigneeName,
+            parent_id as parentId,
+            dependencies,
+            DATEDIFF(planned_end_time, planned_start_time) as duration
+        FROM project_task
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY planned_start_time ASC
+    </select>
+
+    <!-- selectTeamPerformanceAnalysis -->
+    <select id="selectTeamPerformanceAnalysis" resultType="java.util.Map">
+        SELECT 
+            assignee_id as memberId,
+            assignee_name as memberName,
+            COUNT(*) as totalTasks,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as completedTasks,
+            SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as cancelledTasks,
+            SUM(CASE WHEN planned_end_time < NOW() AND status IN (0, 1, 2) THEN 1 ELSE 0 END) as overdueTasks,
+            ROUND(SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completionRate,
+            SUM(actual_hours) as totalActualHours,
+            SUM(estimated_hours) as totalEstimatedHours,
+            ROUND(AVG(progress), 2) as avgProgress,
+            ROUND(SUM(actual_hours) / NULLIF(SUM(estimated_hours), 0) * 100, 2) as efficiencyRate
+        FROM project_task
+        WHERE project_id = #{projectId} AND del_flag = '0' AND assignee_id IS NOT NULL
+        GROUP BY assignee_id, assignee_name
+        ORDER BY completionRate DESC, totalTasks DESC
+    </select>
+
+    <!-- selectTaskCountByStatus -->
+    <select id="selectTaskCountByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            CASE 
+                WHEN status = 0 THEN '待开始'
+                WHEN status = 1 THEN '进行中'
+                WHEN status = 2 THEN '已暂停'
+                WHEN status = 3 THEN '已完成'
+                WHEN status = 4 THEN '已取消'
+                ELSE '未知状态'
+            END as statusName,
+            COUNT(*) as count
+        FROM project_task 
+        WHERE project_id = #{projectId} AND del_flag = '0' 
+        GROUP BY status
+        ORDER BY status
+    </select>
+
+    <!-- selectTaskCountByType -->
+    <select id="selectTaskCountByType" resultType="java.util.Map">
+        SELECT 
+            task_type as taskType,
+            CASE 
+                WHEN task_type = 1 THEN '开发任务'
+                WHEN task_type = 2 THEN '测试任务'
+                WHEN task_type = 3 THEN '设计任务'
+                WHEN task_type = 4 THEN '文档任务'
+                WHEN task_type = 5 THEN '部署任务'
+                ELSE '其他任务'
+            END as typeName,
+            COUNT(*) as count
+        FROM project_task 
+        WHERE project_id = #{projectId} AND del_flag = '0' 
+        GROUP BY task_type
+        ORDER BY task_type
+    </select>
+
+    <!-- selectTaskCountByPriority -->
+    <select id="selectTaskCountByPriority" resultType="java.util.Map">
+        SELECT 
+            priority,
+            CASE 
+                WHEN priority = 1 THEN '低'
+                WHEN priority = 2 THEN '中'
+                WHEN priority = 3 THEN '高'
+                WHEN priority = 4 THEN '紧急'
+                ELSE '未设置'
+            END as priorityName,
+            COUNT(*) as count
+        FROM project_task 
+        WHERE project_id = #{projectId} AND del_flag = '0' 
+        GROUP BY priority
+        ORDER BY priority
+    </select>
+
+    <!-- selectTaskCountByAssignee -->
+    <select id="selectTaskCountByAssignee" resultType="java.util.Map">
+        SELECT 
+            assignee_id as assigneeId,
+            assignee_name as assigneeName,
+            COUNT(*) as count,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as completedCount,
+            SUM(CASE WHEN planned_end_time < NOW() AND status IN (0, 1, 2) THEN 1 ELSE 0 END) as overdueCount,
+            ROUND(SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completionRate
+        FROM project_task 
+        WHERE project_id = #{projectId} AND del_flag = '0' AND assignee_id IS NOT NULL
+        GROUP BY assignee_id, assignee_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectTaskCompletionTrend -->
+    <select id="selectTaskCompletionTrend" resultType="java.util.Map">
+        SELECT 
+            <choose>
+                <when test="period == 'day'">
+                    DATE(actual_end_time) as date,
+                    DATE_FORMAT(actual_end_time, '%Y-%m-%d') as dateStr
+                </when>
+                <when test="period == 'week'">
+                    YEARWEEK(actual_end_time) as date,
+                    CONCAT(YEAR(actual_end_time), '-W', WEEK(actual_end_time)) as dateStr
+                </when>
+                <otherwise>
+                    DATE_FORMAT(actual_end_time, '%Y-%m') as date,
+                    DATE_FORMAT(actual_end_time, '%Y年%m月') as dateStr
+                </otherwise>
+            </choose>,
+            COUNT(*) as completedCount
+        FROM project_task 
+        WHERE project_id = #{projectId} 
+            AND del_flag = '0' 
+            AND status = 3
+            AND actual_end_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY date
+        ORDER BY date
+    </select>
+
+    <!-- selectWorkHourStatistics -->
+    <select id="selectWorkHourStatistics" resultType="java.util.Map">
+        SELECT 
+            assignee_id as assigneeId,
+            assignee_name as assigneeName,
+            SUM(estimated_hours) as totalEstimatedHours,
+            SUM(actual_hours) as totalActualHours,
+            COUNT(*) as taskCount,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as completedTaskCount,
+            ROUND(AVG(actual_hours), 2) as avgActualHours,
+            ROUND(SUM(actual_hours) / NULLIF(SUM(estimated_hours), 0) * 100, 2) as efficiencyRate
+        FROM project_task 
+        WHERE project_id = #{projectId} 
+            AND del_flag = '0' 
+            AND assignee_id IS NOT NULL
+            AND create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY assignee_id, assignee_name
+        ORDER BY totalActualHours DESC
+    </select>
+
+    <!-- selectTaskDependencies -->
+    <select id="selectTaskDependencies" resultType="java.util.Map">
+        SELECT 
+            t1.id as taskId,
+            t1.task_name as taskName,
+            t1.dependencies,
+            t2.id as dependentTaskId,
+            t2.task_name as dependentTaskName,
+            t2.status as dependentTaskStatus,
+            t2.planned_end_time as dependentTaskEndTime
+        FROM project_task t1
+        LEFT JOIN project_task t2 ON FIND_IN_SET(t2.id, t1.dependencies) > 0
+        WHERE t1.project_id = #{projectId} 
+            AND t1.del_flag = '0'
+            AND t1.dependencies IS NOT NULL 
+            AND t1.dependencies != ''
+        ORDER BY t1.id, t2.id
+    </select>
+
+    <!-- selectCriticalPathTasks -->
+    <select id="selectCriticalPathTasks" resultType="java.util.Map">
+        SELECT 
+            id as taskId,
+            task_name as taskName,
+            planned_start_time as plannedStartTime,
+            planned_end_time as plannedEndTime,
+            estimated_hours as estimatedHours,
+            dependencies,
+            priority,
+            status,
+            assignee_name as assigneeName,
+            DATEDIFF(planned_end_time, planned_start_time) as duration,
+            CASE 
+                WHEN dependencies IS NULL OR dependencies = '' THEN 0
+                ELSE 1
+            END as hasDependencies
+        FROM project_task 
+        WHERE project_id = #{projectId} 
+            AND del_flag = '0'
+            AND status IN (0, 1, 2)
+        ORDER BY priority DESC, planned_end_time ASC
+    </select>
+
+    <!-- checkTaskNoExists -->
+    <select id="checkTaskNoExists" resultType="int">
+        SELECT COUNT(*) 
+        FROM project_task 
+        WHERE task_no = #{taskNo} 
+            AND del_flag = '0'
+            <if test="id != null">
+                AND id != #{id}
+            </if>
+    </select>
+
+    <!-- selectTaskHierarchy -->
+    <select id="selectTaskHierarchy" resultMap="ProjectTaskResult">
+        <include refid="selectProjectTaskVo"/>
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY 
+            CASE WHEN parent_id IS NULL THEN id ELSE parent_id END,
+            parent_id IS NULL DESC,
+            id ASC
+    </select>
+
+    <!-- selectTaskResourceAllocation -->
+    <select id="selectTaskResourceAllocation" resultType="java.util.Map">
+        SELECT 
+            assignee_id as assigneeId,
+            assignee_name as assigneeName,
+            COUNT(*) as taskCount,
+            SUM(estimated_hours) as totalEstimatedHours,
+            SUM(actual_hours) as totalActualHours,
+            SUM(CASE WHEN status IN (0, 1, 2) THEN estimated_hours ELSE 0 END) as activeTaskHours,
+            ROUND(SUM(estimated_hours) / (SELECT SUM(estimated_hours) FROM project_task WHERE project_id = #{projectId} AND del_flag = '0') * 100, 2) as workloadPercentage
+        FROM project_task 
+        WHERE project_id = #{projectId} 
+            AND del_flag = '0' 
+            AND assignee_id IS NOT NULL
+        GROUP BY assignee_id, assignee_name
+        ORDER BY totalEstimatedHours DESC
+    </select>
+
+    <!-- selectTaskProgressByProject -->
+    <select id="selectTaskProgressByProject" resultType="java.util.Map">
+        SELECT 
+            project_id as projectId,
+            COUNT(*) as totalTasks,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as completedTasks,
+            SUM(CASE WHEN status IN (0, 1, 2) THEN 1 ELSE 0 END) as activeTasks,
+            SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as cancelledTasks,
+            ROUND(AVG(progress), 2) as avgProgress,
+            ROUND(SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completionRate,
+            SUM(estimated_hours) as totalEstimatedHours,
+            SUM(actual_hours) as totalActualHours
+        FROM project_task 
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY project_id
+    </select>
+
+</mapper>

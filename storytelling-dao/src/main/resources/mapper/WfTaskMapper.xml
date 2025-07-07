@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfTaskMapper">
+
+    <!-- WfTask结果映射 -->
+    <resultMap id="WfTaskResult" type="com.chennian.storytelling.bean.model.WfTask">
+        <id property="id" column="id" />
+        <result property="processInstanceId" column="process_instance_id" />
+        <result property="processDefinitionId" column="process_definition_id" />
+        <result property="processDefinitionKey" column="process_definition_key" />
+        <result property="processDefinitionName" column="process_definition_name" />
+        <result property="taskDefinitionKey" column="task_definition_key" />
+        <result property="taskName" column="task_name" />
+        <result property="taskDescription" column="task_description" />
+        <result property="taskType" column="task_type" />
+        <result property="taskStatus" column="task_status" />
+        <result property="assignee" column="assignee" />
+        <result property="assigneeName" column="assignee_name" />
+        <result property="candidateUsers" column="candidate_users" />
+        <result property="candidateGroups" column="candidate_groups" />
+        <result property="owner" column="owner" />
+        <result property="ownerName" column="owner_name" />
+        <result property="parentTaskId" column="parent_task_id" />
+        <result property="priority" column="priority" />
+        <result property="dueDate" column="due_date" />
+        <result property="followUpDate" column="follow_up_date" />
+        <result property="formKey" column="form_key" />
+        <result property="taskVariables" column="task_variables" />
+        <result property="executionId" column="execution_id" />
+        <result property="activityInstanceId" column="activity_instance_id" />
+        <result property="tenantId" column="tenant_id" />
+        <result property="businessKey" column="business_key" />
+        <result property="createTime" column="create_time" />
+        <result property="startTime" column="start_time" />
+        <result property="claimTime" column="claim_time" />
+        <result property="endTime" column="end_time" />
+        <result property="duration" column="duration" />
+        <result property="deleteReason" column="delete_reason" />
+        <result property="suspensionTime" column="suspension_time" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+        <result property="updatedTime" column="updated_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfTaskVo">
+        SELECT id, process_instance_id, process_definition_id, process_definition_key, process_definition_name, task_definition_key, task_name, task_description, task_type, task_status, assignee, assignee_name, candidate_users, candidate_groups, owner, owner_name, parent_task_id, priority, due_date, follow_up_date, form_key, task_variables, execution_id, activity_instance_id, tenant_id, business_key, create_time, start_time, claim_time, end_time, duration, delete_reason, suspension_time, created_by, updated_by, updated_time
+        FROM wf_task
+    </sql>
+
+    <!-- selectByProcessInstanceId -->
+    <select id="selectByProcessInstanceId" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE process_instance_id = #{processInstanceId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByProcessDefinitionId -->
+    <select id="selectByProcessDefinitionId" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE process_definition_id = #{processDefinitionId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByProcessDefinitionKey -->
+    <select id="selectByProcessDefinitionKey" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE process_definition_key = #{processDefinitionKey} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTaskStatus -->
+    <select id="selectByTaskStatus" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE task_status = #{taskStatus} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByAssignee -->
+    <select id="selectByAssignee" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE assignee = #{assignee} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByCandidateUser -->
+    <select id="selectByCandidateUser" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE (FIND_IN_SET(#{candidateUser}, candidate_users) > 0 OR assignee IS NULL) AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByCandidateGroup -->
+    <select id="selectByCandidateGroup" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE FIND_IN_SET(#{candidateGroup}, candidate_groups) > 0 AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByOwner -->
+    <select id="selectByOwner" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE owner = #{owner} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTaskType -->
+    <select id="selectByTaskType" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE task_type = #{taskType} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByPriority -->
+    <select id="selectByPriority" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE priority = #{priority} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTenantId -->
+    <select id="selectByTenantId" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE tenant_id = #{tenantId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByBusinessKey -->
+    <select id="selectByBusinessKey" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE business_key = #{businessKey} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTodoTasks -->
+    <select id="selectTodoTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE assignee = #{assignee} AND task_status IN ('PENDING', 'ACTIVE', 'SUSPENDED') AND del_flag = '0'
+        ORDER BY priority DESC, create_time ASC
+    </select>
+
+    <!-- selectDoneTasks -->
+    <select id="selectDoneTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE assignee = #{assignee} AND task_status IN ('COMPLETED', 'TERMINATED') AND del_flag = '0'
+        ORDER BY end_time DESC
+    </select>
+
+    <!-- selectCandidateTasks -->
+    <select id="selectCandidateTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE (FIND_IN_SET(#{userId}, candidate_users) > 0 OR FIND_IN_SET(#{groupId}, candidate_groups) > 0) 
+        AND assignee IS NULL AND task_status = 'PENDING' AND del_flag = '0'
+        ORDER BY priority DESC, create_time ASC
+    </select>
+
+    <!-- selectOverdueTasks -->
+    <select id="selectOverdueTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') AND del_flag = '0'
+        ORDER BY due_date ASC
+    </select>
+
+    <!-- selectSoonOverdueTasks -->
+    <select id="selectSoonOverdueTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY) 
+        AND task_status NOT IN ('COMPLETED', 'TERMINATED') AND del_flag = '0'
+        ORDER BY due_date ASC
+    </select>
+
+    <!-- selectByTimeRange -->
+    <select id="selectByTimeRange" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE create_time BETWEEN #{startTime} AND #{endTime} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByTaskNameLike -->
+    <select id="selectByTaskNameLike" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE task_name LIKE CONCAT('%', #{taskName}, '%') AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTaskStatistics -->
+    <select id="selectTaskStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN task_status = 'PENDING' THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN task_status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN task_status = 'TERMINATED' THEN 1 ELSE 0 END) as terminated,
+            SUM(CASE WHEN due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue
+        FROM wf_task 
+        WHERE del_flag = '0'
+        <if test="assignee != null and assignee != ''">
+            AND assignee = #{assignee}
+        </if>
+    </select>
+
+    <!-- selectTaskCountByStatus -->
+    <select id="selectTaskCountByStatus" resultType="java.util.Map">
+        SELECT 
+            task_status as status,
+            CASE 
+                WHEN task_status = 'PENDING' THEN '待处理'
+                WHEN task_status = 'ACTIVE' THEN '进行中'
+                WHEN task_status = 'COMPLETED' THEN '已完成'
+                WHEN task_status = 'TERMINATED' THEN '已终止'
+                WHEN task_status = 'SUSPENDED' THEN '已暂停'
+                ELSE task_status
+            END as statusName,
+            COUNT(*) as count
+        FROM wf_task 
+        WHERE del_flag = '0'
+        GROUP BY task_status
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectTaskCountByAssignee -->
+    <select id="selectTaskCountByAssignee" resultType="java.util.Map">
+        SELECT 
+            assignee,
+            COUNT(*) as total,
+            SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue,
+            ROUND(SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completionRate
+        FROM wf_task 
+        WHERE assignee IS NOT NULL AND del_flag = '0'
+        GROUP BY assignee
+        ORDER BY total DESC
+    </select>
+
+    <!-- selectTaskCountByType -->
+    <select id="selectTaskCountByType" resultType="java.util.Map">
+        SELECT 
+            task_type as type,
+            CASE 
+                WHEN task_type = 'USER_TASK' THEN '用户任务'
+                WHEN task_type = 'SERVICE_TASK' THEN '服务任务'
+                WHEN task_type = 'SCRIPT_TASK' THEN '脚本任务'
+                WHEN task_type = 'MANUAL_TASK' THEN '手工任务'
+                ELSE task_type
+            END as typeName,
+            COUNT(*) as count
+        FROM wf_task 
+        WHERE del_flag = '0'
+        GROUP BY task_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectTaskCountByProcessDefinition -->
+    <select id="selectTaskCountByProcessDefinition" resultType="java.util.Map">
+        SELECT 
+            process_definition_id as processDefinitionId,
+            process_definition_key as processDefinitionKey,
+            process_definition_name as processDefinitionName,
+            COUNT(*) as count
+        FROM wf_task 
+        WHERE del_flag = '0'
+        GROUP BY process_definition_id, process_definition_key, process_definition_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectAverageDuration -->
+    <select id="selectAverageDuration" resultType="java.lang.Double">
+        SELECT AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avgDuration
+        FROM wf_task 
+        WHERE start_time IS NOT NULL AND end_time IS NOT NULL AND del_flag = '0'
+    </select>
+
+    <!-- selectAverageDurationByTaskType -->
+    <select id="selectAverageDurationByTaskType" resultType="java.util.Map">
+        SELECT 
+            task_type as type,
+            AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avgDuration,
+            COUNT(*) as count
+        FROM wf_task 
+        WHERE start_time IS NOT NULL AND end_time IS NOT NULL AND del_flag = '0'
+        GROUP BY task_type
+        ORDER BY avgDuration DESC
+    </select>
+
+    <!-- selectAverageDurationByAssignee -->
+    <select id="selectAverageDurationByAssignee" resultType="java.util.Map">
+        SELECT 
+            assignee,
+            AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avgDuration,
+            COUNT(*) as count
+        FROM wf_task 
+        WHERE assignee IS NOT NULL AND start_time IS NOT NULL AND end_time IS NOT NULL AND del_flag = '0'
+        GROUP BY assignee
+        ORDER BY avgDuration ASC
+    </select>
+
+    <!-- batchUpdateTaskStatus -->
+    <update id="batchUpdateTaskStatus">
+        UPDATE wf_task 
+        SET task_status = #{status}, updated_time = NOW(), updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+        AND del_flag = '0'
+    </update>
+
+    <!-- batchAssignTasks -->
+    <update id="batchAssignTasks">
+        UPDATE wf_task 
+        SET assignee = #{assignee}, updated_time = NOW(), updated_by = #{updatedBy}
+        WHERE id IN
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectPendingTaskStatistics -->
+    <select id="selectPendingTaskStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN priority = 'HIGH' THEN 1 ELSE 0 END) as highPriority,
+            SUM(CASE WHEN priority = 'MEDIUM' THEN 1 ELSE 0 END) as mediumPriority,
+            SUM(CASE WHEN priority = 'LOW' THEN 1 ELSE 0 END) as lowPriority,
+            SUM(CASE WHEN due_date < NOW() THEN 1 ELSE 0 END) as overdue,
+            SUM(CASE WHEN due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 3 DAY) THEN 1 ELSE 0 END) as soonOverdue
+        FROM wf_task 
+        WHERE task_status = 'PENDING' AND del_flag = '0'
+        <if test="assignee != null and assignee != ''">
+            AND assignee = #{assignee}
+        </if>
+    </select>
+
+    <!-- selectRecentTasks -->
+    <select id="selectRecentTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE del_flag = '0'
+        <if test="assignee != null and assignee != ''">
+            AND assignee = #{assignee}
+        </if>
+        <if test="days != null">
+            AND create_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        </if>
+        ORDER BY create_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- selectTaskDetail -->
+    <select id="selectTaskDetail" resultType="java.util.Map">
+        SELECT 
+            t.*,
+            TIMESTAMPDIFF(MINUTE, t.start_time, COALESCE(t.end_time, NOW())) as currentDuration,
+            CASE 
+                WHEN t.due_date < NOW() AND t.task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1
+                ELSE 0
+            END as isOverdue
+        FROM wf_task t
+        WHERE t.id = #{taskId} AND t.del_flag = '0'
+    </select>
+
+    <!-- selectByTaskIds -->
+    <select id="selectByTaskIds" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE id IN
+        <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+            #{taskId}
+        </foreach>
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTasksByDateRange -->
+    <select id="selectTasksByDateRange" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE del_flag = '0'
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time <= #{endDate}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTasksByPriorityRange -->
+    <select id="selectTasksByPriorityRange" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE priority BETWEEN #{minPriority} AND #{maxPriority} AND del_flag = '0'
+        ORDER BY priority DESC, create_time ASC
+    </select>
+
+    <!-- selectTasksByMultipleStatus -->
+    <select id="selectTasksByMultipleStatus" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE task_status IN
+        <foreach collection="statusList" item="status" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+        AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectDelegatedTasks -->
+    <select id="selectDelegatedTasks" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE owner = #{userId} AND assignee != #{userId} AND assignee IS NOT NULL AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectTaskExecutionPath -->
+    <select id="selectTaskExecutionPath" resultMap="WfTaskResult">
+        <include refid="selectWfTaskVo"/>
+        WHERE process_instance_id = #{processInstanceId} AND del_flag = '0'
+        ORDER BY create_time ASC, task_definition_key ASC
+    </select>
+
+</mapper>

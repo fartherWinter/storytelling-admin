@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.quality.QualityStandardMapper">
+
+    <!-- QualityStandard结果映射 -->
+    <resultMap id="QualityStandardResult" type="com.chennian.storytelling.bean.model.QualityStandard">
+        <id property="id" column="id" />
+        <result property="standardNo" column="standard_no" />
+        <result property="standardName" column="standard_name" />
+        <result property="standardType" column="standard_type" />
+        <result property="status" column="status" />
+        <result property="applicableScope" column="applicable_scope" />
+        <result property="productCategory" column="product_category" />
+        <result property="version" column="version" />
+        <result property="description" column="description" />
+        <result property="technicalRequirements" column="technical_requirements" />
+        <result property="testMethods" column="test_methods" />
+        <result property="inspectionRules" column="inspection_rules" />
+        <result property="markingPackaging" column="marking_packaging" />
+        <result property="transportStorage" column="transport_storage" />
+        <result property="issuingOrganization" column="issuing_organization" />
+        <result property="issueDate" column="issue_date" />
+        <result property="implementationDate" column="implementation_date" />
+        <result property="abolitionDate" column="abolition_date" />
+        <result property="replacementStandard" column="replacement_standard" />
+        <result property="replacedStandard" column="replaced_standard" />
+        <result property="referencedStandards" column="referenced_standards" />
+        <result property="keywords" column="keywords" />
+        <result property="attachmentPath" column="attachment_path" />
+        <result property="responsibleId" column="responsible_id" />
+        <result property="responsibleName" column="responsible_name" />
+        <result property="reviewerId" column="reviewer_id" />
+        <result property="reviewerName" column="reviewer_name" />
+        <result property="reviewTime" column="review_time" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectQualityStandardVo">
+        SELECT id, standard_no, standard_name, standard_type, status, applicable_scope, product_category, version, description, technical_requirements, test_methods, inspection_rules, marking_packaging, transport_storage, issuing_organization, issue_date, implementation_date, abolition_date, replacement_standard, replaced_standard, referenced_standards, keywords, attachment_path, responsible_id, responsible_name, reviewer_id, reviewer_name, review_time, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM quality_standard
+    </sql>
+
+    <!-- selectByProductId -->
+    <select id="selectByProductId" parameterType="Long" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE product_category = #{productId} AND status = 1 AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStandardType -->
+    <select id="selectByStandardType" parameterType="Integer" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE standard_type = #{standardType} AND status = 1 AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStandardNo -->
+    <select id="selectByStandardNo" parameterType="String" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE standard_no = #{standardNo} AND del_flag = '0'
+    </select>
+
+    <!-- selectEffectiveStandards -->
+    <select id="selectEffectiveStandards" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE status = 1 AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByProductCategory -->
+    <select id="selectByProductCategory" parameterType="String" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE product_category = #{productCategory} AND status = 1 AND del_flag = '0'
+        ORDER BY version DESC
+    </select>
+
+    <!-- getStandardStatistics -->
+    <select id="getStandardStatistics" resultType="java.util.Map">
+        SELECT 
+            standard_type,
+            COUNT(*) as count,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as effectiveCount
+        FROM quality_standard
+        WHERE del_flag = '0'
+        GROUP BY standard_type
+    </select>
+
+    <!-- selectExpiringStandards -->
+    <select id="selectExpiringStandards" parameterType="Integer" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE status = 1 
+            AND abolition_date IS NOT NULL 
+            AND DATEDIFF(abolition_date, NOW()) &lt;= #{days} 
+            AND DATEDIFF(abolition_date, NOW()) &gt;= 0 
+            AND del_flag = '0'
+        ORDER BY abolition_date ASC
+    </select>
+
+    <!-- selectByApplicableScope -->
+    <select id="selectByApplicableScope" parameterType="String" resultMap="QualityStandardResult">
+        <include refid="selectQualityStandardVo"/>
+        WHERE applicable_scope LIKE CONCAT('%', #{applicableScope}, '%') AND status = 1 AND del_flag = '0'
+    </select>
+
+</mapper>

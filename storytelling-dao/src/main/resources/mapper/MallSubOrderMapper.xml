@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallSubOrderMapper">
+
+    <!-- MallSubOrder结果映射 -->
+    <resultMap id="MallSubOrderResult" type="com.chennian.storytelling.bean.model.MallSubOrder">
+        <id property="id" column="id" />
+        <result property="orderId" column="order_id" />
+        <result property="orderSn" column="order_sn" />
+        <result property="productId" column="product_id" />
+        <result property="productSkuId" column="product_sku_id" />
+        <result property="productName" column="product_name" />
+        <result property="productPic" column="product_pic" />
+        <result property="productPrice" column="product_price" />
+        <result property="productQuantity" column="product_quantity" />
+        <result property="totalAmount" column="total_amount" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallSubOrderVo">
+        SELECT id, order_id, order_sn, product_id, product_sku_id, product_name, product_pic, product_price, product_quantity, total_amount, create_time, update_time
+        FROM mall_sub_order
+    </sql>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO mall_sub_order(
+            id, order_id, order_sn, product_id, product_sku_id, product_name, 
+            product_pic, product_price, product_quantity, total_amount, 
+            create_time, update_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.id}, #{item.orderId}, #{item.orderSn}, #{item.productId}, 
+                #{item.productSkuId}, #{item.productName}, #{item.productPic}, 
+                #{item.productPrice}, #{item.productQuantity}, #{item.totalAmount}, 
+                #{item.createTime}, #{item.updateTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- selectByOrderId -->
+    <select id="selectByOrderId" resultMap="MallSubOrderResult">
+        <include refid="selectMallSubOrderVo"/>
+        WHERE order_id = #{orderId} AND del_flag = '0'
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- sumOrderAmount -->
+    <select id="sumOrderAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0) 
+        FROM mall_sub_order 
+        WHERE order_id = #{orderId} AND del_flag = '0'
+    </select>
+
+</mapper>

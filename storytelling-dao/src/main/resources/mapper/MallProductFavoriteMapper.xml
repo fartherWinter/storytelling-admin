@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mapper.mall.MallProductFavoriteMapper">
+
+    <!-- MallProductFavorite结果映射 -->
+    <resultMap id="MallProductFavoriteResult" type="com.chennian.storytelling.bean.model.mall.MallProductFavorite">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="productImage" column="product_image" />
+        <result property="productPrice" column="product_price" />
+        <result property="groupId" column="group_id" />
+        <result property="groupName" column="group_name" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 分页查询收藏列表 -->
+    <select id="selectFavoritePage" resultMap="MallProductFavoriteResult">
+        SELECT * FROM mall_product_favorite
+        <where>
+            <if test="favorite.userId != null">
+                AND user_id = #{favorite.userId}
+            </if>
+            <if test="favorite.productId != null">
+                AND product_id = #{favorite.productId}
+            </if>
+            <if test="favorite.groupId != null">
+                AND group_id = #{favorite.groupId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 检查是否已收藏商品 -->
+    <select id="checkFavorited" resultType="int">
+        SELECT COUNT(*) FROM mall_product_favorite
+        WHERE user_id = #{userId} AND product_id = #{productId}
+    </select>
+
+    <!-- 批量检查是否已收藏商品 -->
+    <select id="batchCheckFavorited" resultType="long">
+        SELECT product_id FROM mall_product_favorite
+        WHERE user_id = #{userId} AND product_id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </select>
+
+    <!-- 获取用户收藏列表 -->
+    <select id="selectUserFavorites" resultMap="MallProductFavoriteResult">
+        SELECT * FROM mall_product_favorite
+        WHERE user_id = #{userId}
+        <if test="groupId != null">
+            AND group_id = #{groupId}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 获取用户收藏分组列表 -->
+    <select id="selectUserFavoriteGroups" resultType="map">
+        SELECT DISTINCT group_id as groupId, group_name as groupName, COUNT(*) as count
+        FROM mall_product_favorite
+        WHERE user_id = #{userId} AND group_id IS NOT NULL
+        GROUP BY group_id, group_name
+        ORDER BY group_id
+    </select>
+
+    <!-- 检查分组名称是否存在 -->
+    <select id="checkGroupNameExists" resultType="int">
+        SELECT COUNT(*) FROM mall_product_favorite_group
+        WHERE user_id = #{userId} AND group_name = #{groupName}
+    </select>
+
+    <!-- 创建收藏分组 -->
+    <insert id="insertFavoriteGroup">
+        INSERT INTO mall_product_favorite_group (user_id, group_name, create_time)
+        VALUES (#{userId}, #{groupName}, NOW())
+    </insert>
+
+    <!-- 获取最新创建的分组ID -->
+    <select id="selectLatestGroupId" resultType="long">
+        SELECT id FROM mall_product_favorite_group
+        WHERE user_id = #{userId} AND group_name = #{groupName}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 更新收藏分组 -->
+    <update id="updateFavoriteGroup">
+        UPDATE mall_product_favorite_group
+        SET group_name = #{groupName}, update_time = NOW()
+        WHERE user_id = #{userId} AND id = #{groupId}
+    </update>
+
+    <!-- 删除收藏分组 -->
+    <delete id="deleteFavoriteGroup">
+        DELETE FROM mall_product_favorite_group
+        WHERE user_id = #{userId} AND id = #{groupId}
+    </delete>
+
+    <!-- 移动收藏到分组 -->
+    <update id="moveFavoritesToGroup">
+        UPDATE mall_product_favorite
+        SET group_id = #{groupId}, group_name = #{groupName}, update_time = NOW()
+        WHERE id IN
+        <foreach collection="favoriteIds" item="favoriteId" open="(" separator="," close=")">
+            #{favoriteId}
+        </foreach>
+    </update>
+
+    <!-- 更新收藏备注 -->
+    <update id="updateFavoriteRemark">
+        UPDATE mall_product_favorite
+        SET remark = #{remark}, update_time = NOW()
+        WHERE id = #{favoriteId}
+    </update>
+
+    <!-- 获取用户收藏统计 -->
+    <select id="selectUserFavoriteStats" resultType="map">
+        SELECT
+            COUNT(*) as totalCount,
+            COUNT(DISTINCT group_id) as groupCount,
+            COUNT(CASE WHEN DATE(create_time) = CURDATE() THEN 1 END) as todayCount,
+            COUNT(CASE WHEN create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as weekCount,
+            COUNT(CASE WHEN create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as monthCount
+        FROM mall_product_favorite
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 获取热门收藏商品 -->
+    <select id="selectHotFavoriteProducts" resultType="map">
+        SELECT
+            product_id as productId,
+            product_name as productName,
+            product_image as productImage,
+            product_price as productPrice,
+            COUNT(*) as favoriteCount
+        FROM mall_product_favorite
+        GROUP BY product_id, product_name, product_image, product_price
+        ORDER BY favoriteCount DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 根据收藏推荐商品 -->
+    <select id="selectRecommendProductsByFavorites" resultType="map">
+        SELECT DISTINCT
+            p.id as productId,
+            p.product_name as productName,
+            p.main_image as productImage,
+            p.sale_price as productPrice,
+            p.category_id as categoryId,
+            p.brand_id as brandId
+        FROM mall_product p
+        WHERE p.status = 1
+        AND p.category_id IN (
+            SELECT DISTINCT mp.category_id
+            FROM mall_product_favorite f
+            JOIN mall_product mp ON f.product_id = mp.id
+            WHERE f.user_id = #{userId}
+        )
+        AND p.id NOT IN (
+            SELECT product_id FROM mall_product_favorite WHERE user_id = #{userId}
+        )
+        ORDER BY p.sales DESC, p.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 导出用户收藏列表 -->
+    <select id="selectUserFavoritesForExport" resultMap="MallProductFavoriteResult">
+        SELECT * FROM mall_product_favorite
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 清空用户收藏列表 -->
+    <delete id="clearUserFavorites">
+        DELETE FROM mall_product_favorite
+        WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 获取商品收藏数量 -->
+    <select id="selectProductFavoriteCount" resultType="long">
+        SELECT COUNT(*) FROM mall_product_favorite
+        WHERE product_id = #{productId}
+    </select>
+
+    <!-- 批量获取商品收藏数量 -->
+    <select id="batchSelectProductFavoriteCount" resultType="map">
+        SELECT product_id as productId, COUNT(*) as count
+        FROM mall_product_favorite
+        WHERE product_id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+        GROUP BY product_id
+    </select>
+
+    <!-- 同步收藏商品信息 -->
+    <update id="syncFavoriteProductInfo">
+        UPDATE mall_product_favorite
+        SET product_name = #{productName},
+            product_image = #{productImage},
+            product_price = #{productPrice},
+            update_time = NOW()
+        WHERE product_id = #{productId}
+    </update>
+
+    <!-- 根据商品ID删除收藏 -->
+    <delete id="deleteFavoritesByProductId">
+        DELETE FROM mall_product_favorite
+        WHERE product_id = #{productId}
+    </delete>
+
+    <!-- 根据分组ID清空收藏 -->
+    <update id="clearFavoritesByGroupId">
+        UPDATE mall_product_favorite
+        SET group_id = NULL, group_name = NULL, update_time = NOW()
+        WHERE group_id = #{groupId}
+    </update>
+
+    <!-- 根据收藏获取推荐商品（分页） -->
+    <select id="selectRecommendationsByFavorites" resultType="map">
+        SELECT DISTINCT
+            p.id as productId,
+            p.product_name as productName,
+            p.main_image as productImage,
+            p.sale_price as productPrice,
+            p.category_id as categoryId,
+            p.brand_id as brandId,
+            p.sales as sales,
+            p.views as views
+        FROM mall_product p
+        WHERE p.status = 1
+        AND (
+            p.category_id IN (
+                SELECT DISTINCT mp.category_id
+                FROM mall_product_favorite f
+                JOIN mall_product mp ON f.product_id = mp.id
+                WHERE f.user_id = #{userId}
+            )
+            OR p.brand_id IN (
+                SELECT DISTINCT mp.brand_id
+                FROM mall_product_favorite f
+                JOIN mall_product mp ON f.product_id = mp.id
+                WHERE f.user_id = #{userId}
+            )
+        )
+        AND p.id NOT IN (
+            SELECT product_id FROM mall_product_favorite WHERE user_id = #{userId}
+        )
+        <if test="limit != null and offset != null">
+            ORDER BY p.sales DESC, p.views DESC, p.create_time DESC
+            LIMIT #{limit} OFFSET #{offset}
+        </if>
+        <if test="limit == null or offset == null">
+            ORDER BY p.sales DESC, p.views DESC, p.create_time DESC
+        </if>
+    </select>
+
+    <!-- 导出收藏 -->
+    <select id="selectFavoritesForExport" resultType="map">
+        SELECT
+            f.id as favoriteId,
+            f.product_id as productId,
+            f.product_name as productName,
+            f.product_image as productImage,
+            f.product_price as productPrice,
+            f.group_id as groupId,
+            f.group_name as groupName,
+            f.remark as remark,
+            f.create_time as createTime
+        FROM mall_product_favorite f
+        WHERE f.user_id = #{userId}
+        <if test="groupId != null">
+            AND f.group_id = #{groupId}
+        </if>
+        ORDER BY f.create_time DESC
+    </select>
+
+    <!-- 根据分组ID获取分组名称 -->
+    <select id="selectGroupNameById" resultType="string">
+        SELECT group_name FROM mall_product_favorite_group
+        WHERE id = #{groupId}
+    </select>
+
+</mapper>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.MallDeliveryMethodMapper">
+
+    <!-- MallDeliveryMethod结果映射 -->
+    <resultMap id="MallDeliveryMethodResult" type="com.chennian.storytelling.bean.model.MallDeliveryMethod">
+        <id property="id" column="id" />
+        <result property="methodCode" column="method_code" />
+        <result property="methodName" column="method_name" />
+        <result property="methodType" column="method_type" />
+        <result property="deliveryScope" column="delivery_scope" />
+        <result property="startingPrice" column="starting_price" />
+        <result property="baseFreight" column="base_freight" />
+        <result property="weightUnit" column="weight_unit" />
+        <result property="firstWeight" column="first_weight" />
+        <result property="firstWeightPrice" column="first_weight_price" />
+        <result property="continuedWeight" column="continued_weight" />
+        <result property="continuedWeightPrice" column="continued_weight_price" />
+        <result property="supportTimeDelivery" column="support_time_delivery" />
+        <result property="deliveryTimeType" column="delivery_time_type" />
+        <result property="estimatedDays" column="estimated_days" />
+        <result property="deliveryDesc" column="delivery_desc" />
+        <result property="specialAreaPrice" column="special_area_price" />
+        <result property="supportValueInsurance" column="support_value_insurance" />
+        <result property="insuranceRate" column="insurance_rate" />
+        <result property="maxInsuranceAmount" column="max_insurance_amount" />
+        <result property="supportCashOnDelivery" column="support_cash_on_delivery" />
+        <result property="codRate" column="cod_rate" />
+        <result property="maxCodAmount" column="max_cod_amount" />
+        <result property="priority" column="priority" />
+        <result property="status" column="status" />
+        <result property="isDefault" column="is_default" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallDeliveryMethodVo">
+        SELECT id, method_code, method_name, method_type, delivery_scope, starting_price, base_freight, weight_unit, first_weight, first_weight_price, continued_weight, continued_weight_price, support_time_delivery, delivery_time_type, estimated_days, delivery_desc, special_area_price, support_value_insurance, insurance_rate, max_insurance_amount, support_cash_on_delivery, cod_rate, max_cod_amount, priority, status, is_default, remark, create_time, update_time, create_by, update_by
+        FROM mall_delivery_method
+    </sql>
+
+    <!-- selectAreaPriceRules -->
+    <select id="selectAreaPriceRules" resultType="java.util.Map">
+        SELECT 
+            id,
+            area_code,
+            area_name,
+            price_type,
+            additional_price,
+            weight_limit,
+            amount_limit,
+            remark
+        FROM mall_delivery_area_price_rule
+        WHERE method_id = #{methodId}
+        AND del_flag = '0'
+        ORDER BY area_code
+    </select>
+
+    <!-- selectTimeRules -->
+    <select id="selectTimeRules" resultType="java.util.Map">
+        SELECT 
+            id,
+            time_code,
+            time_name,
+            start_time,
+            end_time,
+            additional_price,
+            is_available,
+            remark
+        FROM mall_delivery_time_rule
+        WHERE method_id = #{methodId}
+        AND del_flag = '0'
+        ORDER BY start_time
+    </select>
+
+    <!-- selectSupportedAreas -->
+    <select id="selectSupportedAreas" resultType="java.lang.String">
+        SELECT DISTINCT area_code
+        FROM mall_delivery_supported_area
+        WHERE method_id = #{methodId}
+        AND is_supported = 1
+        AND del_flag = '0'
+        ORDER BY area_code
+    </select>
+
+    <!-- selectUnsupportedAreas -->
+    <select id="selectUnsupportedAreas" resultType="java.lang.String">
+        SELECT DISTINCT area_code
+        FROM mall_delivery_supported_area
+        WHERE method_id = #{methodId}
+        AND is_supported = 0
+        AND del_flag = '0'
+        ORDER BY area_code
+    </select>
+
+</mapper>

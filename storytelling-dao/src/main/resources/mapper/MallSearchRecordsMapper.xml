@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallSearchRecordsMapper">
+
+    <!-- MallSearchRecords结果映射 -->
+    <resultMap id="MallSearchRecordsResult" type="com.chennian.storytelling.bean.model.MallSearchRecords">
+        <id property="id" column="id" />
+        <result property="mobile" column="mobile" />
+        <result property="content" column="content" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallSearchRecordsVo">
+        SELECT id, mobile, content, create_time
+        FROM mall_search_records
+    </sql>
+
+</mapper>

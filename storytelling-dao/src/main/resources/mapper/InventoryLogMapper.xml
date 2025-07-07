@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.InventoryLogMapper">
+
+    <!-- InventoryLog结果映射 -->
+    <resultMap id="InventoryLogResult" type="com.chennian.storytelling.bean.model.InventoryLog">
+        <id property="id" column="id" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="productCode" column="product_code" />
+        <result property="warehouseId" column="warehouse_id" />
+        <result property="warehouseName" column="warehouse_name" />
+        <result property="operationType" column="operation_type" />
+        <result property="beforeQuantity" column="before_quantity" />
+        <result property="afterQuantity" column="after_quantity" />
+        <result property="changeQuantity" column="change_quantity" />
+        <result property="documentType" column="document_type" />
+        <result property="documentNumber" column="document_number" />
+        <result property="reason" column="reason" />
+        <result property="remark" column="remark" />
+        <result property="operatorId" column="operator_id" />
+        <result property="operatorName" column="operator_name" />
+        <result property="operationTime" column="operation_time" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectInventoryLogVo">
+        SELECT id, product_id, product_name, product_code, warehouse_id, warehouse_name, operation_type, before_quantity, after_quantity, change_quantity, document_type, document_number, reason, remark, operator_id, operator_name, operation_time, create_time
+        FROM erp_inventory_log
+    </sql>
+
+    <!-- selectLastOperation -->
+    <select id="selectLastOperation" resultMap="InventoryLogResult">
+        <include refid="selectInventoryLogVo"/>
+        WHERE product_id = #{productId} AND warehouse_id = #{warehouseId}
+        ORDER BY operation_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- selectByDocumentNumber -->
+    <select id="selectByDocumentNumber" resultMap="InventoryLogResult">
+        <include refid="selectInventoryLogVo"/>
+        WHERE document_number = #{documentNumber}
+        ORDER BY operation_time DESC
+    </select>
+
+    <!-- calculateTheoreticalStock -->
+    <select id="calculateTheoreticalStock" resultType="java.lang.Integer">
+        SELECT COALESCE(SUM(change_quantity), 0)
+        FROM erp_inventory_log
+        WHERE product_id = #{productId} AND warehouse_id = #{warehouseId}
+    </select>
+
+    <!-- deleteLogsBefore -->
+    <delete id="deleteLogsBefore">
+        DELETE FROM erp_inventory_log
+        WHERE operation_time &lt; #{beforeTime}
+    </delete>
+
+</mapper>

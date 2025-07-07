@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfFieldOptionMapper">
+
+    <!-- WfFieldOption结果映射 -->
+    <resultMap id="WfFieldOptionResult" type="com.chennian.storytelling.bean.model.WfFieldOption">
+        <id property="id" column="id" />
+        <result property="formId" column="form_id" />
+        <result property="fieldId" column="field_id" />
+        <result property="optionValue" column="option_value" />
+        <result property="optionLabel" column="option_label" />
+        <result property="optionDescription" column="option_description" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="disabled" column="disabled" />
+        <result property="isDefault" column="is_default" />
+        <result property="optionGroup" column="option_group" />
+        <result property="extraProps" column="extra_props" />
+        <result property="creatorId" column="creator_id" />
+        <result property="creatorName" column="creator_name" />
+        <result property="createTime" column="create_time" />
+        <result property="updaterId" column="updater_id" />
+        <result property="updaterName" column="updater_name" />
+        <result property="updateTime" column="update_time" />
+        <result property="deleted" column="deleted" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfFieldOptionVo">
+        SELECT id, form_id, field_id, option_value, option_label, option_description, sort_order, disabled, is_default, option_group, extra_props, creator_id, creator_name, create_time, updater_id, updater_name, update_time, deleted, remark
+        FROM wf_field_option
+    </sql>
+
+    <!-- selectOptionPage -->
+    <select id="selectOptionPage" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        <if test="params.formId != null and params.formId != ''">
+            AND form_id = #{params.formId}
+        </if>
+        <if test="params.fieldId != null and params.fieldId != ''">
+            AND field_id = #{params.fieldId}
+        </if>
+        <if test="params.optionLabel != null and params.optionLabel != ''">
+            AND option_label LIKE CONCAT('%', #{params.optionLabel}, '%')
+        </if>
+        <if test="params.disabled != null">
+            AND disabled = #{params.disabled}
+        </if>
+        ORDER BY sort_order ASC, create_time DESC
+    </select>
+
+    <!-- selectByFormIdAndFieldId -->
+    <select id="selectByFormIdAndFieldId" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        <if test="orderBy != null and orderBy != ''">
+            ORDER BY ${orderBy} ${orderType}
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            ORDER BY sort_order ASC
+        </if>
+    </select>
+
+    <!-- selectByFormId -->
+    <select id="selectByFormId" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        <if test="enabled != null">
+            AND disabled = #{enabled}
+        </if>
+        ORDER BY field_id, sort_order ASC
+    </select>
+
+    <!-- selectByFieldId -->
+    <select id="selectByFieldId" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND field_id = #{fieldId}
+        <if test="orderBy != null and orderBy != ''">
+            ORDER BY ${orderBy} ASC
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            ORDER BY sort_order ASC
+        </if>
+    </select>
+
+    <!-- searchOptions -->
+    <select id="searchOptions" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        <if test="params.optionValue != null and params.optionValue != ''">
+            AND option_value LIKE CONCAT('%', #{params.optionValue}, '%')
+        </if>
+        <if test="params.optionLabel != null and params.optionLabel != ''">
+            AND option_label LIKE CONCAT('%', #{params.optionLabel}, '%')
+        </if>
+        <if test="params.optionGroup != null and params.optionGroup != ''">
+            AND option_group = #{params.optionGroup}
+        </if>
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- selectByGroup -->
+    <select id="selectByGroup" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        AND option_group = #{optionGroup}
+        <if test="orderBy != null and orderBy != ''">
+            ORDER BY ${orderBy} ASC
+        </if>
+        <if test="orderBy == null or orderBy == ''">
+            ORDER BY sort_order ASC
+        </if>
+    </select>
+
+    <!-- selectEnabledOptions -->
+    <select id="selectEnabledOptions" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        AND disabled = 0
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- selectDefaultOptions -->
+    <select id="selectDefaultOptions" resultMap="WfFieldOptionResult">
+        <include refid="selectWfFieldOptionVo"/>
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        AND is_default = 1
+        ORDER BY sort_order ASC
+    </select>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO wf_field_option (
+            form_id, field_id, option_value, option_label, option_description,
+            sort_order, disabled, is_default, option_group, extra_props,
+            creator_id, creator_name, create_time
+        ) VALUES
+        <foreach collection="options" item="option" separator=",">
+            (
+                #{option.formId}, #{option.fieldId}, #{option.optionValue},
+                #{option.optionLabel}, #{option.optionDescription}, #{option.sortOrder},
+                #{option.disabled}, #{option.isDefault}, #{option.optionGroup},
+                #{option.extraProps}, #{option.creatorId}, #{option.creatorName},
+                #{option.createTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- batchUpdate -->
+    <update id="batchUpdate">
+        <foreach collection="options" item="option" separator=";">
+            UPDATE wf_field_option SET
+                option_value = #{option.optionValue},
+                option_label = #{option.optionLabel},
+                option_description = #{option.optionDescription},
+                sort_order = #{option.sortOrder},
+                disabled = #{option.disabled},
+                is_default = #{option.isDefault},
+                option_group = #{option.optionGroup},
+                extra_props = #{option.extraProps},
+                updater_id = #{option.updaterId},
+                updater_name = #{option.updaterName},
+                update_time = #{option.updateTime}
+            WHERE id = #{option.id}
+        </foreach>
+    </update>
+
+    <!-- deleteByFormIdAndFieldId -->
+    <delete id="deleteByFormIdAndFieldId">
+        UPDATE wf_field_option SET deleted = 1
+        WHERE form_id = #{formId} AND field_id = #{fieldId}
+    </delete>
+
+    <!-- deleteByFormId -->
+    <delete id="deleteByFormId">
+        UPDATE wf_field_option SET deleted = 1
+        WHERE form_id = #{formId}
+    </delete>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE wf_field_option SET
+            disabled = #{enabled},
+            updater_id = #{updaterId},
+            update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- updateSort -->
+    <update id="updateSort">
+        UPDATE wf_field_option SET
+            sort_order = #{sort},
+            updater_id = #{updaterId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- batchUpdateSort -->
+    <update id="batchUpdateSort">
+        <foreach collection="sortMap" index="id" item="sort" separator=";">
+            UPDATE wf_field_option SET
+                sort_order = #{sort},
+                updater_id = #{updaterId},
+                update_time = NOW()
+            WHERE id = #{id}
+        </foreach>
+    </update>
+
+    <!-- updateLinkageConfig -->
+    <update id="updateLinkageConfig">
+        UPDATE wf_field_option SET
+            extra_props = #{linkageConfig},
+            updater_id = #{updaterId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- countOptionUsage -->
+    <select id="countOptionUsage" resultType="map">
+        SELECT 
+            wo.option_value,
+            wo.option_label,
+            COUNT(wfd.id) as usage_count
+        FROM wf_field_option wo
+        LEFT JOIN wf_form_data wfd ON wo.option_value = wfd.field_value
+            AND wo.form_id = wfd.form_id
+            AND wo.field_id = wfd.field_id
+        WHERE wo.deleted = 0
+        AND wo.form_id = #{formId}
+        AND wo.field_id = #{fieldId}
+        <if test="startTime != null">
+            AND wfd.create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND wfd.create_time <= #{endTime}
+        </if>
+        GROUP BY wo.option_value, wo.option_label
+        ORDER BY usage_count DESC
+    </select>
+
+    <!-- countOptionGroups -->
+    <select id="countOptionGroups" resultType="map">
+        SELECT 
+            option_group,
+            COUNT(*) as option_count
+        FROM wf_field_option
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        GROUP BY option_group
+        ORDER BY option_count DESC
+    </select>
+
+    <!-- countOptionStatus -->
+    <select id="countOptionStatus" resultType="map">
+        SELECT 
+            CASE WHEN disabled = 0 THEN '启用' ELSE '禁用' END as status,
+            COUNT(*) as count
+        FROM wf_field_option
+        WHERE deleted = 0
+        AND form_id = #{formId}
+        AND field_id = #{fieldId}
+        GROUP BY disabled
+    </select>
+
+</mapper>

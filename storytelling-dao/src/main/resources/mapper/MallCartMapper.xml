@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallCartMapper">
+
+    <!-- MallCart结果映射 -->
+    <resultMap id="MallCartResult" type="com.chennian.storytelling.bean.model.MallCart">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="productId" column="product_id" />
+        <result property="productName" column="product_name" />
+        <result property="productImage" column="product_image" />
+        <result property="productPrice" column="product_price" />
+        <result property="quantity" column="quantity" />
+        <result property="specification" column="specification" />
+        <result property="isSelected" column="is_selected" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallCartVo">
+        SELECT id, user_id, product_id, product_name, product_image, product_price, quantity, specification, is_selected, create_time, update_time
+        FROM mall_cart
+    </sql>
+
+</mapper>

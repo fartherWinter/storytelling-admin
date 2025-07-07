@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.manufacturing.ProductionLineMapper">
+
+    <!-- ProductionLine结果映射 -->
+    <resultMap id="ProductionLineResult" type="com.chennian.storytelling.bean.model.ProductionLine">
+        <id property="lineId" column="line_id" />
+        <result property="lineCode" column="line_code" />
+        <result property="lineName" column="line_name" />
+        <result property="lineType" column="line_type" />
+        <result property="lineStatus" column="line_status" />
+        <result property="workshopId" column="workshop_id" />
+        <result property="workshopName" column="workshop_name" />
+        <result property="location" column="location" />
+        <result property="designCapacity" column="design_capacity" />
+        <result property="actualCapacity" column="actual_capacity" />
+        <result property="capacityUtilization" column="capacity_utilization" />
+        <result property="managerId" column="manager_id" />
+        <result property="managerName" column="manager_name" />
+        <result property="teamLeaderId" column="team_leader_id" />
+        <result property="teamLeaderName" column="team_leader_name" />
+        <result property="employeeCount" column="employee_count" />
+        <result property="equipmentCount" column="equipment_count" />
+        <result property="commissioningDate" column="commissioning_date" />
+        <result property="lastMaintenanceTime" column="last_maintenance_time" />
+        <result property="nextMaintenanceTime" column="next_maintenance_time" />
+        <result property="maintenanceCycle" column="maintenance_cycle" />
+        <result property="runningHours" column="running_hours" />
+        <result property="downtime" column="downtime" />
+        <result property="oeeRate" column="oee_rate" />
+        <result property="availabilityRate" column="availability_rate" />
+        <result property="performanceRate" column="performance_rate" />
+        <result property="qualityRate" column="quality_rate" />
+        <result property="statusChangeReason" column="status_change_reason" />
+        <result property="statusChangeTime" column="status_change_time" />
+        <result property="technicalParameters" column="technical_parameters" />
+        <result property="processFlow" column="process_flow" />
+        <result property="safetyRequirements" column="safety_requirements" />
+        <result property="environmentalRequirements" column="environmental_requirements" />
+        <result property="description" column="description" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProductionLineVo">
+        SELECT line_id, line_code, line_name, line_type, line_status, workshop_id, workshop_name, location, design_capacity, actual_capacity, capacity_utilization, manager_id, manager_name, team_leader_id, team_leader_name, employee_count, equipment_count, commissioning_date, last_maintenance_time, next_maintenance_time, maintenance_cycle, running_hours, downtime, oee_rate, availability_rate, performance_rate, quality_rate, status_change_reason, status_change_time, technical_parameters, process_flow, safety_requirements, environmental_requirements, description, remark, create_by, create_time, update_by, update_time, del_flag
+        FROM production_line
+    </sql>
+
+    <!-- updateLineStatus -->
+    <update id="updateLineStatus">
+        UPDATE production_line
+        SET line_status = #{status},
+            status_change_time = NOW(),
+            update_time = NOW()
+        WHERE line_id = #{lineId}
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectByWorkshopId -->
+    <select id="selectByWorkshopId" resultMap="ProductionLineResult">
+        <include refid="selectProductionLineVo"/>
+        WHERE workshop_id = #{workshopId}
+        AND del_flag = '0'
+        ORDER BY line_code
+    </select>
+
+    <!-- selectCapacityUtilizationData -->
+    <select id="selectCapacityUtilizationData" resultType="java.util.Map">
+        SELECT 
+            line_id as lineId,
+            line_name as lineName,
+            design_capacity as designCapacity,
+            actual_capacity as actualCapacity,
+            capacity_utilization as capacityUtilization,
+            running_hours as runningHours,
+            downtime,
+            oee_rate as oeeRate
+        FROM production_line
+        WHERE del_flag = '0'
+        <if test="lineId != null">
+            AND line_id = #{lineId}
+        </if>
+        ORDER BY capacity_utilization DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProductionLineResult">
+        <include refid="selectProductionLineVo"/>
+        WHERE line_status = #{status}
+        AND del_flag = '0'
+        ORDER BY line_code
+    </select>
+
+    <!-- selectProductionLineStatistics -->
+    <select id="selectProductionLineStatistics" resultType="java.util.Map">
+        SELECT 
+            line_id as lineId,
+            line_name as lineName,
+            COUNT(wo.id) as totalOrders,
+            SUM(CASE WHEN wo.status = 'COMPLETED' THEN 1 ELSE 0 END) as completedOrders,
+            SUM(wo.actual_quantity) as totalOutput,
+            AVG(pl.oee_rate) as avgOeeRate,
+            AVG(pl.availability_rate) as avgAvailabilityRate,
+            AVG(pl.performance_rate) as avgPerformanceRate,
+            AVG(pl.quality_rate) as avgQualityRate
+        FROM production_line pl
+        LEFT JOIN work_order wo ON pl.line_id = wo.production_line_id
+            AND wo.create_time BETWEEN #{startDate} AND #{endDate}
+            AND wo.del_flag = '0'
+        WHERE pl.del_flag = '0'
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY pl.line_id, pl.line_name
+        ORDER BY pl.line_code
+    </select>
+
+    <!-- selectProductionLineCapacityAnalysis -->
+    <select id="selectProductionLineCapacityAnalysis" resultType="java.util.Map">
+        SELECT 
+            line_id as lineId,
+            line_name as lineName,
+            design_capacity as designCapacity,
+            actual_capacity as actualCapacity,
+            capacity_utilization as capacityUtilization,
+            running_hours as runningHours,
+            downtime,
+            (running_hours / (running_hours + downtime) * 100) as availabilityRate,
+            oee_rate as oeeRate
+        FROM production_line
+        WHERE del_flag = '0'
+        <if test="lineId != null">
+            AND line_id = #{lineId}
+        </if>
+        ORDER BY capacity_utilization DESC
+    </select>
+
+    <!-- selectProductionLineEfficiencyStatistics -->
+    <select id="selectProductionLineEfficiencyStatistics" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as id,
+            pl.line_name as lineName,
+            AVG(pl.oee_rate) as avgOeeRate,
+            AVG(pl.availability_rate) as avgAvailabilityRate,
+            AVG(pl.performance_rate) as avgPerformanceRate,
+            AVG(pl.quality_rate) as avgQualityRate,
+            SUM(wo.actual_quantity) as totalOutput,
+            COUNT(wo.id) as totalOrders
+        FROM production_line pl
+        LEFT JOIN work_order wo ON pl.line_id = wo.production_line_id
+            AND wo.create_time BETWEEN #{startDate} AND #{endDate}
+            AND wo.del_flag = '0'
+        WHERE pl.del_flag = '0'
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        GROUP BY pl.line_id, pl.line_name
+        ORDER BY avgOeeRate DESC
+    </select>
+
+    <!-- selectProductionLineRunningTimeStatistics -->
+    <select id="selectProductionLineRunningTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            line_id as lineId,
+            line_name as lineName,
+            running_hours as runningHours,
+            downtime,
+            (running_hours + downtime) as totalTime,
+            (running_hours / (running_hours + downtime) * 100) as utilizationRate
+        FROM production_line
+        WHERE del_flag = '0'
+        <if test="lineId != null">
+            AND line_id = #{lineId}
+        </if>
+        ORDER BY utilizationRate DESC
+    </select>
+
+    <!-- selectProductionLineOutputStatistics -->
+    <select id="selectProductionLineOutputStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(wo.id) as totalOrders,
+            SUM(wo.planned_quantity) as totalPlannedQuantity,
+            SUM(wo.actual_quantity) as totalActualQuantity,
+            AVG(wo.actual_quantity / wo.planned_quantity * 100) as avgCompletionRate,
+            SUM(CASE WHEN wo.status = 'COMPLETED' THEN 1 ELSE 0 END) as completedOrders,
+            SUM(CASE WHEN wo.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgressOrders
+        FROM work_order wo
+        WHERE wo.production_line_id = #{lineId}
+        AND wo.create_time BETWEEN #{startDate} AND #{endDate}
+        AND wo.del_flag = '0'
+    </select>
+
+    <!-- selectProductionLineQualityStatistics -->
+    <select id="selectProductionLineQualityStatistics" resultType="java.util.Map">
+        SELECT 
+            AVG(pl.quality_rate) as avgQualityRate,
+            COUNT(qi.id) as totalInspections,
+            SUM(CASE WHEN qi.result = 'PASS' THEN 1 ELSE 0 END) as passedInspections,
+            SUM(CASE WHEN qi.result = 'FAIL' THEN 1 ELSE 0 END) as failedInspections,
+            (SUM(CASE WHEN qi.result = 'PASS' THEN 1 ELSE 0 END) / COUNT(qi.id) * 100) as passRate
+        FROM production_line pl
+        LEFT JOIN work_order wo ON pl.line_id = wo.production_line_id
+        LEFT JOIN quality_inspection qi ON wo.id = qi.work_order_id
+            AND qi.create_time BETWEEN #{startDate} AND #{endDate}
+            AND qi.del_flag = '0'
+        WHERE pl.line_id = #{lineId}
+        AND pl.del_flag = '0'
+        AND wo.del_flag = '0'
+    </select>
+
+    <!-- selectProductionLineEfficiencyTrend -->
+    <select id="selectProductionLineEfficiencyTrend" resultType="java.util.Map">
+        SELECT 
+            DATE(wo.create_time) as date,
+            AVG(pl.oee_rate) as oeeRate,
+            AVG(pl.availability_rate) as availabilityRate,
+            AVG(pl.performance_rate) as performanceRate,
+            AVG(pl.quality_rate) as qualityRate,
+            SUM(wo.actual_quantity) as dailyOutput
+        FROM production_line pl
+        LEFT JOIN work_order wo ON pl.line_id = wo.production_line_id
+            AND wo.create_time BETWEEN #{startDate} AND #{endDate}
+            AND wo.del_flag = '0'
+        WHERE pl.line_id = #{lineId}
+        AND pl.del_flag = '0'
+        GROUP BY DATE(wo.create_time)
+        ORDER BY date
+    </select>
+
+    <!-- selectProductionLineBottleneckAnalysis -->
+    <select id="selectProductionLineBottleneckAnalysis" resultType="java.util.Map">
+        SELECT 
+            'equipment' as bottleneckType,
+            e.equipment_name as bottleneckName,
+            AVG(e.efficiency_rate) as efficiencyRate,
+            SUM(e.downtime_hours) as totalDowntime,
+            COUNT(em.id) as maintenanceCount
+        FROM production_line pl
+        LEFT JOIN equipment e ON pl.line_id = e.production_line_id
+        LEFT JOIN equipment_maintenance em ON e.id = em.equipment_id
+            AND em.create_time BETWEEN #{startDate} AND #{endDate}
+            AND em.del_flag = '0'
+        WHERE pl.line_id = #{lineId}
+        AND pl.del_flag = '0'
+        AND e.del_flag = '0'
+        GROUP BY e.id, e.equipment_name
+        HAVING AVG(e.efficiency_rate) < 80 OR SUM(e.downtime_hours) > 10
+        ORDER BY efficiencyRate ASC, totalDowntime DESC
+    </select>
+
+    <!-- selectEfficiencyStatistics -->
+    <select id="selectEfficiencyStatistics" resultType="java.util.Map">
+        SELECT 
+            AVG(oee_rate) as avgOeeRate,
+            AVG(availability_rate) as avgAvailabilityRate,
+            AVG(performance_rate) as avgPerformanceRate,
+            AVG(quality_rate) as avgQualityRate,
+            MAX(oee_rate) as maxOeeRate,
+            MIN(oee_rate) as minOeeRate
+        FROM production_line
+        WHERE del_flag = '0'
+        <if test="lineId != null">
+            AND line_id = #{lineId}
+        </if>
+    </select>
+
+    <!-- selectEfficiencyTrends -->
+    <select id="selectEfficiencyTrends" resultType="java.util.Map">
+        SELECT 
+            DATE(update_time) as date,
+            AVG(oee_rate) as avgOeeRate,
+            AVG(availability_rate) as avgAvailabilityRate,
+            AVG(performance_rate) as avgPerformanceRate,
+            AVG(quality_rate) as avgQualityRate
+        FROM production_line
+        WHERE update_time BETWEEN #{startDate} AND #{endDate}
+        AND del_flag = '0'
+        <if test="lineId != null">
+            AND line_id = #{lineId}
+        </if>
+        GROUP BY DATE(update_time)
+        ORDER BY date
+    </select>
+
+    <!-- selectLineComparisons -->
+    <select id="selectLineComparisons" resultType="java.util.Map">
+        SELECT 
+            line_id as lineId,
+            line_name as lineName,
+            line_code as lineCode,
+            oee_rate as oeeRate,
+            availability_rate as availabilityRate,
+            performance_rate as performanceRate,
+            quality_rate as qualityRate,
+            capacity_utilization as capacityUtilization,
+            actual_capacity as actualCapacity,
+            design_capacity as designCapacity
+        FROM production_line
+        WHERE del_flag = '0'
+        ORDER BY oee_rate DESC
+    </select>
+
+    <!-- selectCapacityAnalysis -->
+    <select id="selectCapacityAnalysis" resultType="java.util.Map">
+        SELECT 
+            design_capacity as designCapacity,
+            actual_capacity as actualCapacity,
+            capacity_utilization as capacityUtilization,
+            running_hours as runningHours,
+            downtime,
+            (actual_capacity / design_capacity * 100) as capacityEfficiency,
+            (running_hours / (running_hours + downtime) * 100) as timeUtilization
+        FROM production_line
+        WHERE line_id = #{id}
+        AND del_flag = '0'
+    </select>
+
+    <!-- selectBottleneckAnalysis -->
+    <select id="selectBottleneckAnalysis" resultType="java.util.Map">
+        SELECT 
+            pl.line_id as lineId,
+            pl.line_name as lineName,
+            pl.oee_rate as oeeRate,
+            pl.availability_rate as availabilityRate,
+            pl.performance_rate as performanceRate,
+            pl.quality_rate as qualityRate,
+            pl.downtime,
+            'low_efficiency' as bottleneckType
+        FROM production_line pl
+        WHERE pl.del_flag = '0'
+        <if test="lineId != null">
+            AND pl.line_id = #{lineId}
+        </if>
+        AND (pl.oee_rate < 75 OR pl.availability_rate < 85 OR pl.performance_rate < 80)
+        ORDER BY pl.oee_rate ASC
+    </select>
+
+</mapper>

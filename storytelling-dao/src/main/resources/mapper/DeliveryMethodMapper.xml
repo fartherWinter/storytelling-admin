@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.DeliveryMethodMapper">
+
+    <!-- DeliveryMethod结果映射 -->
+    <resultMap id="DeliveryMethodResult" type="com.chennian.storytelling.bean.model.DeliveryMethod">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="code" column="code" />
+        <result property="description" column="description" />
+        <result property="basePrice" column="base_price" />
+        <result property="firstWeight" column="first_weight" />
+        <result property="additionalPrice" column="additional_price" />
+        <result property="freeShippingThreshold" column="free_shipping_threshold" />
+        <result property="estimatedDeliveryHours" column="estimated_delivery_hours" />
+        <result property="supportedRegions" column="supported_regions" />
+        <result property="status" column="status" />
+        <result property="sort" column="sort" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectDeliveryMethodVo">
+        SELECT id, name, code, description, base_price, first_weight, additional_price, free_shipping_threshold, estimated_delivery_hours, supported_regions, status, sort, create_time, update_time, create_by, update_by
+        FROM mall_delivery_method
+    </sql>
+
+    <!-- selectDeliveryMethodPage -->
+    <select id="selectDeliveryMethodPage" resultMap="DeliveryMethodResult">
+        <include refid="selectDeliveryMethodVo"/>
+        WHERE del_flag = '0'
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- selectEnabledDeliveryMethods -->
+    <select id="selectEnabledDeliveryMethods" resultMap="DeliveryMethodResult">
+        <include refid="selectDeliveryMethodVo"/>
+        WHERE del_flag = '0' AND status = 1
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- selectAvailableByRegion -->
+    <select id="selectAvailableByRegion" resultMap="DeliveryMethodResult">
+        <include refid="selectDeliveryMethodVo"/>
+        WHERE del_flag = '0' AND status = 1
+        AND (
+            supported_regions IS NULL 
+            OR supported_regions = '' 
+            OR JSON_CONTAINS(supported_regions, JSON_QUOTE(#{provinceCode}))
+            OR JSON_CONTAINS(supported_regions, JSON_QUOTE(#{cityCode}))
+        )
+        ORDER BY sort ASC, create_time DESC
+    </select>
+
+    <!-- updateStatusBatch -->
+    <update id="updateStatusBatch">
+        UPDATE mall_delivery_method 
+        SET status = #{status}, update_time = NOW()
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND del_flag = '0'
+    </update>
+
+</mapper>

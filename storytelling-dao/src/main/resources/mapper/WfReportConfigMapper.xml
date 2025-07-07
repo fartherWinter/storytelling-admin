@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfReportConfigMapper">
+
+    <!-- WfReportConfig结果映射 -->
+    <resultMap id="WfReportConfigResult" type="com.chennian.storytelling.bean.model.WfReportConfig">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="code" column="code" />
+        <result property="description" column="description" />
+        <result property="reportType" column="report_type" />
+        <result property="templatePath" column="template_path" />
+        <result property="sqlQuery" column="sql_query" />
+        <result property="chartConfig" column="chart_config" />
+        <result property="enabled" column="enabled" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="createdTime" column="created_time" />
+        <result property="updatedTime" column="updated_time" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfReportConfigVo">
+        SELECT id, name, code, description, report_type, template_path, sql_query, chart_config, enabled, sort_order, created_time, updated_time, created_by, updated_by
+        FROM wf_report_config
+    </sql>
+
+    <!-- selectByReportCode -->
+    <select id="selectByReportCode" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE code = #{reportCode} AND del_flag = '0'
+    </select>
+
+    <!-- selectByReportType -->
+    <select id="selectByReportType" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE report_type = #{reportType} AND del_flag = '0'
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByEnabled -->
+    <select id="selectByEnabled" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE enabled = #{enabled} AND del_flag = '0'
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- selectByReportNameLike -->
+    <select id="selectByReportNameLike" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE name LIKE CONCAT('%', #{reportName}, '%') AND del_flag = '0'
+        ORDER BY created_time DESC
+    </select>
+
+
+
+    <!-- selectAllReportTypes -->
+    <select id="selectAllReportTypes" resultType="String">
+        SELECT DISTINCT report_type
+        FROM wf_report_config
+        WHERE del_flag = '0' AND report_type IS NOT NULL
+        ORDER BY report_type
+    </select>
+
+    <!-- selectReportStatistics -->
+    <select id="selectReportStatistics" resultType="java.util.Map">
+        SELECT 
+            report_type,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count,
+            SUM(CASE WHEN enabled = 0 THEN 1 ELSE 0 END) as disabled_count
+        FROM wf_report_config
+        WHERE del_flag = '0'
+        GROUP BY report_type
+        ORDER BY total_count DESC
+    </select>
+
+    <!-- selectReportDetail -->
+    <select id="selectReportDetail" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE id = #{reportId} AND del_flag = '0'
+    </select>
+
+    <!-- selectByReportIds -->
+    <select id="selectByReportIds" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE id IN
+        <foreach collection="reportIds" item="reportId" open="(" separator="," close=")">
+            #{reportId}
+        </foreach>
+        AND del_flag = '0'
+        ORDER BY created_time DESC
+    </select>
+
+
+
+    <!-- selectReportDataSource -->
+    <select id="selectReportDataSource" resultType="java.util.Map">
+        SELECT 
+            id,
+            name,
+            code,
+            sql_query,
+            template_path,
+            chart_config
+        FROM wf_report_config
+        WHERE id = #{reportId} AND del_flag = '0'
+    </select>
+
+
+
+    <!-- selectReportCountByType -->
+    <select id="selectReportCountByType" resultType="java.util.Map">
+        SELECT 
+            report_type,
+            COUNT(*) as count
+        FROM wf_report_config
+        WHERE del_flag = '0'
+        GROUP BY report_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectRecentlyUsedReports -->
+    <select id="selectRecentlyUsedReports" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE del_flag = '0'
+        ORDER BY updated_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- selectPopularReports -->
+    <select id="selectPopularReports" resultMap="WfReportConfigResult">
+        <include refid="selectWfReportConfigVo"/>
+        WHERE del_flag = '0'
+        ORDER BY sort_order ASC, created_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- updateReportUsageCount -->
+    <update id="updateReportUsageCount">
+        UPDATE wf_report_config
+        SET updated_time = NOW()
+        WHERE id = #{reportId} AND del_flag = '0'
+    </update>
+
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallUserMapper">
+
+    <!-- MallUser结果映射 -->
+    <resultMap id="MallUserResult" type="com.chennian.storytelling.bean.model.MallUser">
+        <id property="id" column="id" />
+        <result property="username" column="username" />
+        <result property="password" column="password" />
+        <result property="email" column="email" />
+        <result property="mobile" column="mobile" />
+        <result property="openid" column="openid" />
+        <result property="unionid" column="unionid" />
+        <result property="source" column="source" />
+        <result property="nickname" column="nickname" />
+        <result property="avatarUrl" column="avatar_url" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="lastLoginTime" column="last_login_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallUserVo">
+        SELECT id, username, password, email, mobile, openid, unionid, source, nickname, avatar_url, status, create_time, update_time, last_login_time
+        FROM mall_user
+    </sql>
+
+</mapper>

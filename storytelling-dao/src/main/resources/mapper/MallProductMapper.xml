@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallProductMapper">
+
+    <!-- MallProduct结果映射 -->
+    <resultMap id="MallProductResult" type="com.chennian.storytelling.bean.model.MallProduct">
+        <id property="id" column="id" />
+        <result property="productCode" column="product_code" />
+        <result property="productName" column="product_name" />
+        <result property="categoryId" column="category_id" />
+        <result property="categoryName" column="category_name" />
+        <result property="brandId" column="brand_id" />
+        <result property="brandName" column="brand_name" />
+        <result property="mainImage" column="main_image" />
+        <result property="images" column="images" />
+        <result property="description" column="description" />
+        <result property="specification" column="specification" />
+        <result property="unit" column="unit" />
+        <result property="weight" column="weight" />
+        <result property="volume" column="volume" />
+        <result property="marketPrice" column="market_price" />
+        <result property="salePrice" column="sale_price" />
+        <result property="costPrice" column="cost_price" />
+        <result property="stock" column="stock" />
+        <result property="stockWarning" column="stock_warning" />
+        <result property="sales" column="sales" />
+        <result property="views" column="views" />
+        <result property="status" column="status" />
+        <result property="isRecommend" column="is_recommend" />
+        <result property="isHot" column="is_hot" />
+        <result property="isNew" column="is_new" />
+        <result property="sort" column="sort" />
+        <result property="keywords" column="keywords" />
+        <result property="tags" column="tags" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallProductVo">
+        SELECT id, product_code, product_name, category_id, category_name, brand_id, brand_name, main_image, images, description, specification, unit, weight, volume, market_price, sale_price, cost_price, stock, stock_warning, sales, views, status, is_recommend, is_hot, is_new, sort, keywords, tags, remark, create_time, update_time, create_by, update_by
+        FROM mall_product
+    </sql>
+
+    <!-- selectProductById -->
+    <select id="selectProductById" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
+        <include refid="selectMallProductVo"/>
+        WHERE id = #{productId} AND status = 1
+    </select>
+
+    <!-- batchUpdateStock -->
+    <update id="batchUpdateStock">
+        <foreach collection="productStocks" item="item" separator=";">
+            UPDATE mall_product 
+            SET stock = stock + #{item.stock}, 
+                update_time = NOW()
+            WHERE id = #{item.id}
+        </foreach>
+    </update>
+
+    <!-- selectHotProducts -->
+    <select id="selectHotProducts" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
+        <include refid="selectMallProductVo"/>
+        WHERE status = 1 AND is_hot = 1
+        ORDER BY sales DESC, views DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- selectRecommendProducts -->
+    <select id="selectRecommendProducts" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
+        <include refid="selectMallProductVo"/>
+        WHERE status = 1 AND is_recommend = 1
+        <if test="categoryId != null">
+            AND category_id = #{categoryId}
+        </if>
+        ORDER BY sort ASC, create_time DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- updateProductRating -->
+    <update id="updateProductRating">
+        UPDATE mall_product 
+        SET rating = #{rating}, update_time = NOW()
+        WHERE id = #{productId}
+    </update>
+
+    <!-- batchUpdateStatus -->
+    <update id="batchUpdateStatus">
+        UPDATE mall_product 
+        SET status = #{status}, 
+            update_by = #{operator}, 
+            update_time = NOW()
+        WHERE id IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </update>
+
+    <!-- selectProductSalesStats -->
+    <select id="selectProductSalesStats" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
+        SELECT 
+            p.id, p.product_code, p.product_name, p.category_id, p.category_name,
+            p.sale_price, p.stock, p.sales, p.views,
+            COALESCE(SUM(oi.quantity), 0) as period_sales,
+            COALESCE(SUM(oi.quantity * oi.price), 0) as period_amount
+        FROM mall_product p
+        LEFT JOIN mall_order_item oi ON p.id = oi.product_id
+        LEFT JOIN mall_order o ON oi.order_id = o.id
+        WHERE p.status = 1
+        <if test="categoryId != null">
+            AND p.category_id = #{categoryId}
+        </if>
+        <if test="startDate != null and endDate != null">
+            AND o.create_time BETWEEN #{startDate} AND #{endDate}
+            AND o.status IN ('PAID', 'SHIPPED', 'DELIVERED', 'COMPLETED')
+        </if>
+        GROUP BY p.id, p.product_code, p.product_name, p.category_id, p.category_name,
+                 p.sale_price, p.stock, p.sales, p.views
+        ORDER BY period_sales DESC, p.sales DESC
+    </select>
+
+    <!-- selectLowStockProducts -->
+    <select id="selectLowStockProducts" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
+        <include refid="selectMallProductVo"/>
+        WHERE status = 1 
+        AND stock <= 
+        <choose>
+            <when test="threshold != null">
+                #{threshold}
+            </when>
+            <otherwise>
+                stock_warning
+            </otherwise>
+        </choose>
+        ORDER BY stock ASC, product_name ASC
+    </select>
+
+    <!-- incrementViewCount -->
+    <update id="incrementViewCount">
+        UPDATE mall_product 
+        SET views = views + 1, update_time = NOW()
+        WHERE id = #{productId}
+    </update>
+
+</mapper>

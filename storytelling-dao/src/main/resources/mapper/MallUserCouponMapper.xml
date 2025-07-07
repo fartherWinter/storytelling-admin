@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallUserCouponMapper">
+
+    <!-- MallUserCoupon结果映射 -->
+    <resultMap id="MallUserCouponResult" type="com.chennian.storytelling.bean.model.MallUserCoupon">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="couponId" column="coupon_id" />
+        <result property="couponCode" column="coupon_code" />
+        <result property="status" column="status" />
+        <result property="receiveTime" column="receive_time" />
+        <result property="useTime" column="use_time" />
+        <result property="expireTime" column="expire_time" />
+        <result property="orderId" column="order_id" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallUserCouponVo">
+        SELECT id, user_id, coupon_id, coupon_code, status, receive_time, use_time, expire_time, order_id, create_time, update_time
+        FROM mall_user_coupon
+    </sql>
+
+    <!-- selectUserCouponPage -->
+    <select id="selectUserCouponPage" resultType="com.chennian.storytelling.bean.vo.MallUserCouponVO">
+        <include refid="selectMallUserCouponVo"/>
+        WHERE del_flag = '0'
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectUserCouponById -->
+    <select id="selectUserCouponById" resultType="com.chennian.storytelling.bean.vo.MallUserCouponVO">
+        <include refid="selectMallUserCouponVo"/>
+        WHERE del_flag = '0' AND id = #{userCouponId}
+    </select>
+
+    <!-- selectUsableCouponsForOrder -->
+    <select id="selectUsableCouponsForOrder" resultType="com.chennian.storytelling.bean.vo.MallUserCouponVO">
+        <include refid="selectMallUserCouponVo"/>
+        WHERE del_flag = '0'
+        AND user_id = #{userId}
+        AND status = 0
+        AND start_time &lt;= NOW()
+        AND end_time &gt;= NOW()
+        AND min_order_amount &lt;= #{orderAmount}
+        ORDER BY discount_amount DESC, create_time ASC
+    </select>
+
+    <!-- countUserReceivedCoupons -->
+    <select id="countUserReceivedCoupons" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM mall_user_coupon
+        WHERE del_flag = '0'
+        AND user_id = #{userId}
+        AND coupon_id = #{couponId}
+    </select>
+
+    <!-- selectExpiredUserCouponIds -->
+    <select id="selectExpiredUserCouponIds" resultType="java.lang.Long">
+        SELECT id FROM mall_user_coupon
+        WHERE del_flag = '0'
+        AND status = 0
+        AND end_time &lt; NOW()
+    </select>
+
+    <!-- selectUsedCouponByOrderId -->
+    <select id="selectUsedCouponByOrderId" resultType="com.chennian.storytelling.bean.vo.MallUserCouponVO">
+        <include refid="selectMallUserCouponVo"/>
+        WHERE del_flag = '0'
+        AND order_id = #{orderId}
+        AND status = 1
+    </select>
+
+    <!-- selectByCouponCodeAndUserId -->
+    <select id="selectByCouponCodeAndUserId" resultType="com.chennian.storytelling.bean.model.mall.MallUserCoupon">
+        SELECT * FROM mall_user_coupon
+        WHERE del_flag = '0'
+        AND coupon_code = #{couponCode}
+        AND user_id = #{userId}
+    </select>
+
+</mapper>

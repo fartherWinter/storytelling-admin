@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.project.ProjectResourceMapper">
+
+    <!-- ProjectResource结果映射 -->
+    <resultMap id="ProjectResourceResult" type="com.chennian.storytelling.bean.model.ProjectResource">
+        <id property="id" column="id" />
+        <result property="projectId" column="project_id" />
+        <result property="resourceName" column="resource_name" />
+        <result property="resourceType" column="resource_type" />
+        <result property="resourceNo" column="resource_no" />
+        <result property="description" column="description" />
+        <result property="status" column="status" />
+        <result property="unit" column="unit" />
+        <result property="plannedQuantity" column="planned_quantity" />
+        <result property="actualQuantity" column="actual_quantity" />
+        <result property="availableQuantity" column="available_quantity" />
+        <result property="allocatedQuantity" column="allocated_quantity" />
+        <result property="unitPrice" column="unit_price" />
+        <result property="totalCost" column="total_cost" />
+        <result property="supplier" column="supplier" />
+        <result property="responsibleId" column="responsible_id" />
+        <result property="responsibleName" column="responsible_name" />
+        <result property="allocationTime" column="allocation_time" />
+        <result property="plannedStartTime" column="planned_start_time" />
+        <result property="plannedEndTime" column="planned_end_time" />
+        <result property="actualStartTime" column="actual_start_time" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="efficiency" column="efficiency" />
+        <result property="location" column="location" />
+        <result property="specifications" column="specifications" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProjectResourceVo">
+        SELECT id, project_id, resource_name, resource_type, resource_no, description, status, unit, planned_quantity, actual_quantity, available_quantity, allocated_quantity, unit_price, total_cost, supplier, responsible_id, responsible_name, allocation_time, planned_start_time, planned_end_time, actual_start_time, actual_end_time, efficiency, location, specifications, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM project_resource
+    </sql>
+
+    <!-- selectResourceList -->
+    <select id="selectResourceList" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE del_flag = '0'
+        <if test="resource.projectId != null">
+            AND project_id = #{resource.projectId}
+        </if>
+        <if test="resource.resourceName != null and resource.resourceName != ''">
+            AND resource_name LIKE CONCAT('%', #{resource.resourceName}, '%')
+        </if>
+        <if test="resource.resourceType != null">
+            AND resource_type = #{resource.resourceType}
+        </if>
+        <if test="resource.status != null">
+            AND status = #{resource.status}
+        </if>
+        <if test="resource.supplier != null and resource.supplier != ''">
+            AND supplier LIKE CONCAT('%', #{resource.supplier}, '%')
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectResourcesByProjectId -->
+    <select id="selectResourcesByProjectId" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByResourceName -->
+    <select id="selectByResourceName" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE resource_name = #{resourceName} AND del_flag = '0'
+    </select>
+
+    <!-- selectByResourceType -->
+    <select id="selectByResourceType" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE resource_type = #{resourceType} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectBySupplier -->
+    <select id="selectBySupplier" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE supplier = #{supplier} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectAvailableResources -->
+    <select id="selectAvailableResources" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE status = 1 AND available_quantity > 0 AND del_flag = '0'
+        ORDER BY available_quantity DESC
+    </select>
+
+    <!-- selectInsufficientResources -->
+    <select id="selectInsufficientResources" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE available_quantity < planned_quantity AND del_flag = '0'
+        ORDER BY (available_quantity / planned_quantity) ASC
+    </select>
+
+    <!-- selectExpiringResources -->
+    <select id="selectExpiringResources" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE planned_end_time BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL #{days} DAY) AND del_flag = '0'
+        ORDER BY planned_end_time ASC
+    </select>
+
+
+
+    <!-- selectProjectResourceAnalysis -->
+    <select id="selectProjectResourceAnalysis" resultType="java.util.Map">
+        SELECT 
+            resource_type,
+            COUNT(*) as resource_count,
+            SUM(planned_quantity) as total_planned,
+            SUM(actual_quantity) as total_actual,
+            SUM(available_quantity) as total_available,
+            SUM(allocated_quantity) as total_allocated,
+            SUM(total_cost) as total_cost,
+            AVG(efficiency) as avg_efficiency
+        FROM project_resource 
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY resource_type
+    </select>
+
+    <!-- selectResourceCountByType -->
+    <select id="selectResourceCountByType" resultType="java.util.Map">
+        SELECT 
+            resource_type,
+            COUNT(*) as count,
+            SUM(planned_quantity) as total_planned,
+            SUM(actual_quantity) as total_actual,
+            SUM(available_quantity) as total_available,
+            SUM(allocated_quantity) as total_allocated
+        FROM project_resource 
+        WHERE del_flag = '0' 
+        GROUP BY resource_type
+    </select>
+
+    <!-- selectResourceCountByStatus -->
+    <select id="selectResourceCountByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            COUNT(*) as count,
+            SUM(total_cost) as total_cost
+        FROM project_resource 
+        WHERE del_flag = '0' 
+        GROUP BY status
+    </select>
+
+    <!-- selectResourceCountBySupplier -->
+    <select id="selectResourceCountBySupplier" resultType="java.util.Map">
+        SELECT 
+            supplier,
+            COUNT(*) as count,
+            SUM(total_cost) as total_cost,
+            AVG(unit_price) as avg_unit_price
+        FROM project_resource 
+        WHERE del_flag = '0' AND supplier IS NOT NULL
+        GROUP BY supplier
+        ORDER BY total_cost DESC
+    </select>
+
+
+
+    <!-- selectResourceAllocationHistory -->
+    <select id="selectResourceAllocationHistory" resultType="java.util.Map">
+        SELECT 
+            id as resource_id,
+            resource_name,
+            project_id,
+            allocated_quantity,
+            allocation_time,
+            responsible_name,
+            status,
+            create_time
+        FROM project_resource 
+        WHERE id = #{resourceId} AND del_flag = '0'
+        ORDER BY allocation_time DESC
+    </select>
+
+
+
+
+
+    <!-- selectResourceEfficiencyAnalysis -->
+    <select id="selectResourceEfficiencyAnalysis" resultType="java.util.Map">
+        SELECT 
+            id as resource_id,
+            resource_name,
+            resource_type,
+            efficiency,
+            (actual_quantity / planned_quantity * 100) as completion_rate,
+            DATEDIFF(actual_end_time, planned_end_time) as time_variance,
+            (total_cost / planned_quantity) as cost_per_unit
+        FROM project_resource 
+        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity > 0
+        ORDER BY efficiency DESC
+    </select>
+
+    <!-- checkResourceNameExists -->
+    <select id="checkResourceNameExists" resultType="int">
+        SELECT COUNT(*) 
+        FROM project_resource 
+        WHERE resource_name = #{resourceName} AND del_flag = '0'
+    </select>
+
+    <!-- selectResourceStockWarning -->
+    <select id="selectResourceStockWarning" resultMap="ProjectResourceResult">
+        <include refid="selectProjectResourceVo"/>
+        WHERE available_quantity <= (planned_quantity * 0.2) AND del_flag = '0'
+        ORDER BY (available_quantity / planned_quantity) ASC
+    </select>
+
+    <!-- selectResourceProcurementSuggestion -->
+    <select id="selectResourceProcurementSuggestion" resultType="java.util.Map">
+        SELECT 
+            resource_type,
+            resource_name,
+            (planned_quantity - available_quantity) as shortage_quantity,
+            unit_price,
+            ((planned_quantity - available_quantity) * unit_price) as estimated_cost,
+            supplier,
+            planned_start_time as required_date
+        FROM project_resource 
+        WHERE project_id = #{projectId} 
+            AND available_quantity < planned_quantity 
+            AND del_flag = '0'
+        ORDER BY estimated_cost DESC
+    </select>
+
+    <!-- selectResourceQualityAssessment -->
+    <select id="selectResourceQualityAssessment" resultType="java.util.Map">
+        SELECT 
+            resource_type,
+            COUNT(*) as total_resources,
+            AVG(efficiency) as avg_efficiency,
+            AVG(CASE WHEN actual_end_time <= planned_end_time THEN 1 ELSE 0 END) as on_time_rate,
+            AVG(actual_quantity / planned_quantity) as completion_rate,
+            COUNT(CASE WHEN efficiency >= 80 THEN 1 END) as high_quality_count
+        FROM project_resource 
+        WHERE resource_type = #{resourceType} AND del_flag = '0' AND planned_quantity > 0
+        GROUP BY resource_type
+    </select>
+
+    <!-- selectResourceCostsByProject -->
+    <select id="selectResourceCostsByProject" resultType="java.util.Map">
+        SELECT 
+            resource_type,
+            COUNT(*) as resource_count,
+            SUM(total_cost) as total_cost,
+            AVG(total_cost) as avg_cost,
+            MIN(total_cost) as min_cost,
+            MAX(total_cost) as max_cost,
+            SUM(planned_quantity * unit_price) as planned_cost,
+            (SUM(total_cost) / SUM(planned_quantity * unit_price) * 100) as cost_variance_rate
+        FROM project_resource 
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY resource_type
+        ORDER BY total_cost DESC
+    </select>
+
+    <!-- selectResourceUtilizationByProject -->
+    <select id="selectResourceUtilizationByProject" resultType="java.util.Map">
+        SELECT 
+            id as resource_id,
+            resource_name,
+            resource_type,
+            planned_quantity,
+            actual_quantity,
+            allocated_quantity,
+            available_quantity,
+            (allocated_quantity / planned_quantity * 100) as allocation_rate,
+            (actual_quantity / planned_quantity * 100) as utilization_rate,
+            efficiency,
+            total_cost,
+            (total_cost / planned_quantity) as cost_per_unit
+        FROM project_resource 
+        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity > 0
+        ORDER BY utilization_rate DESC
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.MallLogisticsTrackingDetailMapper">
+
+    <!-- MallLogisticsTrackingDetail结果映射 -->
+    <resultMap id="MallLogisticsTrackingDetailResult" type="com.chennian.storytelling.bean.model.MallLogisticsTrackingDetail">
+        <id property="id" column="id" />
+        <result property="trackingId" column="tracking_id" />
+        <result property="logisticsNo" column="logistics_no" />
+        <result property="trackTime" column="track_time" />
+        <result property="trackInfo" column="track_info" />
+        <result property="location" column="location" />
+        <result property="operator" column="operator" />
+        <result property="operationType" column="operation_type" />
+        <result property="operationResult" column="operation_result" />
+        <result property="exceptionReason" column="exception_reason" />
+        <result property="handleSuggestion" column="handle_suggestion" />
+        <result property="contactPhone" column="contact_phone" />
+        <result property="contactPerson" column="contact_person" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallLogisticsTrackingDetailVo">
+        SELECT id, tracking_id, logistics_no, track_time, track_info, location, operator, operation_type, operation_result, exception_reason, handle_suggestion, contact_phone, contact_person, remark, create_time, update_time, create_by, update_by
+        FROM mall_logistics_tracking_detail
+    </sql>
+
+    <!-- selectByTrackingId -->
+    <select id="selectByTrackingId" resultMap="MallLogisticsTrackingDetailResult">
+        <include refid="selectMallLogisticsTrackingDetailVo"/>
+        WHERE tracking_id = #{trackingId}
+        ORDER BY track_time DESC
+    </select>
+
+    <!-- selectByLogisticsNo -->
+    <select id="selectByLogisticsNo" resultMap="MallLogisticsTrackingDetailResult">
+        <include refid="selectMallLogisticsTrackingDetailVo"/>
+        WHERE logistics_no = #{logisticsNo}
+        ORDER BY track_time DESC
+    </select>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO mall_logistics_tracking_detail (
+            tracking_id, logistics_no, track_time, track_info, location, operator, operation_type, operation_result, exception_reason, handle_suggestion, contact_phone, contact_person, remark, create_time, create_by
+        ) VALUES
+        <foreach collection="list" item="detail" separator=",">
+            (
+                #{detail.trackingId},
+                #{detail.logisticsNo},
+                #{detail.trackTime},
+                #{detail.trackInfo},
+                #{detail.location},
+                #{detail.operator},
+                #{detail.operationType},
+                #{detail.operationResult},
+                #{detail.exceptionReason},
+                #{detail.handleSuggestion},
+                #{detail.contactPhone},
+                #{detail.contactPerson},
+                #{detail.remark},
+                #{detail.createTime},
+                #{detail.createBy}
+            )
+        </foreach>
+    </insert>
+
+    <!-- selectExceptionDetails -->
+    <select id="selectExceptionDetails" resultMap="MallLogisticsTrackingDetailResult">
+        <include refid="selectMallLogisticsTrackingDetailVo"/>
+        WHERE tracking_id = #{trackingId}
+        AND operation_result = 2
+        AND exception_reason IS NOT NULL
+        ORDER BY track_time DESC
+    </select>
+
+    <!-- selectLatestDetail -->
+    <select id="selectLatestDetail" resultMap="MallLogisticsTrackingDetailResult">
+        <include refid="selectMallLogisticsTrackingDetailVo"/>
+        WHERE tracking_id = #{trackingId}
+        ORDER BY track_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- deleteBeforeTime -->
+    <delete id="deleteBeforeTime">
+        DELETE FROM mall_logistics_tracking_detail
+        WHERE track_time < #{beforeTime}
+    </delete>
+
+    <!-- selectDetailStatistics -->
+    <select id="selectDetailStatistics" resultType="java.util.Map">
+        SELECT 
+            operation_type,
+            operation_result,
+            COUNT(*) as count,
+            DATE(track_time) as track_date
+        FROM mall_logistics_tracking_detail
+        WHERE track_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY operation_type, operation_result, DATE(track_time)
+        ORDER BY track_date DESC
+    </select>
+
+    <!-- updateExceptionInfo -->
+    <update id="updateExceptionInfo">
+        UPDATE mall_logistics_tracking_detail
+        SET exception_reason = #{exceptionReason},
+            handle_suggestion = #{handleSuggestion},
+            operation_result = #{operationResult},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- updateLocationInfo -->
+    <update id="updateLocationInfo">
+        UPDATE mall_logistics_tracking_detail
+        SET location = #{location},
+            longitude = #{longitude},
+            latitude = #{latitude},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

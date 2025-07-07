@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.quality.QualityImprovementMapper">
+
+    <!-- QualityImprovement结果映射 -->
+    <resultMap id="QualityImprovementResult" type="com.chennian.storytelling.bean.model.QualityImprovement">
+        <id property="id" column="id" />
+        <result property="improvementNo" column="improvement_no" />
+        <result property="projectName" column="project_name" />
+        <result property="improvementType" column="improvement_type" />
+        <result property="status" column="status" />
+        <result property="priority" column="priority" />
+        <result property="background" column="background" />
+        <result property="currentSituation" column="current_situation" />
+        <result property="problemAnalysis" column="problem_analysis" />
+        <result property="improvementGoal" column="improvement_goal" />
+        <result property="improvementPlan" column="improvement_plan" />
+        <result property="implementationSteps" column="implementation_steps" />
+        <result property="expectedEffect" column="expected_effect" />
+        <result property="actualEffect" column="actual_effect" />
+        <result property="investmentCost" column="investment_cost" />
+        <result property="expectedBenefit" column="expected_benefit" />
+        <result property="actualBenefit" column="actual_benefit" />
+        <result property="roi" column="roi" />
+        <result property="projectManagerId" column="project_manager_id" />
+        <result property="projectManagerName" column="project_manager_name" />
+        <result property="teamMembers" column="team_members" />
+        <result property="relatedDepartments" column="related_departments" />
+        <result property="plannedStartTime" column="planned_start_time" />
+        <result property="plannedEndTime" column="planned_end_time" />
+        <result property="actualStartTime" column="actual_start_time" />
+        <result property="actualEndTime" column="actual_end_time" />
+        <result property="progress" column="progress" />
+        <result property="milestones" column="milestones" />
+        <result property="riskAssessment" column="risk_assessment" />
+        <result property="riskMitigation" column="risk_mitigation" />
+        <result property="verificationMethod" column="verification_method" />
+        <result property="verificationResult" column="verification_result" />
+        <result property="verifierId" column="verifier_id" />
+        <result property="verifierName" column="verifier_name" />
+        <result property="verificationTime" column="verification_time" />
+        <result property="lessonsLearned" column="lessons_learned" />
+        <result property="standardizationMeasures" column="standardization_measures" />
+        <result property="promotionPlan" column="promotion_plan" />
+        <result property="attachmentPath" column="attachment_path" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectQualityImprovementVo">
+        SELECT id, improvement_no, project_name, improvement_type, status, priority, background, current_situation, problem_analysis, improvement_goal, improvement_plan, implementation_steps, expected_effect, actual_effect, investment_cost, expected_benefit, actual_benefit, roi, project_manager_id, project_manager_name, team_members, related_departments, planned_start_time, planned_end_time, actual_start_time, actual_end_time, progress, milestones, risk_assessment, risk_mitigation, verification_method, verification_result, verifier_id, verifier_name, verification_time, lessons_learned, standardization_measures, promotion_plan, attachment_path, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM quality_improvement
+    </sql>
+
+    <!-- selectByImprovementType -->
+    <select id="selectByImprovementType" parameterType="Integer" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE improvement_type = #{improvementType} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" parameterType="Integer" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByPriority -->
+    <select id="selectByPriority" parameterType="Integer" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE priority = #{priority} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByResponsiblePersonId -->
+    <select id="selectByResponsiblePersonId" parameterType="Long" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE project_manager_id = #{responsiblePersonId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+
+
+    <!-- selectOverdueImprovements -->
+    <select id="selectOverdueImprovements" parameterType="Integer" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE status IN (0, 1, 2) 
+            AND planned_end_time IS NOT NULL 
+            AND DATEDIFF(NOW(), planned_end_time) &gt; #{days} 
+            AND del_flag = '0'
+        ORDER BY planned_end_time ASC
+    </select>
+
+    <!-- selectByExpectedEffect -->
+    <select id="selectByExpectedEffect" parameterType="String" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE expected_effect LIKE CONCAT('%', #{expectedEffect}, '%') AND del_flag = '0'
+    </select>
+
+    <!-- selectHighPriorityImprovements -->
+    <select id="selectHighPriorityImprovements" resultMap="QualityImprovementResult">
+        <include refid="selectQualityImprovementVo"/>
+        WHERE priority &gt;= 3 AND status IN (0, 1, 2) AND del_flag = '0'
+        ORDER BY priority DESC, create_time ASC
+    </select>
+
+</mapper>

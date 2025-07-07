@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.mall.UserAddressMapper">
+
+    <!-- UserAddress结果映射 -->
+    <resultMap id="UserAddressResult" type="com.chennian.storytelling.bean.model.UserAddress">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="receiverName" column="receiver_name" />
+        <result property="receiverPhone" column="receiver_phone" />
+        <result property="provinceCode" column="province_code" />
+        <result property="provinceName" column="province_name" />
+        <result property="cityCode" column="city_code" />
+        <result property="cityName" column="city_name" />
+        <result property="regionCode" column="region_code" />
+        <result property="regionName" column="region_name" />
+        <result property="detailAddress" column="detail_address" />
+        <result property="postalCode" column="postal_code" />
+        <result property="addressTag" column="address_tag" />
+        <result property="isDefault" column="is_default" />
+        <result property="longitude" column="longitude" />
+        <result property="latitude" column="latitude" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectUserAddressVo">
+        SELECT id, user_id, receiver_name, receiver_phone, province_code, province_name, city_code, city_name, region_code, region_name, detail_address, postal_code, address_tag, is_default, longitude, latitude, status, create_time, update_time
+        FROM mall_user_address
+    </sql>
+
+    <!-- selectByUserId -->
+    <select id="selectByUserId" resultMap="UserAddressResult">
+        <include refid="selectUserAddressVo"/>
+        WHERE user_id = #{userId} AND del_flag = '0'
+        ORDER BY is_default DESC, create_time DESC
+    </select>
+
+    <!-- selectDefaultByUserId -->
+    <select id="selectDefaultByUserId" resultMap="UserAddressResult">
+        <include refid="selectUserAddressVo"/>
+        WHERE user_id = #{userId} AND is_default = 1 AND del_flag = '0'
+        LIMIT 1
+    </select>
+
+    <!-- clearDefaultByUserId -->
+    <update id="clearDefaultByUserId">
+        UPDATE mall_user_address 
+        SET is_default = 0, update_time = NOW()
+        WHERE user_id = #{userId} AND del_flag = '0'
+    </update>
+
+    <!-- setDefaultAddress -->
+    <update id="setDefaultAddress">
+        UPDATE mall_user_address 
+        SET is_default = 1, update_time = NOW()
+        WHERE id = #{id} AND user_id = #{userId} AND del_flag = '0'
+    </update>
+
+    <!-- countByUserId -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) 
+        FROM mall_user_address 
+        WHERE user_id = #{userId} AND del_flag = '0'
+    </select>
+
+    <!-- validateOwnership -->
+    <select id="validateOwnership" resultType="int">
+        SELECT COUNT(*) 
+        FROM mall_user_address 
+        WHERE id = #{id} AND user_id = #{userId} AND del_flag = '0'
+    </select>
+
+</mapper>

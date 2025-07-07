@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.project.ProjectRiskMapper">
+
+    <!-- ProjectRisk结果映射 -->
+    <resultMap id="ProjectRiskResult" type="com.chennian.storytelling.bean.model.ProjectRisk">
+        <id property="id" column="id" />
+        <result property="projectId" column="project_id" />
+        <result property="riskNo" column="risk_no" />
+        <result property="riskName" column="risk_name" />
+        <result property="description" column="description" />
+        <result property="riskType" column="risk_type" />
+        <result property="riskLevel" column="risk_level" />
+        <result property="status" column="status" />
+        <result property="probability" column="probability" />
+        <result property="impact" column="impact" />
+        <result property="riskValue" column="risk_value" />
+        <result property="potentialLoss" column="potential_loss" />
+        <result property="riskSource" column="risk_source" />
+        <result property="triggerConditions" column="trigger_conditions" />
+        <result property="responseStrategy" column="response_strategy" />
+        <result property="responseMeasures" column="response_measures" />
+        <result property="contingencyPlan" column="contingency_plan" />
+        <result property="responsibleId" column="responsible_id" />
+        <result property="responsibleName" column="responsible_name" />
+        <result property="identificationTime" column="identification_time" />
+        <result property="expectedOccurrenceTime" column="expected_occurrence_time" />
+        <result property="actualOccurrenceTime" column="actual_occurrence_time" />
+        <result property="closureTime" column="closure_time" />
+        <result property="monitoringFrequency" column="monitoring_frequency" />
+        <result property="lastAssessmentTime" column="last_assessment_time" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectProjectRiskVo">
+        SELECT id, project_id, risk_no, risk_name, description, risk_type, risk_level, status, probability, impact, risk_value, potential_loss, risk_source, trigger_conditions, response_strategy, response_measures, contingency_plan, responsible_id, responsible_name, identification_time, expected_occurrence_time, actual_occurrence_time, closure_time, monitoring_frequency, last_assessment_time, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM project_risk
+    </sql>
+
+    <!-- selectRiskList -->
+    <select id="selectRiskList" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        <where>
+            del_flag = '0'
+            <if test="risk.projectId != null">
+                AND project_id = #{risk.projectId}
+            </if>
+            <if test="risk.riskName != null and risk.riskName != ''">
+                AND risk_name LIKE CONCAT('%', #{risk.riskName}, '%')
+            </if>
+            <if test="risk.riskType != null">
+                AND risk_type = #{risk.riskType}
+            </if>
+            <if test="risk.status != null">
+                AND status = #{risk.status}
+            </if>
+            <if test="risk.riskLevel != null">
+                AND risk_level = #{risk.riskLevel}
+            </if>
+            <if test="risk.responsibleId != null">
+                AND responsible_id = #{risk.responsibleId}
+            </if>
+        </where>
+        ORDER BY risk_level DESC, create_time DESC
+    </select>
+
+    <!-- selectRisksByProjectId -->
+    <select id="selectRisksByProjectId" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        ORDER BY risk_level DESC, create_time DESC
+    </select>
+
+    <!-- selectByRiskName -->
+    <select id="selectByRiskName" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE risk_name = #{riskName} AND project_id = #{projectId} AND del_flag = '0'
+    </select>
+
+    <!-- selectByRiskType -->
+    <select id="selectByRiskType" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE risk_type = #{riskType} AND del_flag = '0'
+        ORDER BY risk_level DESC, create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY risk_level DESC, create_time DESC
+    </select>
+
+    <!-- selectByRiskLevel -->
+    <select id="selectByRiskLevel" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE risk_level = #{riskLevel} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByOwnerId -->
+    <select id="selectByOwnerId" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE responsible_id = #{ownerId} AND del_flag = '0'
+        ORDER BY risk_level DESC, create_time DESC
+    </select>
+
+    <!-- selectHighRisks -->
+    <select id="selectHighRisks" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE risk_level >= #{threshold} AND status IN (1, 2, 3) AND del_flag = '0'
+        ORDER BY risk_level DESC
+    </select>
+
+    <!-- selectUnhandledRisks -->
+    <select id="selectUnhandledRisks" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE status = 1 AND del_flag = '0'
+        ORDER BY risk_level DESC, create_time ASC
+    </select>
+
+    <!-- selectOverdueRisks -->
+    <select id="selectOverdueRisks" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE status = 1 AND expected_occurrence_time &lt; NOW() AND del_flag = '0'
+        ORDER BY expected_occurrence_time ASC
+    </select>
+
+    <!-- selectRiskMatrixAnalysis -->
+    <select id="selectRiskMatrixAnalysis" resultType="java.util.Map">
+        SELECT 
+            probability,
+            impact,
+            COUNT(*) as count,
+            AVG(risk_value) as avg_risk_value
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY probability, impact
+        ORDER BY probability DESC, impact DESC
+    </select>
+
+    <!-- selectProjectRiskAnalysis -->
+    <select id="selectProjectRiskAnalysis" resultType="java.util.Map">
+        SELECT 
+            risk_type,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as identified_count,
+            SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as assessed_count,
+            SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as mitigated_count,
+            SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as closed_count,
+            AVG(risk_level) as avg_risk_level,
+            SUM(potential_loss) as total_potential_loss
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY risk_type
+        ORDER BY total_count DESC
+    </select>
+
+    <!-- selectRiskCountByType -->
+    <select id="selectRiskCountByType" resultType="java.util.Map">
+        SELECT risk_type, COUNT(*) as count
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY risk_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectRiskCountByStatus -->
+    <select id="selectRiskCountByStatus" resultType="java.util.Map">
+        SELECT status, COUNT(*) as count
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY status
+        ORDER BY status
+    </select>
+
+    <!-- selectRiskCountByLevel -->
+    <select id="selectRiskCountByLevel" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN risk_level >= 15 THEN '高风险'
+                WHEN risk_level >= 8 THEN '中风险'
+                ELSE '低风险'
+            END as level,
+            COUNT(*) as count
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY CASE 
+            WHEN risk_level >= 15 THEN '高风险'
+            WHEN risk_level >= 8 THEN '中风险'
+            ELSE '低风险'
+        END
+        ORDER BY count DESC
+    </select>
+
+    <!-- selectRiskCountByOwner -->
+    <select id="selectRiskCountByOwner" resultType="java.util.Map">
+        SELECT responsible_name, COUNT(*) as count
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY responsible_id, responsible_name
+        ORDER BY count DESC
+    </select>
+
+
+
+    <!-- selectRiskImpactAnalysis -->
+    <select id="selectRiskImpactAnalysis" resultType="java.util.Map">
+        SELECT 
+            impact,
+            COUNT(*) as count,
+            AVG(potential_loss) as avg_potential_loss,
+            SUM(potential_loss) as total_potential_loss,
+            AVG(risk_level) as avg_risk_level
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY impact
+        ORDER BY impact DESC
+    </select>
+
+    <!-- selectRiskResponseEffectivenessAnalysis -->
+    <select id="selectRiskResponseEffectivenessAnalysis" resultType="java.util.Map">
+        SELECT 
+            response_strategy,
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as closed_count,
+            ROUND(SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as effectiveness_rate,
+            AVG(DATEDIFF(actual_occurrence_time, create_time)) as avg_response_days
+        FROM project_risk
+        WHERE project_id = #{projectId} AND response_strategy IS NOT NULL AND del_flag = '0'
+        GROUP BY response_strategy
+        ORDER BY effectiveness_rate DESC
+    </select>
+
+    <!-- selectRiskWarnings -->
+    <select id="selectRiskWarnings" resultMap="ProjectRiskResult">
+        <include refid="selectProjectRiskVo"/>
+        WHERE (risk_level >= #{threshold} OR expected_occurrence_time <= DATE_ADD(NOW(), INTERVAL #{days} DAY))
+              AND status IN (1, 2) AND del_flag = '0'
+        ORDER BY risk_level DESC, expected_occurrence_time ASC
+    </select>
+
+    <!-- selectRiskCorrelationAnalysis -->
+    <select id="selectRiskCorrelationAnalysis" resultType="java.util.Map">
+        SELECT 
+            r1.risk_type as risk_type_1,
+            r2.risk_type as risk_type_2,
+            COUNT(*) as correlation_count,
+            AVG(r1.risk_level + r2.risk_level) as avg_combined_risk
+        FROM project_risk r1
+        JOIN project_risk r2 ON r1.project_id = r2.project_id 
+                              AND r1.risk_id != r2.risk_id
+                              AND r1.risk_type < r2.risk_type
+        WHERE r1.project_id = #{projectId} AND r1.del_flag = '0' AND r2.del_flag = '0'
+        GROUP BY r1.risk_type, r2.risk_type
+        HAVING COUNT(*) > 1
+        ORDER BY correlation_count DESC
+    </select>
+
+    <!-- checkRiskNameExists -->
+    <select id="checkRiskNameExists" resultType="int">
+        SELECT COUNT(*) 
+        FROM project_risk 
+        WHERE risk_name = #{riskName} 
+              AND project_id = #{projectId} 
+              AND del_flag = '0'
+              <if test="riskId != null">
+                  AND risk_id != #{riskId}
+              </if>
+    </select>
+
+    <!-- selectRiskHandlingTimeStatistics -->
+    <select id="selectRiskHandlingTimeStatistics" resultType="java.util.Map">
+        SELECT 
+            risk_type,
+            AVG(DATEDIFF(closure_time, identification_time)) as avg_handling_days,
+            MIN(DATEDIFF(closure_time, identification_time)) as min_handling_days,
+            MAX(DATEDIFF(closure_time, identification_time)) as max_handling_days,
+            COUNT(*) as total_handled
+        FROM project_risk
+        WHERE project_id = #{projectId} AND status = 4 AND closure_time IS NOT NULL 
+              AND identification_time IS NOT NULL AND del_flag = '0'
+        GROUP BY risk_type
+        ORDER BY avg_handling_days DESC
+    </select>
+
+    <!-- selectRiskCostImpactAnalysis -->
+    <select id="selectRiskCostImpactAnalysis" resultType="java.util.Map">
+        SELECT 
+            risk_level,
+            COUNT(*) as risk_count,
+            SUM(potential_loss) as total_potential_loss,
+            AVG(potential_loss) as avg_potential_loss,
+            SUM(CASE WHEN status = 5 THEN potential_loss ELSE 0 END) as actual_loss
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY risk_level
+        ORDER BY risk_level DESC
+    </select>
+
+    <!-- selectRiskProbabilityDistribution -->
+    <select id="selectRiskProbabilityDistribution" resultType="java.util.Map">
+        SELECT 
+            probability,
+            COUNT(*) as count,
+            ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM project_risk WHERE project_id = #{projectId} AND del_flag = '0'), 2) as percentage,
+            AVG(risk_level) as avg_risk_level
+        FROM project_risk
+        WHERE project_id = #{projectId} AND del_flag = '0'
+        GROUP BY probability
+        ORDER BY probability DESC
+    </select>
+
+    <!-- selectRiskMitigationEffectiveness -->
+    <select id="selectRiskMitigationEffectiveness" resultType="java.util.Map">
+        SELECT 
+            response_strategy,
+            COUNT(*) as total_risks,
+            SUM(CASE WHEN status IN (4, 5) THEN 1 ELSE 0 END) as resolved_risks,
+            ROUND(SUM(CASE WHEN status IN (4, 5) THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as mitigation_rate,
+            AVG(CASE WHEN status IN (4, 5) THEN DATEDIFF(closure_time, identification_time) END) as avg_resolution_days
+        FROM project_risk
+        WHERE project_id = #{projectId} AND response_strategy IS NOT NULL AND del_flag = '0'
+        GROUP BY response_strategy
+        ORDER BY mitigation_rate DESC
+    </select>
+
+
+
+</mapper>

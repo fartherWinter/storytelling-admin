@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.quality.QualityIssueMapper">
+
+    <!-- QualityIssue结果映射 -->
+    <resultMap id="QualityIssueResult" type="com.chennian.storytelling.bean.model.QualityIssue">
+        <id property="id" column="id" />
+        <result property="issueNo" column="issue_no" />
+        <result property="issueTitle" column="issue_title" />
+        <result property="description" column="description" />
+        <result property="issueType" column="issue_type" />
+        <result property="issueLevel" column="issue_level" />
+        <result property="status" column="status" />
+        <result property="productNo" column="product_no" />
+        <result property="productName" column="product_name" />
+        <result property="batchNo" column="batch_no" />
+        <result property="discoveryStage" column="discovery_stage" />
+        <result property="discovererId" column="discoverer_id" />
+        <result property="discovererName" column="discoverer_name" />
+        <result property="discoveryTime" column="discovery_time" />
+        <result property="discoveryLocation" column="discovery_location" />
+        <result property="impactScope" column="impact_scope" />
+        <result property="impactQuantity" column="impact_quantity" />
+        <result property="economicLoss" column="economic_loss" />
+        <result property="causeAnalysis" column="cause_analysis" />
+        <result property="rootCause" column="root_cause" />
+        <result property="responsibleDepartment" column="responsible_department" />
+        <result property="responsibleId" column="responsible_id" />
+        <result property="responsibleName" column="responsible_name" />
+        <result property="correctiveAction" column="corrective_action" />
+        <result property="preventiveAction" column="preventive_action" />
+        <result property="treatmentMeasures" column="treatment_measures" />
+        <result property="plannedCompletionTime" column="planned_completion_time" />
+        <result property="actualCompletionTime" column="actual_completion_time" />
+        <result property="verifierId" column="verifier_id" />
+        <result property="verifierName" column="verifier_name" />
+        <result property="verificationTime" column="verification_time" />
+        <result property="verificationResult" column="verification_result" />
+        <result property="closureTime" column="closure_time" />
+        <result property="attachmentPath" column="attachment_path" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectQualityIssueVo">
+        SELECT id, issue_no, issue_title, description, issue_type, issue_level, status, product_no, product_name, batch_no, discovery_stage, discoverer_id, discoverer_name, discovery_time, discovery_location, impact_scope, impact_quantity, economic_loss, cause_analysis, root_cause, responsible_department, responsible_id, responsible_name, corrective_action, preventive_action, treatment_measures, planned_completion_time, actual_completion_time, verifier_id, verifier_name, verification_time, verification_result, closure_time, attachment_path, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM quality_issue
+    </sql>
+
+    <!-- selectByProductNo -->
+    <select id="selectByProductNo" parameterType="String" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE product_no = #{productNo} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" parameterType="Integer" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByIssueLevel -->
+    <select id="selectByIssueLevel" parameterType="Integer" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE issue_level = #{issueLevel} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectByHandlerId -->
+    <select id="selectByHandlerId" parameterType="Long" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE responsible_id = #{handlerId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+
+
+    <!-- selectByBatchNo -->
+    <select id="selectByBatchNo" parameterType="String" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE batch_no = #{batchNo} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+
+
+    <!-- selectOverdueIssues -->
+    <select id="selectOverdueIssues" resultMap="QualityIssueResult">
+        <include refid="selectQualityIssueVo"/>
+        WHERE planned_completion_time &lt; NOW() AND status != 3 AND del_flag = '0'
+        ORDER BY planned_completion_time ASC
+    </select>
+
+
+
+</mapper>

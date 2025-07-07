@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.workflow.WfProcessCategoryMapper">
+
+    <!-- WfProcessCategory结果映射 -->
+    <resultMap id="WfProcessCategoryResult" type="com.chennian.storytelling.bean.model.WfProcessCategory">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="code" column="code" />
+        <result property="description" column="description" />
+        <result property="parentId" column="parent_id" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="enabled" column="enabled" />
+        <result property="icon" column="icon" />
+        <result property="color" column="color" />
+        <result property="createdTime" column="created_time" />
+        <result property="updatedTime" column="updated_time" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectWfProcessCategoryVo">
+        SELECT id, name, code, description, parent_id, sort_order, enabled, icon, color, created_time, updated_time, created_by, updated_by
+        FROM wf_process_category
+    </sql>
+
+    <!-- selectByCategoryCode -->
+    <select id="selectByCategoryCode" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE code = #{categoryCode}
+    </select>
+
+    <!-- selectByParentId -->
+    <select id="selectByParentId" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+    <!-- selectByEnabled -->
+    <select id="selectByEnabled" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE enabled = #{enabled}
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+    <!-- selectRootCategories -->
+    <select id="selectRootCategories" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE parent_id IS NULL OR parent_id = ''
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+    <!-- selectCategoryTree -->
+    <select id="selectCategoryTree" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        ORDER BY parent_id ASC, sort_order ASC, created_time ASC
+    </select>
+
+    <!-- selectByCategoryNameLike -->
+    <select id="selectByCategoryNameLike" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE name LIKE CONCAT('%', #{categoryName}, '%')
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+
+
+    <!-- selectCategoryStatistics -->
+    <select id="selectCategoryStatistics" resultType="java.util.Map">
+        SELECT 
+            parent_id,
+            COUNT(*) as category_count,
+            SUM(CASE WHEN enabled = 1 THEN 1 ELSE 0 END) as enabled_count,
+            SUM(CASE WHEN enabled = 0 THEN 1 ELSE 0 END) as disabled_count
+        FROM wf_process_category 
+        GROUP BY parent_id
+        ORDER BY parent_id ASC
+    </select>
+
+    <!-- selectCategoryDetail -->
+    <select id="selectCategoryDetail" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE id = #{categoryId}
+    </select>
+
+    <!-- selectByCategoryIds -->
+    <select id="selectByCategoryIds" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE id IN
+        <foreach collection="categoryIds" item="categoryId" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+    <!-- selectCategoryPath -->
+    <select id="selectCategoryPath" resultType="java.lang.String">
+        WITH RECURSIVE category_path AS (
+            SELECT id, name, parent_id, name as path
+            FROM wf_process_category
+            WHERE id = #{categoryId}
+            UNION ALL
+            SELECT c.id, c.name, c.parent_id, CONCAT(c.name, ' > ', cp.path)
+            FROM wf_process_category c
+            INNER JOIN category_path cp ON c.id = cp.parent_id
+        )
+        SELECT path FROM category_path WHERE parent_id IS NULL
+    </select>
+
+    <!-- selectLeafCategories -->
+    <select id="selectLeafCategories" resultMap="WfProcessCategoryResult">
+        <include refid="selectWfProcessCategoryVo"/>
+        WHERE id NOT IN (
+            SELECT DISTINCT parent_id 
+            FROM wf_process_category 
+            WHERE parent_id IS NOT NULL
+        )
+        ORDER BY sort_order ASC, created_time ASC
+    </select>
+
+</mapper>

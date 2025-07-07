@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SupplyChainPlanParticipantMapper">
+
+    <!-- SupplyChainPlanParticipant结果映射 -->
+    <resultMap id="SupplyChainPlanParticipantResult" type="com.chennian.storytelling.bean.model.SupplyChainPlanParticipant">
+        <id property="id" column="participant_id" />
+        <result property="planId" column="plan_id" />
+        <result property="participantType" column="participant_type" />
+        <result property="participantId" column="participant_id" />
+        <result property="participantName" column="participant_name" />
+        <result property="participantRole" column="participant_role" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectSupplyChainPlanParticipantVo">
+        SELECT participant_id, plan_id, participant_type, participant_id, participant_name, participant_role
+        FROM supply_chain_plan_participant
+    </sql>
+
+</mapper>

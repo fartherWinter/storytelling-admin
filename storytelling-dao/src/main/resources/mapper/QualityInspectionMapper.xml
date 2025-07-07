@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.quality.QualityInspectionMapper">
+
+    <!-- QualityInspection结果映射 -->
+    <resultMap id="QualityInspectionResult" type="com.chennian.storytelling.bean.model.QualityInspection">
+        <id property="id" column="id" />
+        <result property="inspectionNo" column="inspection_no" />
+        <result property="inspectionName" column="inspection_name" />
+        <result property="inspectionType" column="inspection_type" />
+        <result property="status" column="status" />
+        <result property="productNo" column="product_no" />
+        <result property="productName" column="product_name" />
+        <result property="batchNo" column="batch_no" />
+        <result property="supplier" column="supplier" />
+        <result property="inspectionQuantity" column="inspection_quantity" />
+        <result property="sampleQuantity" column="sample_quantity" />
+        <result property="qualifiedQuantity" column="qualified_quantity" />
+        <result property="unqualifiedQuantity" column="unqualified_quantity" />
+        <result property="qualificationRate" column="qualification_rate" />
+        <result property="inspectionStandard" column="inspection_standard" />
+        <result property="inspectionMethod" column="inspection_method" />
+        <result property="inspectionEquipment" column="inspection_equipment" />
+        <result property="inspectorId" column="inspector_id" />
+        <result property="inspectorName" column="inspector_name" />
+        <result property="inspectionStartTime" column="inspection_start_time" />
+        <result property="inspectionEndTime" column="inspection_end_time" />
+        <result property="inspectionResult" column="inspection_result" />
+        <result property="unqualifiedReason" column="unqualified_reason" />
+        <result property="treatmentMeasures" column="treatment_measures" />
+        <result property="inspectionCost" column="inspection_cost" />
+        <result property="inspectionReport" column="inspection_report" />
+        <result property="remarks" column="remarks" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="delFlag" column="del_flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectQualityInspectionVo">
+        SELECT id, inspection_no, inspection_name, inspection_type, status, product_no, product_name, batch_no, supplier, inspection_quantity, sample_quantity, qualified_quantity, unqualified_quantity, qualification_rate, inspection_standard, inspection_method, inspection_equipment, inspector_id, inspector_name, inspection_start_time, inspection_end_time, inspection_result, unqualified_reason, treatment_measures, inspection_cost, inspection_report, remarks, create_by, create_time, update_by, update_time, del_flag
+        FROM quality_inspection
+    </sql>
+
+    <!-- selectByProductId -->
+    <select id="selectByProductId" parameterType="String" resultMap="QualityInspectionResult">
+        <include refid="selectQualityInspectionVo"/>
+        WHERE product_no = #{productId} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectBySupplier -->
+    <select id="selectBySupplier" parameterType="String" resultMap="QualityInspectionResult">
+        <include refid="selectQualityInspectionVo"/>
+        WHERE supplier = #{supplier} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+
+
+    <!-- selectByBatchNo -->
+    <select id="selectByBatchNo" parameterType="String" resultMap="QualityInspectionResult">
+        <include refid="selectQualityInspectionVo"/>
+        WHERE batch_no = #{batchNo} AND del_flag = '0'
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>
