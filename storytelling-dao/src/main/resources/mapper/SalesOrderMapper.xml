@@ -60,10 +60,10 @@
         FROM erp_sales_order
         WHERE status = 'COMPLETED'
         <if test="startDate != null">
-            AND create_time >= #{startDate}
+            AND create_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND create_time <= #{endDate}
+            AND create_time &lt;=#{endDate}
         </if>
     </select>
 

@@ -90,7 +90,7 @@
     <!-- deleteBeforeTime -->
     <delete id="deleteBeforeTime">
         DELETE FROM mall_logistics_tracking_detail
-        WHERE track_time < #{beforeTime}
+        WHERE track_time &lt;#{beforeTime}
     </delete>
 
     <!-- selectDetailStatistics -->

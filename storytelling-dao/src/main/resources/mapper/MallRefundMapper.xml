@@ -60,7 +60,7 @@
     <select id="selectTimeoutRefunds" resultMap="MallRefundResult">
         <include refid="selectMallRefundVo"/>
         WHERE status = 0 
-            AND create_time < DATE_SUB(NOW(), INTERVAL #{timeoutHours} HOUR)
+            AND create_time &lt;DATE_SUB(NOW(), INTERVAL #{timeoutHours} HOUR)
             AND del_flag = '0'
         ORDER BY create_time ASC
     </select>

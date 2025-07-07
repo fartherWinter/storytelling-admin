@@ -245,10 +245,10 @@
         AND wo.form_id = #{formId}
         AND wo.field_id = #{fieldId}
         <if test="startTime != null">
-            AND wfd.create_time >= #{startTime}
+            AND wfd.create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND wfd.create_time <= #{endTime}
+            AND wfd.create_time &lt;=#{endTime}
         </if>
         GROUP BY wo.option_value, wo.option_label
         ORDER BY usage_count DESC

@@ -114,10 +114,10 @@
         FROM asset_depreciation
         WHERE del_flag = '0'
         <if test="startMonth != null and startMonth != ''">
-            AND depreciation_month >= #{startMonth}
+            AND depreciation_month &gt;=#{startMonth}
         </if>
         <if test="endMonth != null and endMonth != ''">
-            AND depreciation_month <= #{endMonth}
+            AND depreciation_month &lt;=#{endMonth}
         </if>
         GROUP BY depreciation_month
         ORDER BY depreciation_month DESC
@@ -127,7 +127,7 @@
     <select id="selectByAssetIds" resultMap="AssetDepreciationResult">
         <include refid="selectAssetDepreciationVo"/>
         WHERE del_flag = '0'
-        <if test="assetIds != null and assetIds.length > 0">
+        <if test="assetIds != null and assetIds.length &gt;0">
             AND asset_id IN
             <foreach collection="assetIds" item="assetId" open="(" separator="," close=")">
                 #{assetId}
@@ -167,15 +167,15 @@
             FROM asset_depreciation 
             WHERE del_flag = '0'
             <if test="depreciationMonth != null and depreciationMonth != ''">
-                AND depreciation_month < #{depreciationMonth}
+                AND depreciation_month &lt;#{depreciationMonth}
             </if>
             GROUP BY asset_id
         ) ad ON ai.id = ad.asset_id
         WHERE ai.del_flag = '0' 
         AND ai.status = 1 
         AND ai.depreciation_method IS NOT NULL
-        AND ai.useful_life > 0
-        AND ai.purchase_price > 0
+        AND ai.useful_life &gt;0
+        AND ai.purchase_price &gt;0
         ORDER BY ai.asset_code ASC
     </select>
 

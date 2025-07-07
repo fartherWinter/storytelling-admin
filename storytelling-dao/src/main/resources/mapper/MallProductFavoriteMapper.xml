@@ -124,8 +124,8 @@
             COUNT(*) as totalCount,
             COUNT(DISTINCT group_id) as groupCount,
             COUNT(CASE WHEN DATE(create_time) = CURDATE() THEN 1 END) as todayCount,
-            COUNT(CASE WHEN create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as weekCount,
-            COUNT(CASE WHEN create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as monthCount
+            COUNT(CASE WHEN create_time &gt;=DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as weekCount,
+            COUNT(CASE WHEN create_time &gt;=DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as monthCount
         FROM mall_product_favorite
         WHERE user_id = #{userId}
     </select>

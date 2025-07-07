@@ -162,7 +162,7 @@
         <if test="projectId != null">
             AND project_id = #{projectId}
         </if>
-        HAVING delay_days > 0
+        HAVING delay_days &gt;0
         ORDER BY delay_days DESC
     </select>
 

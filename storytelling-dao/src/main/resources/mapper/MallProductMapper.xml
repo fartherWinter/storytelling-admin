@@ -130,7 +130,7 @@
     <select id="selectLowStockProducts" resultType="com.chennian.storytelling.bean.vo.MallProductVO">
         <include refid="selectMallProductVo"/>
         WHERE status = 1 
-        AND stock <= 
+        AND stock &lt;=
         <choose>
             <when test="threshold != null">
                 #{threshold}

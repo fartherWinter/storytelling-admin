@@ -103,10 +103,10 @@
         FROM production_plan
         WHERE del_flag = '0'
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY plan_status
     </select>

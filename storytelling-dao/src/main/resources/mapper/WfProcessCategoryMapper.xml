@@ -102,7 +102,7 @@
             FROM wf_process_category
             WHERE id = #{categoryId}
             UNION ALL
-            SELECT c.id, c.name, c.parent_id, CONCAT(c.name, ' > ', cp.path)
+            SELECT c.id, c.name, c.parent_id, CONCAT(c.name, ' &gt;', cp.path)
             FROM wf_process_category c
             INNER JOIN category_path cp ON c.id = cp.parent_id
         )

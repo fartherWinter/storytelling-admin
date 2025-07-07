@@ -250,7 +250,7 @@
         AND pl.del_flag = '0'
         AND e.del_flag = '0'
         GROUP BY e.id, e.equipment_name
-        HAVING AVG(e.efficiency_rate) < 80 OR SUM(e.downtime_hours) > 10
+        HAVING AVG(e.efficiency_rate) &lt;80 OR SUM(e.downtime_hours) &gt;10
         ORDER BY efficiencyRate ASC, totalDowntime DESC
     </select>
 
@@ -337,7 +337,7 @@
         <if test="lineId != null">
             AND pl.line_id = #{lineId}
         </if>
-        AND (pl.oee_rate < 75 OR pl.availability_rate < 85 OR pl.performance_rate < 80)
+        AND (pl.oee_rate &lt;75 OR pl.availability_rate &lt;85 OR pl.performance_rate &lt;80)
         ORDER BY pl.oee_rate ASC
     </select>
 

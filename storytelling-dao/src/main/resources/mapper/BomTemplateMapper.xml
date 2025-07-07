@@ -124,10 +124,10 @@
             AND product_id = #{productId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY bom_id, bom_name, product_name
         ORDER BY usageCount DESC

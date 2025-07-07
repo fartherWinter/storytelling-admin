@@ -86,14 +86,14 @@
     <!-- selectByCandidateUser -->
     <select id="selectByCandidateUser" resultMap="WfTaskResult">
         <include refid="selectWfTaskVo"/>
-        WHERE (FIND_IN_SET(#{candidateUser}, candidate_users) > 0 OR assignee IS NULL) AND del_flag = '0'
+        WHERE (FIND_IN_SET(#{candidateUser}, candidate_users) &gt;0 OR assignee IS NULL) AND del_flag = '0'
         ORDER BY create_time DESC
     </select>
 
     <!-- selectByCandidateGroup -->
     <select id="selectByCandidateGroup" resultMap="WfTaskResult">
         <include refid="selectWfTaskVo"/>
-        WHERE FIND_IN_SET(#{candidateGroup}, candidate_groups) > 0 AND del_flag = '0'
+        WHERE FIND_IN_SET(#{candidateGroup}, candidate_groups) &gt;0 AND del_flag = '0'
         ORDER BY create_time DESC
     </select>
 
@@ -149,7 +149,7 @@
     <!-- selectCandidateTasks -->
     <select id="selectCandidateTasks" resultMap="WfTaskResult">
         <include refid="selectWfTaskVo"/>
-        WHERE (FIND_IN_SET(#{userId}, candidate_users) > 0 OR FIND_IN_SET(#{groupId}, candidate_groups) > 0) 
+        WHERE (FIND_IN_SET(#{userId}, candidate_users) &gt;0 OR FIND_IN_SET(#{groupId}, candidate_groups) &gt;0)
         AND assignee IS NULL AND task_status = 'PENDING' AND del_flag = '0'
         ORDER BY priority DESC, create_time ASC
     </select>
@@ -157,7 +157,7 @@
     <!-- selectOverdueTasks -->
     <select id="selectOverdueTasks" resultMap="WfTaskResult">
         <include refid="selectWfTaskVo"/>
-        WHERE due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') AND del_flag = '0'
+        WHERE due_date &lt;NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') AND del_flag = '0'
         ORDER BY due_date ASC
     </select>
 
@@ -191,7 +191,7 @@
             SUM(CASE WHEN task_status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
             SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
             SUM(CASE WHEN task_status = 'TERMINATED' THEN 1 ELSE 0 END) as terminated,
-            SUM(CASE WHEN due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue
+            SUM(CASE WHEN due_date &lt;NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue
         FROM wf_task 
         WHERE del_flag = '0'
         <if test="assignee != null and assignee != ''">
@@ -224,7 +224,7 @@
             assignee,
             COUNT(*) as total,
             SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN due_date < NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue,
+            SUM(CASE WHEN due_date &lt;NOW() AND task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1 ELSE 0 END) as overdue,
             ROUND(SUM(CASE WHEN task_status = 'COMPLETED' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as completionRate
         FROM wf_task 
         WHERE assignee IS NOT NULL AND del_flag = '0'
@@ -323,7 +323,7 @@
             SUM(CASE WHEN priority = 'HIGH' THEN 1 ELSE 0 END) as highPriority,
             SUM(CASE WHEN priority = 'MEDIUM' THEN 1 ELSE 0 END) as mediumPriority,
             SUM(CASE WHEN priority = 'LOW' THEN 1 ELSE 0 END) as lowPriority,
-            SUM(CASE WHEN due_date < NOW() THEN 1 ELSE 0 END) as overdue,
+            SUM(CASE WHEN due_date &lt;NOW() THEN 1 ELSE 0 END) as overdue,
             SUM(CASE WHEN due_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 3 DAY) THEN 1 ELSE 0 END) as soonOverdue
         FROM wf_task 
         WHERE task_status = 'PENDING' AND del_flag = '0'
@@ -340,7 +340,7 @@
             AND assignee = #{assignee}
         </if>
         <if test="days != null">
-            AND create_time >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+            AND create_time &gt;=DATE_SUB(NOW(), INTERVAL #{days} DAY)
         </if>
         ORDER BY create_time DESC
         <if test="limit != null">
@@ -354,7 +354,7 @@
             t.*,
             TIMESTAMPDIFF(MINUTE, t.start_time, COALESCE(t.end_time, NOW())) as currentDuration,
             CASE 
-                WHEN t.due_date < NOW() AND t.task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1
+                WHEN t.due_date &lt;NOW() AND t.task_status NOT IN ('COMPLETED', 'TERMINATED') THEN 1
                 ELSE 0
             END as isOverdue
         FROM wf_task t
@@ -377,10 +377,10 @@
         <include refid="selectWfTaskVo"/>
         WHERE del_flag = '0'
         <if test="startDate != null">
-            AND create_time >= #{startDate}
+            AND create_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND create_time <= #{endDate}
+            AND create_time &lt;=#{endDate}
         </if>
         ORDER BY create_time DESC
     </select>

@@ -199,7 +199,7 @@
             qualified_quantity = #{qualifiedQuantity},
             unqualified_quantity = #{unqualifiedQuantity},
             progress = CASE 
-                WHEN work_order_quantity > 0 THEN 
+                WHEN work_order_quantity &gt;0 THEN
                     ROUND(#{completedQuantity} * 100.0 / work_order_quantity, 2)
                 ELSE 0 
             END,
@@ -244,17 +244,17 @@
             SUM(qualified_quantity) as total_qualified,
             SUM(unqualified_quantity) as total_unqualified,
             CASE 
-                WHEN SUM(completed_quantity) > 0 THEN 
+                WHEN SUM(completed_quantity) &gt;0 THEN
                     ROUND(SUM(qualified_quantity) * 100.0 / SUM(completed_quantity), 2)
                 ELSE 0 
             END as quality_rate
         FROM work_order
         WHERE del_flag = '0' AND work_order_status = 'COMPLETED'
         <if test="startDate != null">
-            AND actual_end_time >= #{startDate}
+            AND actual_end_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND actual_end_time <= #{endDate}
+            AND actual_end_time &lt;=#{endDate}
         </if>
         <if test="productId != null">
             AND product_id = #{productId}
@@ -272,17 +272,17 @@
             SUM(completed_quantity) as actual_quantity,
             SUM(unqualified_quantity) as waste_quantity,
             CASE 
-                WHEN SUM(completed_quantity) > 0 THEN 
+                WHEN SUM(completed_quantity) &gt;0 THEN
                     ROUND(SUM(unqualified_quantity) * 100.0 / SUM(completed_quantity), 2)
                 ELSE 0 
             END as waste_rate
         FROM work_order
         WHERE del_flag = '0' AND work_order_status = 'COMPLETED'
         <if test="startDate != null">
-            AND actual_end_time >= #{startDate}
+            AND actual_end_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND actual_end_time <= #{endDate}
+            AND actual_end_time &lt;=#{endDate}
         </if>
         <if test="productId != null">
             AND product_id = #{productId}
@@ -300,17 +300,17 @@
             SUM(plan_work_hours) as total_plan_hours,
             SUM(actual_work_hours) as total_actual_hours,
             CASE 
-                WHEN SUM(actual_work_hours) > 0 THEN 
+                WHEN SUM(actual_work_hours) &gt;0 THEN
                     ROUND(SUM(plan_work_hours) * 100.0 / SUM(actual_work_hours), 2)
                 ELSE 0 
             END as time_efficiency
         FROM work_order
         WHERE del_flag = '0' AND work_order_status = 'COMPLETED'
         <if test="startDate != null">
-            AND actual_end_time >= #{startDate}
+            AND actual_end_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND actual_end_time <= #{endDate}
+            AND actual_end_time &lt;=#{endDate}
         </if>
         <if test="productionLineId != null">
             AND production_line_id = #{productionLineId}
@@ -324,10 +324,10 @@
         <include refid="selectWorkOrderVo"/>
         WHERE del_flag = '0'
         <if test="startDate != null">
-            AND create_time >= #{startDate}
+            AND create_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND create_time <= #{endDate}
+            AND create_time &lt;=#{endDate}
         </if>
         ORDER BY create_time DESC
     </select>
@@ -368,7 +368,7 @@
         <include refid="selectWorkOrderVo"/>
         WHERE del_flag = '0' 
         AND work_order_status NOT IN ('COMPLETED', 'CANCELLED')
-        AND plan_end_time < NOW()
+        AND plan_end_time &lt;NOW()
         ORDER BY plan_end_time ASC
     </select>
 
@@ -398,10 +398,10 @@
         <include refid="selectWorkOrderVo"/>
         WHERE work_order_status = 'COMPLETED' AND del_flag = '0'
         <if test="startDate != null">
-            AND actual_end_time >= #{startDate}
+            AND actual_end_time &gt;=#{startDate}
         </if>
         <if test="endDate != null">
-            AND actual_end_time <= #{endDate}
+            AND actual_end_time &lt;=#{endDate}
         </if>
         ORDER BY actual_end_time DESC
     </select>

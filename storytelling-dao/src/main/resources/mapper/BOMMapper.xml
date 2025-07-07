@@ -104,10 +104,10 @@
             AND product_id = #{productId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY product_id, product_name
         ORDER BY bomCount DESC
@@ -180,8 +180,8 @@
         WHERE product_id = #{productId}
         AND del_flag = '0'
         AND bom_status IN (1, 2)
-        AND (effective_date IS NULL OR effective_date <= #{effectiveDate})
-        AND (expiry_date IS NULL OR expiry_date >= #{effectiveDate})
+        AND (effective_date IS NULL OR effective_date &lt;=#{effectiveDate})
+        AND (expiry_date IS NULL OR expiry_date &gt;=#{effectiveDate})
         ORDER BY bom_version DESC, create_time DESC
     </select>
 
@@ -195,17 +195,17 @@
             MAX(bom_version) as latestVersion,
             COUNT(CASE WHEN bom_status = 1 THEN 1 END) as activeBomCount,
             AVG(DATEDIFF(publish_time, create_time)) as avgDevelopmentDays,
-            COUNT(CASE WHEN DATE(create_time) >= #{startDate} THEN 1 END) as newBomCount
+            COUNT(CASE WHEN DATE(create_time) &gt;=#{startDate} THEN 1 END) as newBomCount
         FROM bom
         WHERE del_flag = '0'
         <if test="productId != null">
             AND product_id = #{productId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY product_id, product_name
         ORDER BY newBomCount DESC, totalBomCount DESC

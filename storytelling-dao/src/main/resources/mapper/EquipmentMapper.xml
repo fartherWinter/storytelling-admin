@@ -124,8 +124,8 @@
             e.workshop_id as departmentId,
             e.workshop_name as departmentName,
             COUNT(CASE WHEN e.equipment_status = 'FAULT' THEN 1 END) as faultCount,
-            COUNT(CASE WHEN e.next_maintenance_time < NOW() THEN 1 END) as overdueMaintenanceCount,
-            COUNT(CASE WHEN e.fault_count > 5 THEN 1 END) as highRiskCount,
+            COUNT(CASE WHEN e.next_maintenance_time &lt;NOW() THEN 1 END) as overdueMaintenanceCount,
+            COUNT(CASE WHEN e.fault_count &gt;5 THEN 1 END) as highRiskCount,
             AVG(e.fault_count) as avgFaultCount,
             COUNT(e.equipment_id) as totalEquipment
         FROM equipment e
@@ -249,12 +249,12 @@
             e.total_downtime,
             e.design_capacity as planned_production_time,
             CASE 
-                WHEN e.design_capacity > 0 
+                WHEN e.design_capacity &gt;0
                 THEN ROUND((e.total_running_hours / e.design_capacity) * 100, 2)
                 ELSE 0 
             END as utilizationRate,
             CASE 
-                WHEN (e.total_running_hours + e.total_downtime) > 0 
+                WHEN (e.total_running_hours + e.total_downtime) &gt;0
                 THEN ROUND((e.total_running_hours / (e.total_running_hours + e.total_downtime)) * 100, 2)
                 ELSE 0 
             END as availabilityRate
@@ -340,7 +340,7 @@
             e.design_capacity as plannedProductionTime,
             e.actual_capacity,
             CASE 
-                WHEN e.design_capacity > 0 
+                WHEN e.design_capacity &gt;0
                 THEN ROUND((e.actual_capacity / e.design_capacity) * 100, 2)
                 ELSE 0 
             END as capacityUtilization
@@ -458,7 +458,7 @@
             e.energy_consumption as totalEnergyConsumption,
             e.energy_efficiency_rating,
             CASE 
-                WHEN e.total_running_hours > 0 
+                WHEN e.total_running_hours &gt;0
                 THEN ROUND(e.energy_consumption / e.total_running_hours, 2)
                 ELSE 0 
             END as avgHourlyConsumption,
@@ -548,12 +548,12 @@
             e.rated_power,
             e.actual_power_consumption,
             CASE 
-                WHEN e.rated_power > 0 
+                WHEN e.rated_power &gt;0
                 THEN ROUND((e.actual_power_consumption / e.rated_power) * 100, 2)
                 ELSE 0 
             END as powerEfficiency,
             CASE 
-                WHEN e.total_running_hours > 0 
+                WHEN e.total_running_hours &gt;0
                 THEN ROUND(e.energy_consumption / e.total_running_hours, 2)
                 ELSE 0 
             END as energyPerHour

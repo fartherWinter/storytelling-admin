@@ -96,10 +96,10 @@
             AND bi.bom_id = #{bomId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(bi.create_time) >= #{startDate}
+            AND DATE(bi.create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(bi.create_time) <= #{endDate}
+            AND DATE(bi.create_time) &lt;=#{endDate}
         </if>
         ORDER BY bi.create_time DESC
     </select>
@@ -161,10 +161,10 @@
             AND material_id = #{materialId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY material_id
         ORDER BY totalActualUsage DESC
@@ -259,10 +259,10 @@
             AND b.product_id = #{productId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(bi.create_time) >= #{startDate}
+            AND DATE(bi.create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(bi.create_time) <= #{endDate}
+            AND DATE(bi.create_time) &lt;=#{endDate}
         </if>
         GROUP BY DATE_FORMAT(bi.create_time, '%Y-%m')
         ORDER BY month DESC
@@ -285,10 +285,10 @@
             AND material_id = #{materialId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY material_id, material_code, material_name, material_type
         ORDER BY totalConsumption DESC
@@ -312,10 +312,10 @@
             AND b.product_id = #{productId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(bi.create_time) >= #{startDate}
+            AND DATE(bi.create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(bi.create_time) <= #{endDate}
+            AND DATE(bi.create_time) &lt;=#{endDate}
         </if>
         GROUP BY bi.material_id, bi.material_code, bi.material_name
         ORDER BY turnoverRatio DESC
@@ -337,10 +337,10 @@
             AND supplier_id = #{supplierId}
         </if>
         <if test="startDate != null and startDate != ''">
-            AND DATE(create_time) >= #{startDate}
+            AND DATE(create_time) &gt;=#{startDate}
         </if>
         <if test="endDate != null and endDate != ''">
-            AND DATE(create_time) <= #{endDate}
+            AND DATE(create_time) &lt;=#{endDate}
         </if>
         GROUP BY supplier_id, supplier_name
         ORDER BY totalCost DESC

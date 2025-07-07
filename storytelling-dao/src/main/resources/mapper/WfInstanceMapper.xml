@@ -125,10 +125,10 @@
             AND tenant_id = #{tenantId}
         </if>
         <if test="startTime != null">
-            AND start_time >= #{startTime}
+            AND start_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND end_time <= #{endTime}
+            AND end_time &lt;=#{endTime}
         </if>
         ORDER BY end_time DESC
     </select>
@@ -153,7 +153,7 @@
     <select id="selectTimeoutInstances" resultMap="WfInstanceResult">
         <include refid="selectWfInstanceVo"/>
         WHERE instance_status IN ('RUNNING', 'ACTIVE')
-        AND TIMESTAMPDIFF(MINUTE, start_time, NOW()) > #{timeoutMinutes}
+        AND TIMESTAMPDIFF(MINUTE, start_time, NOW()) &gt;#{timeoutMinutes}
         ORDER BY start_time ASC
     </select>
 
@@ -193,8 +193,8 @@
     <!-- selectByTimeRange -->
     <select id="selectByTimeRange" resultMap="WfInstanceResult">
         <include refid="selectWfInstanceVo"/>
-        WHERE start_time >= #{startTime}
-        AND start_time <= #{endTime}
+        WHERE start_time &gt;=#{startTime}
+        AND start_time &lt;=#{endTime}
         ORDER BY start_time DESC
     </select>
 
@@ -203,7 +203,7 @@
         <include refid="selectWfInstanceVo"/>
         WHERE instance_status IN ('RUNNING', 'ACTIVE')
         AND expected_end_time IS NOT NULL
-        AND expected_end_time < NOW()
+        AND expected_end_time &lt;NOW()
         ORDER BY expected_end_time ASC
     </select>
 
@@ -212,8 +212,8 @@
         <include refid="selectWfInstanceVo"/>
         WHERE instance_status IN ('RUNNING', 'ACTIVE')
         AND expected_end_time IS NOT NULL
-        AND expected_end_time > NOW()
-        AND TIMESTAMPDIFF(HOUR, NOW(), expected_end_time) <= #{hours}
+        AND expected_end_time &gt;NOW()
+        AND TIMESTAMPDIFF(HOUR, NOW(), expected_end_time) &lt;=#{hours}
         ORDER BY expected_end_time ASC
     </select>
 
@@ -239,10 +239,10 @@
                 AND process_definition_key = #{processDefinitionKey}
             </if>
             <if test="startTime != null">
-                AND start_time >= #{startTime}
+                AND start_time &gt;=#{startTime}
             </if>
             <if test="endTime != null">
-                AND start_time <= #{endTime}
+                AND start_time &lt;=#{endTime}
             </if>
         </where>
     </select>
@@ -347,9 +347,9 @@
         FROM wf_instance
         WHERE instance_status = 'COMPLETED'
         AND duration IS NOT NULL
-        AND end_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        AND end_time &gt;=DATE_SUB(NOW(), INTERVAL 30 DAY)
         GROUP BY process_definition_key, process_definition_name
-        HAVING instanceCount >= 5
+        HAVING instanceCount &gt;=5
         ORDER BY avgDuration DESC
     </select>
 

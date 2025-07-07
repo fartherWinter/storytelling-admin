@@ -167,7 +167,7 @@
             COALESCE(budget_amount, 0) as budget,
             COALESCE(actual_cost, 0) as actualCost,
             CASE 
-                WHEN budget_amount > 0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
+                WHEN budget_amount &gt;0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
                 ELSE 0
             END as costRatio
         FROM project
@@ -204,7 +204,7 @@
             COUNT(pd.id) as totalDeliverables,
             SUM(CASE WHEN pd.status = '2' THEN 1 ELSE 0 END) as completedDeliverables,
             CASE 
-                WHEN COUNT(pd.id) > 0 THEN ROUND((SUM(CASE WHEN pd.status = '2' THEN 1 ELSE 0 END) / COUNT(pd.id)) * 100, 2)
+                WHEN COUNT(pd.id) &gt;0 THEN ROUND((SUM(CASE WHEN pd.status = '2' THEN 1 ELSE 0 END) / COUNT(pd.id)) * 100, 2)
                 ELSE 0
             END as deliverableCompletionRate
         FROM project p
@@ -404,7 +404,7 @@
             COALESCE(SUM(pr.allocated_amount), 0) as totalAllocatedAmount,
             COALESCE(SUM(pr.used_amount), 0) as totalUsedAmount,
             CASE 
-                WHEN SUM(pr.allocated_amount) > 0 THEN ROUND((SUM(pr.used_amount) / SUM(pr.allocated_amount)) * 100, 2)
+                WHEN SUM(pr.allocated_amount) &gt;0 THEN ROUND((SUM(pr.used_amount) / SUM(pr.allocated_amount)) * 100, 2)
                 ELSE 0
             END as resourceUtilizationRate
         FROM project p
@@ -435,9 +435,9 @@
             manager_name,
             dept_name,
             CASE 
-                WHEN planned_end_time < NOW() AND status NOT IN ('4', '5') THEN 'overdue'
-                WHEN progress >= 90 THEN 'near_completion'
-                WHEN progress < 30 AND DATEDIFF(planned_end_time, NOW()) < 30 THEN 'at_risk'
+                WHEN planned_end_time &lt;NOW() AND status NOT IN ('4', '5') THEN 'overdue'
+                WHEN progress &gt;=90 THEN 'near_completion'
+                WHEN progress &lt;30 AND DATEDIFF(planned_end_time, NOW()) &lt;30 THEN 'at_risk'
                 ELSE 'on_track'
             END as progress_status
         FROM project
@@ -455,12 +455,12 @@
             COALESCE(budget_amount, 0) as budget,
             COALESCE(actual_cost, 0) as actualCost,
             CASE 
-                WHEN budget_amount > 0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
+                WHEN budget_amount &gt;0 THEN ROUND((actual_cost / budget_amount) * 100, 2)
                 ELSE 0
             END as costRatio,
             CASE 
-                WHEN actual_cost > budget_amount THEN 'over_budget'
-                WHEN actual_cost > budget_amount * 0.9 THEN 'near_budget'
+                WHEN actual_cost &gt;budget_amount THEN 'over_budget'
+                WHEN actual_cost &gt;budget_amount * 0.9 THEN 'near_budget'
                 ELSE 'within_budget'
             END as budget_status,
             manager_name,
@@ -478,7 +478,7 @@
             AND (
                 (planned_start_time BETWEEN #{startDate} AND #{endDate})
                 OR (planned_end_time BETWEEN #{startDate} AND #{endDate})
-                OR (planned_start_time <= #{startDate} AND planned_end_time >= #{endDate})
+                OR (planned_start_time &lt;=#{startDate} AND planned_end_time &gt;=#{endDate})
             )
         </if>
         <if test="status != null">

@@ -79,8 +79,8 @@
         <include refid="selectAssetInfoVo"/>
         WHERE del_flag = '0'
         AND useful_life IS NOT NULL
-        AND DATE_ADD(purchase_date, INTERVAL (useful_life * 12 - #{months}) MONTH) <= CURDATE()
-        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) > CURDATE()
+        AND DATE_ADD(purchase_date, INTERVAL (useful_life * 12 - #{months}) MONTH) &lt;=CURDATE()
+        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) &gt;CURDATE()
         ORDER BY purchase_date ASC
     </select>
 
@@ -129,9 +129,9 @@
         WHERE del_flag = '0'
         AND depreciation_method IS NOT NULL
         AND useful_life IS NOT NULL
-        AND useful_life > 0
+        AND useful_life &gt;0
         AND status = 1
-        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) > CURDATE()
+        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) &gt;CURDATE()
         ORDER BY purchase_date ASC
     </select>
 

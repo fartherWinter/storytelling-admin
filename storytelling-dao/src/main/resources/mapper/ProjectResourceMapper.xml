@@ -102,14 +102,14 @@
     <!-- selectAvailableResources -->
     <select id="selectAvailableResources" resultMap="ProjectResourceResult">
         <include refid="selectProjectResourceVo"/>
-        WHERE status = 1 AND available_quantity > 0 AND del_flag = '0'
+        WHERE status = 1 AND available_quantity &gt;0 AND del_flag = '0'
         ORDER BY available_quantity DESC
     </select>
 
     <!-- selectInsufficientResources -->
     <select id="selectInsufficientResources" resultMap="ProjectResourceResult">
         <include refid="selectProjectResourceVo"/>
-        WHERE available_quantity < planned_quantity AND del_flag = '0'
+        WHERE available_quantity &lt;planned_quantity AND del_flag = '0'
         ORDER BY (available_quantity / planned_quantity) ASC
     </select>
 
@@ -209,7 +209,7 @@
             DATEDIFF(actual_end_time, planned_end_time) as time_variance,
             (total_cost / planned_quantity) as cost_per_unit
         FROM project_resource 
-        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity > 0
+        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity &gt;0
         ORDER BY efficiency DESC
     </select>
 
@@ -223,7 +223,7 @@
     <!-- selectResourceStockWarning -->
     <select id="selectResourceStockWarning" resultMap="ProjectResourceResult">
         <include refid="selectProjectResourceVo"/>
-        WHERE available_quantity <= (planned_quantity * 0.2) AND del_flag = '0'
+        WHERE available_quantity &lt;=(planned_quantity * 0.2) AND del_flag = '0'
         ORDER BY (available_quantity / planned_quantity) ASC
     </select>
 
@@ -239,7 +239,7 @@
             planned_start_time as required_date
         FROM project_resource 
         WHERE project_id = #{projectId} 
-            AND available_quantity < planned_quantity 
+            AND available_quantity &lt;planned_quantity
             AND del_flag = '0'
         ORDER BY estimated_cost DESC
     </select>
@@ -250,11 +250,11 @@
             resource_type,
             COUNT(*) as total_resources,
             AVG(efficiency) as avg_efficiency,
-            AVG(CASE WHEN actual_end_time <= planned_end_time THEN 1 ELSE 0 END) as on_time_rate,
+            AVG(CASE WHEN actual_end_time &lt;=planned_end_time THEN 1 ELSE 0 END) as on_time_rate,
             AVG(actual_quantity / planned_quantity) as completion_rate,
-            COUNT(CASE WHEN efficiency >= 80 THEN 1 END) as high_quality_count
+            COUNT(CASE WHEN efficiency &gt;=80 THEN 1 END) as high_quality_count
         FROM project_resource 
-        WHERE resource_type = #{resourceType} AND del_flag = '0' AND planned_quantity > 0
+        WHERE resource_type = #{resourceType} AND del_flag = '0' AND planned_quantity &gt;0
         GROUP BY resource_type
     </select>
 
@@ -291,7 +291,7 @@
             total_cost,
             (total_cost / planned_quantity) as cost_per_unit
         FROM project_resource 
-        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity > 0
+        WHERE project_id = #{projectId} AND del_flag = '0' AND planned_quantity &gt;0
         ORDER BY utilization_rate DESC
     </select>
 

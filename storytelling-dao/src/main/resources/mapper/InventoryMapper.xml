@@ -43,7 +43,7 @@
             available_quantity = available_quantity - #{quantity},
             update_time = NOW()
         WHERE product_id = #{productId} 
-        AND available_quantity >= #{quantity}
+        AND available_quantity &gt;=#{quantity}
     </update>
 
     <!-- unlockInventory -->
@@ -66,16 +66,16 @@
     <update id="cleanExpiredLocks">
         UPDATE erp_inventory i
         SET locked_quantity = locked_quantity - IFNULL(
-            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}), 0
+            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time &lt;#{now}), 0
         ),
         available_quantity = available_quantity + IFNULL(
-            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}), 0
+            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time &lt;#{now}), 0
         ),
         update_time = NOW()
         WHERE EXISTS (
-            SELECT 1 FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}
+            SELECT 1 FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time &lt;#{now}
         );
-        DELETE FROM erp_inventory_lock WHERE expire_time < #{now};
+        DELETE FROM erp_inventory_lock WHERE expire_time &lt;#{now};
     </update>
 
     <!-- getAvailableStock -->
@@ -102,7 +102,7 @@
         FROM erp_inventory i
         LEFT JOIN erp_product p ON i.product_id = p.product_id
         LEFT JOIN erp_warehouse w ON i.warehouse_id = w.warehouse_id
-        WHERE i.available_quantity <= #{warningThreshold}
+        WHERE i.available_quantity &lt;=#{warningThreshold}
         AND i.del_flag = '0'
         ORDER BY i.available_quantity ASC
     </select>
@@ -115,10 +115,10 @@
             AND product_id = #{productId}
         </if>
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
         ORDER BY create_time DESC
     </select>

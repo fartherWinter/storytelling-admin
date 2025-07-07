@@ -114,7 +114,7 @@
     <!-- selectHighRisks -->
     <select id="selectHighRisks" resultMap="ProjectRiskResult">
         <include refid="selectProjectRiskVo"/>
-        WHERE risk_level >= #{threshold} AND status IN (1, 2, 3) AND del_flag = '0'
+        WHERE risk_level &gt;=#{threshold} AND status IN (1, 2, 3) AND del_flag = '0'
         ORDER BY risk_level DESC
     </select>
 
@@ -184,16 +184,16 @@
     <select id="selectRiskCountByLevel" resultType="java.util.Map">
         SELECT 
             CASE 
-                WHEN risk_level >= 15 THEN '高风险'
-                WHEN risk_level >= 8 THEN '中风险'
+                WHEN risk_level &gt;=15 THEN '高风险'
+                WHEN risk_level &gt;=8 THEN '中风险'
                 ELSE '低风险'
             END as level,
             COUNT(*) as count
         FROM project_risk
         WHERE project_id = #{projectId} AND del_flag = '0'
         GROUP BY CASE 
-            WHEN risk_level >= 15 THEN '高风险'
-            WHEN risk_level >= 8 THEN '中风险'
+            WHEN risk_level &gt;=15 THEN '高风险'
+            WHEN risk_level &gt;=8 THEN '中风险'
             ELSE '低风险'
         END
         ORDER BY count DESC
@@ -241,7 +241,7 @@
     <!-- selectRiskWarnings -->
     <select id="selectRiskWarnings" resultMap="ProjectRiskResult">
         <include refid="selectProjectRiskVo"/>
-        WHERE (risk_level >= #{threshold} OR expected_occurrence_time <= DATE_ADD(NOW(), INTERVAL #{days} DAY))
+        WHERE (risk_level &gt;=#{threshold} OR expected_occurrence_time &lt;=DATE_ADD(NOW(), INTERVAL #{days} DAY))
               AND status IN (1, 2) AND del_flag = '0'
         ORDER BY risk_level DESC, expected_occurrence_time ASC
     </select>
@@ -256,10 +256,10 @@
         FROM project_risk r1
         JOIN project_risk r2 ON r1.project_id = r2.project_id 
                               AND r1.risk_id != r2.risk_id
-                              AND r1.risk_type < r2.risk_type
+                              AND r1.risk_type &lt;r2.risk_type
         WHERE r1.project_id = #{projectId} AND r1.del_flag = '0' AND r2.del_flag = '0'
         GROUP BY r1.risk_type, r2.risk_type
-        HAVING COUNT(*) > 1
+        HAVING COUNT(*) &gt;1
         ORDER BY correlation_count DESC
     </select>
 

@@ -127,8 +127,8 @@
             w.warehouse_code, 
             COUNT(i.id) as product_count, 
             SUM(i.quantity) as total_quantity, 
-            SUM(CASE WHEN i.quantity <= p.min_stock THEN 1 ELSE 0 END) as low_stock_count, 
-            SUM(CASE WHEN i.quantity >= p.max_stock THEN 1 ELSE 0 END) as high_stock_count 
+            SUM(CASE WHEN i.quantity &lt;=p.min_stock THEN 1 ELSE 0 END) as low_stock_count,
+            SUM(CASE WHEN i.quantity &gt;=p.max_stock THEN 1 ELSE 0 END) as high_stock_count
         FROM erp_warehouse w 
         LEFT JOIN erp_inventory i ON w.id = i.warehouse_id 
         LEFT JOIN erp_product p ON i.product_id = p.id 

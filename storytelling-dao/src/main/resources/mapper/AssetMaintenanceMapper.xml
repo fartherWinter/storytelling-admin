@@ -63,8 +63,8 @@
     <select id="selectUpcomingMaintenance" resultMap="AssetMaintenanceResult">
         <include refid="selectAssetMaintenanceVo"/>
         WHERE next_maintenance_date IS NOT NULL 
-          AND next_maintenance_date <= DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
-          AND next_maintenance_date >= CURDATE()
+          AND next_maintenance_date &lt;=DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+          AND next_maintenance_date &gt;=CURDATE()
           AND del_flag = '0'
         ORDER BY next_maintenance_date ASC
     </select>

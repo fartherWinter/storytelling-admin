@@ -45,10 +45,10 @@
             AND status = #{searchBo.status}
         </if>
         <if test="searchBo.startTime != null">
-            AND create_time >= #{searchBo.startTime}
+            AND create_time &gt;=#{searchBo.startTime}
         </if>
         <if test="searchBo.endTime != null">
-            AND create_time <= #{searchBo.endTime}
+            AND create_time &lt;=#{searchBo.endTime}
         </if>
         ORDER BY create_time DESC
     </select>
@@ -73,10 +73,10 @@
             GROUP BY coupon_id
         ) uc ON c.id = uc.coupon_id
         WHERE c.status = 1
-        AND c.valid_start_time <= NOW()
-        AND c.valid_end_time >= NOW()
-        AND c.received_count < c.total_count
-        AND (c.limit_per_user = 0 OR COALESCE(uc.received_count, 0) < c.limit_per_user)
+        AND c.valid_start_time &lt;=NOW()
+        AND c.valid_end_time &gt;=NOW()
+        AND c.received_count &lt;c.total_count
+        AND (c.limit_per_user = 0 OR COALESCE(uc.received_count, 0) &lt;c.limit_per_user)
         AND c.del_flag = '0'
         ORDER BY c.create_time DESC
     </select>
@@ -89,9 +89,9 @@
         WHERE uc.user_id = #{userId}
         AND uc.status = 0
         AND c.status = 1
-        AND c.valid_start_time <= NOW()
-        AND c.valid_end_time >= NOW()
-        AND c.min_amount <= #{orderAmount}
+        AND c.valid_start_time &lt;=NOW()
+        AND c.valid_end_time &gt;=NOW()
+        AND c.min_amount &lt;=#{orderAmount}
         AND c.del_flag = '0'
         AND uc.del_flag = '0'
         ORDER BY 
@@ -108,7 +108,7 @@
             COUNT(*) as total_count,
             SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active_count,
             SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactive_count,
-            SUM(CASE WHEN valid_end_time < NOW() THEN 1 ELSE 0 END) as expired_count,
+            SUM(CASE WHEN valid_end_time &lt;NOW() THEN 1 ELSE 0 END) as expired_count,
             SUM(total_count) as total_issued,
             SUM(received_count) as total_received,
             SUM(used_count) as total_used,
@@ -123,7 +123,7 @@
         SET received_count = received_count + #{quantity},
             update_time = NOW()
         WHERE id = #{couponId}
-        AND received_count + #{quantity} <= total_count
+        AND received_count + #{quantity} &lt;=total_count
         AND del_flag = '0'
     </update>
 
@@ -131,7 +131,7 @@
     <select id="selectExpiredCouponIds" resultType="java.lang.Long">
         SELECT id
         FROM mall_coupon
-        WHERE valid_end_time < NOW()
+        WHERE valid_end_time &lt;NOW()
         AND status = 1
         AND del_flag = '0'
     </select>

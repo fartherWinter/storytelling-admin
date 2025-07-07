@@ -69,10 +69,10 @@
                 AND process_definition_key = #{query.processDefinitionKey}
             </if>
             <if test="query.startTime != null">
-                AND create_time >= #{query.startTime}
+                AND create_time &gt;=#{query.startTime}
             </if>
             <if test="query.endTime != null">
-                AND create_time <= #{query.endTime}
+                AND create_time &lt;=#{query.endTime}
             </if>
         </if>
         ORDER BY create_time DESC
@@ -168,7 +168,7 @@
         <include refid="selectWfTaskVo"/>
         WHERE del_flag = '0'
         AND due_date IS NOT NULL 
-        AND due_date < NOW()
+        AND due_date &lt;NOW()
         AND task_status IN ('PENDING', 'IN_PROGRESS')
         ORDER BY due_date ASC
     </select>

@@ -155,10 +155,10 @@
         AND p.permission_type = 'workflow'
         AND p.status = '0'
         <if test="startTime != null">
-            AND p.create_time >= #{startTime}
+            AND p.create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND p.create_time <= #{endTime}
+            AND p.create_time &lt;=#{endTime}
         </if>
         ORDER BY p.create_time DESC
     </select>

@@ -63,10 +63,10 @@
                 AND business_type = #{params.businessType}
             </if>
             <if test="params.startTime != null">
-                AND create_time >= #{params.startTime}
+                AND create_time &gt;=#{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND create_time <= #{params.endTime}
+                AND create_time &lt;=#{params.endTime}
             </if>
         </if>
         ORDER BY create_time DESC
@@ -87,10 +87,10 @@
                 AND business_type = #{params.businessType}
             </if>
             <if test="params.startTime != null">
-                AND create_time >= #{params.startTime}
+                AND create_time &gt;=#{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND create_time <= #{params.endTime}
+                AND create_time &lt;=#{params.endTime}
             </if>
         </if>
         ORDER BY create_time DESC
@@ -191,10 +191,10 @@
         FROM wf_approval
         WHERE approver_id = #{userId}
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
     </select>
 
@@ -210,10 +210,10 @@
         FROM wf_approval
         WHERE process_key = #{processKey}
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
     </select>
 
@@ -229,11 +229,11 @@
                 AND business_type = #{params.businessType}
             </if>
             <if test="params.urgent != null and params.urgent == true">
-                AND due_time IS NOT NULL AND due_time < NOW()
+                AND due_time IS NOT NULL AND due_time &lt;NOW()
             </if>
         </if>
         ORDER BY 
-            CASE WHEN due_time IS NOT NULL AND due_time < NOW() THEN 0 ELSE 1 END,
+            CASE WHEN due_time IS NOT NULL AND due_time &lt;NOW() THEN 0 ELSE 1 END,
             due_time ASC,
             create_time ASC
     </select>
@@ -253,10 +253,10 @@
                 AND business_type = #{params.businessType}
             </if>
             <if test="params.startTime != null">
-                AND approval_time >= #{params.startTime}
+                AND approval_time &gt;=#{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND approval_time <= #{params.endTime}
+                AND approval_time &lt;=#{params.endTime}
             </if>
         </if>
         ORDER BY approval_time DESC
@@ -265,7 +265,7 @@
     <!-- selectCcApprovals -->
     <select id="selectCcApprovals" resultMap="WfApprovalResult">
         <include refid="selectWfApprovalVo"/>
-        WHERE FIND_IN_SET(#{userId}, cc_user_ids) > 0
+        WHERE FIND_IN_SET(#{userId}, cc_user_ids) &gt;0
         <if test="params != null">
             <if test="params.processKey != null and params.processKey != ''">
                 AND process_key = #{params.processKey}
@@ -274,10 +274,10 @@
                 AND business_type = #{params.businessType}
             </if>
             <if test="params.startTime != null">
-                AND create_time >= #{params.startTime}
+                AND create_time &gt;=#{params.startTime}
             </if>
             <if test="params.endTime != null">
-                AND create_time <= #{params.endTime}
+                AND create_time &lt;=#{params.endTime}
             </if>
         </if>
         ORDER BY create_time DESC
@@ -303,10 +303,10 @@
             AND process_key = #{processKey}
         </if>
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
         GROUP BY process_key, process_name
         ORDER BY avgDurationHours DESC
@@ -331,13 +331,13 @@
             AND approver_id = #{approverId}
         </if>
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
         GROUP BY process_key, process_name, approver_id, approver_name
-        HAVING COUNT(*) >= 5
+        HAVING COUNT(*) &gt;=5
         ORDER BY rejectRate DESC, totalCount DESC
     </select>
 
@@ -350,10 +350,10 @@
             approver_name,
             COUNT(*) as totalCount,
             SUM(CASE WHEN due_time IS NOT NULL AND 
-                (approval_time IS NULL OR approval_time > due_time) THEN 1 ELSE 0 END) as timeoutCount,
+                (approval_time IS NULL OR approval_time &gt;due_time) THEN 1 ELSE 0 END) as timeoutCount,
             ROUND(SUM(CASE WHEN due_time IS NOT NULL AND 
-                (approval_time IS NULL OR approval_time > due_time) THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as timeoutRate,
-            AVG(CASE WHEN due_time IS NOT NULL AND approval_time IS NOT NULL AND approval_time > due_time 
+                (approval_time IS NULL OR approval_time &gt;due_time) THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 2) as timeoutRate,
+            AVG(CASE WHEN due_time IS NOT NULL AND approval_time IS NOT NULL AND approval_time &gt;due_time
                 THEN TIMESTAMPDIFF(HOUR, due_time, approval_time) ELSE NULL END) as avgOverdueHours
         FROM wf_approval
         WHERE due_time IS NOT NULL
@@ -364,13 +364,13 @@
             AND approver_id = #{approverId}
         </if>
         <if test="startTime != null">
-            AND create_time >= #{startTime}
+            AND create_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND create_time <= #{endTime}
+            AND create_time &lt;=#{endTime}
         </if>
         GROUP BY process_key, process_name, approver_id, approver_name
-        HAVING COUNT(*) >= 3
+        HAVING COUNT(*) &gt;=3
         ORDER BY timeoutRate DESC, totalCount DESC
     </select>
 
@@ -401,10 +401,10 @@
             AND process_key = #{processKey}
         </if>
         <if test="startTime != null">
-            AND delegate_time >= #{startTime}
+            AND delegate_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND delegate_time <= #{endTime}
+            AND delegate_time &lt;=#{endTime}
         </if>
         ORDER BY delegate_time DESC
     </select>
@@ -436,10 +436,10 @@
             AND process_key = #{processKey}
         </if>
         <if test="startTime != null">
-            AND transfer_time >= #{startTime}
+            AND transfer_time &gt;=#{startTime}
         </if>
         <if test="endTime != null">
-            AND transfer_time <= #{endTime}
+            AND transfer_time &lt;=#{endTime}
         </if>
         ORDER BY transfer_time DESC
     </select>
