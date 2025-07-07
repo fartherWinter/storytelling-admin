@@ -81,7 +81,8 @@ public class SysMenuController {
         } else if (!StringUtils.ishttp(sysMenu.getPath())) {
             return ServerResponseEntity.showFailMsg("新增菜单'" + sysMenu.getName() + "'失败，地址必须以http(s)://开头");
         }
-        //todo 写入操作人员
+        // 写入操作人员
+        sysMenu.setCreateBy(SecurityUtils.getUsername());
         return ServerResponseEntity.success(sysMenuService.insertMenu(sysMenu));
     }
 

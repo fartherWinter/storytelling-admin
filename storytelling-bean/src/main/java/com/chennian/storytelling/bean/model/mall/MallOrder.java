@@ -3,6 +3,7 @@ package com.chennian.storytelling.bean.model.mall;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.chennian.storytelling.bean.enums.DataStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -59,6 +60,20 @@ public class MallOrder implements Serializable {
      * 订单状态: 0->待付款；1->待发货；2->已发货；3->已完成；4->已关闭；5->无效订单
      */
     private Integer status;
+    
+    /**
+     * 获取订单状态枚举
+     */
+    public DataStatusEnum getStatusEnum() {
+        return DataStatusEnum.getByCode(this.status);
+    }
+    
+    /**
+     * 设置订单状态枚举
+     */
+    public void setStatusEnum(DataStatusEnum statusEnum) {
+        this.status = statusEnum != null ? statusEnum.getCode() : null;
+    }
 
     /**
      * 收货人姓名

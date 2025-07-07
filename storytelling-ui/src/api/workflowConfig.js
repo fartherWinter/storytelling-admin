@@ -323,6 +323,59 @@ export function getCurrentUserRoles() {
   })
 }
 
+/**
+ * 检查当前用户是否有工作流操作权限
+ * @param {String} processDefinitionKey 流程定义Key
+ * @param {String} operation 操作类型
+ * @returns {Promise}
+ */
+export function checkCurrentUserWorkflowPermission(processDefinitionKey, operation) {
+  return request({
+    url: '/admin/unified-permission/current-user/workflow/check',
+    method: 'get',
+    params: { processDefinitionKey, operation }
+  })
+}
+
+/**
+ * 获取权限统计信息
+ * @returns {Promise}
+ */
+export function getPermissionStats() {
+  return request({
+    url: '/admin/unified-permission/stats',
+    method: 'get'
+  })
+}
+
+/**
+ * 导出权限配置
+ * @returns {Promise}
+ */
+export function exportPermissionConfig() {
+  return request({
+    url: '/admin/unified-permission/export',
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 导入权限配置
+ * @param {FormData} formData 包含文件的表单数据
+ * @returns {Promise}
+ */
+export function importPermissionConfig(formData) {
+  return request({
+    url: '/admin/unified-permission/import',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 // ==================== 流程分类相关接口 ====================
 
 /**

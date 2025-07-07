@@ -179,7 +179,7 @@ public class PurchaseOrderServiceImpl extends ServiceImpl<PurchaseOrderMapper, P
         }
         
         // 删除订单主表
-        return purchaseOrderMapper.deleteBatchIds(Arrays.asList(orderIds));
+        return purchaseOrderMapper.deleteByIds(Arrays.asList(orderIds));
     }
 
     /**

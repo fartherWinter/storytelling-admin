@@ -139,4 +139,50 @@ public interface MallProductService extends IService<MallProduct> {
      * @return 结果
      */
     int increaseSales(Long productId, Integer quantity);
+    
+    /**
+     * 获取个性化推荐商品
+     * 
+     * @param userId 用户ID
+     * @param limit 限制数量
+     * @return 推荐商品列表
+     */
+    List<MallProduct> getRecommendedProducts(Long userId, Integer limit);
+    
+    /**
+     * 获取相关商品
+     * 
+     * @param productId 商品ID
+     * @param limit 限制数量
+     * @return 相关商品列表
+     */
+    List<MallProduct> getRelatedProducts(Long productId, Integer limit);
+    
+    /**
+     * 高级搜索商品
+     * 
+     * @param searchParams 搜索参数
+     * @param page 分页参数
+     * @return 商品分页数据
+     */
+    IPage<MallProduct> advancedSearchProducts(java.util.Map<String, Object> searchParams, PageParam<MallProduct> page);
+    
+    /**
+     * 获取个性化推荐商品
+     * 
+     * @param userId 用户ID
+     * @param limit 限制数量
+     * @return 推荐商品列表
+     */
+    List<MallProduct> getPersonalizedRecommendations(Long userId, Integer limit);
+    
+    /**
+     * 获取商品订单统计
+     * 
+     * @param productId 商品ID
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     * @return 订单统计数据
+     */
+    java.util.Map<String, Object> getProductOrderStats(Long productId, String startDate, String endDate);
 }

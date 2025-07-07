@@ -1,5 +1,9 @@
 package com.chennian.storytelling.bean.model.manufacturing;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -13,39 +17,51 @@ import java.util.Date;
  * @author storytelling
  * @date 2024-01-01
  */
+@TableName("bom_item")
 public class BOMItem {
     
     /** BOM明细ID */
+    @TableId(value = "bom_item_id", type = IdType.AUTO)
     private Long bomItemId;
     
     /** BOM ID */
+    @TableField("bom_id")
     private Long bomId;
     
     /** 物料ID */
+    @TableField("material_id")
     private Long materialId;
     
     /** 物料编号 */
+    @TableField("material_code")
     private String materialCode;
     
     /** 物料名称 */
+    @TableField("material_name")
     private String materialName;
     
     /** 物料规格 */
+    @TableField("material_spec")
     private String materialSpec;
     
     /** 物料单位 */
+    @TableField("material_unit")
     private String materialUnit;
     
     /** 物料类型（1-原材料 2-半成品 3-成品 4-辅料 5-包装材料） */
+    @TableField("material_type")
     private Integer materialType;
     
     /** 需求数量 */
+    @TableField("required_quantity")
     private BigDecimal requiredQuantity;
     
     /** 基础用量 */
+    @TableField("base_usage")
     private BigDecimal baseUsage;
     
     /** 损耗率 */
+    @TableField("loss_rate")
     private BigDecimal lossRate;
     
     /** 实际用量 */

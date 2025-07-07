@@ -33,8 +33,40 @@ sa-token:
   token-name: token
   timeout: 864000
   token-style: random-32
-  #jwt密钥
-  jwt-secret-key: chennian
+  #jwt密钥 - 使用环境变量配置，提高安全性
+  jwt-secret-key: ${JWT_SECRET_KEY:default-secret-key-change-in-production}
+
+# 服务器配置
+server:
+  port: ${SERVER_PORT:8080}
+  # HTTPS配置
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    port: ${SSL_PORT:8443}
+    key-store: ${SSL_KEY_STORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:tomcat}
+  # 连接配置
+  tomcat:
+    max-connections: 8192
+    accept-count: 1000
+    max-threads: 800
+    min-spare-threads: 100
+
+# 应用安全配置
+app:
+  security:
+    # 是否强制使用HTTPS
+    force-https: ${FORCE_HTTPS:false}
+    # 是否启用CSRF保护
+    csrf-enabled: ${CSRF_ENABLED:true}
+    # 是否启用CORS
+    cors-enabled: ${CORS_ENABLED:true}
+    # 允许的跨域来源
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,https://localhost:3000}
+    # 会话超时时间（分钟）
+    session-timeout: ${SESSION_TIMEOUT:30}
 
   # MongoDB Configuration
   data:

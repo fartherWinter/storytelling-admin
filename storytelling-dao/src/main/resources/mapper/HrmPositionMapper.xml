@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.hrm.HrmPositionMapper">
+
+    <!-- HrmPosition结果映射 -->
+    <resultMap id="HrmPositionResult" type="com.chennian.storytelling.bean.model.HrmPosition">
+        <result property="id" column="id" />
+        <result property="positionCode" column="position_code" />
+        <result property="positionName" column="position_name" />
+        <result property="level" column="level" />
+        <result property="departmentId" column="department_id" />
+        <result property="departmentName" column="department_name" />
+        <result property="description" column="description" />
+        <result property="requirements" column="requirements" />
+        <result property="minSalary" column="min_salary" />
+        <result property="maxSalary" column="max_salary" />
+        <result property="orderNum" column="order_num" />
+        <result property="status" column="status" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectHrmPositionVo">
+        SELECT p.id, p.position_code, p.position_name, p.level, p.department_id, 
+               d.dept_name as department_name, p.description, p.requirements, 
+               p.min_salary, p.max_salary, p.order_num, p.status,
+               p.create_time, p.update_time
+        FROM hrm_position p
+        LEFT JOIN hrm_department d ON p.department_id = d.id
+    </sql>
+
+    <!-- selectByDepartmentId -->
+    <select id="selectByDepartmentId" resultMap="HrmPositionResult">
+        <include refid="selectHrmPositionVo"/>
+        WHERE p.del_flag = '0'
+        AND p.department_id = #{departmentId}
+        ORDER BY p.order_num ASC, p.level ASC
+    </select>
+
+    <!-- selectByPositionCode -->
+    <select id="selectByPositionCode" resultMap="HrmPositionResult">
+        <include refid="selectHrmPositionVo"/>
+        WHERE p.del_flag = '0'
+        AND p.position_code = #{positionCode}
+    </select>
+
+    <!-- selectByLevel -->
+    <select id="selectByLevel" resultMap="HrmPositionResult">
+        <include refid="selectHrmPositionVo"/>
+        WHERE p.del_flag = '0'
+        AND p.level = #{level}
+        ORDER BY p.department_id ASC, p.order_num ASC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="HrmPositionResult">
+        <include refid="selectHrmPositionVo"/>
+        WHERE p.del_flag = '0'
+        AND p.status = #{status}
+        ORDER BY p.department_id ASC, p.level ASC, p.order_num ASC
+    </select>
+
+    <!-- selectPositionStatistics -->
+    <select id="selectPositionStatistics" resultType="java.util.Map">
+        SELECT 
+            d.dept_name as department_name,
+            COUNT(p.id) as position_count,
+            COUNT(CASE WHEN p.status = 1 THEN 1 END) as active_count,
+            COUNT(CASE WHEN p.status = 0 THEN 1 END) as inactive_count,
+            AVG(p.min_salary) as avg_min_salary,
+            AVG(p.max_salary) as avg_max_salary,
+            MIN(p.level) as min_level,
+            MAX(p.level) as max_level
+        FROM hrm_position p
+        LEFT JOIN hrm_department d ON p.department_id = d.id
+        WHERE p.del_flag = '0'
+        GROUP BY p.department_id, d.dept_name
+        ORDER BY d.dept_name ASC
+    </select>
+
+</mapper>

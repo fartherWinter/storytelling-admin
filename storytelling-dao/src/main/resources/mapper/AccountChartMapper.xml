@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.AccountChartMapper">
+
+    <!-- AccountChart结果映射 -->
+    <resultMap id="AccountChartResult" type="com.chennian.storytelling.bean.model.AccountChart">
+        <id property="accountId" column="account_id" />
+        <result property="accountCode" column="account_code" />
+        <result property="accountName" column="account_name" />
+        <result property="accountType" column="account_type" />
+        <result property="parentId" column="parent_id" />
+        <result property="level" column="level" />
+        <result property="balanceDirection" column="balance_direction" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="children" column="children" />
+    </resultMap>
+
+    <!-- 通用查询语句 -->
+    <sql id="selectAccountChartVo">
+        SELECT account_id, account_code, account_name, account_type, parent_id, 
+               level, balance_direction, status, remark, create_by, create_time, 
+               update_by, update_time, children
+        FROM account_chart
+    </sql>
+
+    <!-- selectAccountChartPage -->
+    <select id="selectAccountChartPage" resultMap="AccountChartResult">
+        <include refid="selectAccountChartVo"/>
+        WHERE del_flag = '0'
+        <if test="accountChart.accountCode != null and accountChart.accountCode != ''">
+            AND account_code LIKE CONCAT('%', #{accountChart.accountCode}, '%')
+        </if>
+        <if test="accountChart.accountName != null and accountChart.accountName != ''">
+            AND account_name LIKE CONCAT('%', #{accountChart.accountName}, '%')
+        </if>
+        <if test="accountChart.accountType != null and accountChart.accountType != ''">
+            AND account_type = #{accountChart.accountType}
+        </if>
+        <if test="accountChart.parentId != null">
+            AND parent_id = #{accountChart.parentId}
+        </if>
+        <if test="accountChart.status != null">
+            AND status = #{accountChart.status}
+        </if>
+        ORDER BY level ASC, account_code ASC
+    </select>
+
+    <!-- selectAccountChartById -->
+    <select id="selectAccountChartById" resultMap="AccountChartResult">
+        <include refid="selectAccountChartVo"/>
+        WHERE account_id = #{accountId} AND del_flag = '0'
+    </select>
+
+    <!-- insertAccountChart -->
+    <insert id="insertAccountChart" parameterType="AccountChart">
+        INSERT INTO account_chart
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="accountCode != null and accountCode != ''">account_code,</if>
+            <if test="accountName != null and accountName != ''">account_name,</if>
+            <if test="accountType != null and accountType != ''">account_type,</if>
+            <if test="parentId != null">parent_id,</if>
+            <if test="level != null">level,</if>
+            <if test="balanceDirection != null and balanceDirection != ''">balance_direction,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            del_flag
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="accountCode != null and accountCode != ''">#{accountCode},</if>
+            <if test="accountName != null and accountName != ''">#{accountName},</if>
+            <if test="accountType != null and accountType != ''">#{accountType},</if>
+            <if test="parentId != null">#{parentId},</if>
+            <if test="level != null">#{level},</if>
+            <if test="balanceDirection != null and balanceDirection != ''">#{balanceDirection},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            NOW(),
+            '0'
+        </trim>
+    </insert>
+
+    <!-- updateAccountChart -->
+    <update id="updateAccountChart" parameterType="AccountChart">
+        UPDATE account_chart
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="accountCode != null and accountCode != ''">account_code = #{accountCode},</if>
+            <if test="accountName != null and accountName != ''">account_name = #{accountName},</if>
+            <if test="accountType != null and accountType != ''">account_type = #{accountType},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="level != null">level = #{level},</if>
+            <if test="balanceDirection != null and balanceDirection != ''">balance_direction = #{balanceDirection},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = NOW()
+        </trim>
+        WHERE account_id = #{accountId}
+    </update>
+
+    <!-- deleteAccountChartByIds -->
+    <update id="deleteAccountChartByIds">
+        UPDATE account_chart SET del_flag = '1' WHERE account_id IN
+        <foreach item="accountId" collection="array" open="(" separator="," close=")">
+            #{accountId}
+        </foreach>
+    </update>
+
+    <!-- selectAccountChartList -->
+    <select id="selectAccountChartList" resultMap="AccountChartResult">
+        <include refid="selectAccountChartVo"/>
+        WHERE del_flag = '0'
+        ORDER BY level ASC, account_code ASC
+    </select>
+
+    <!-- selectChildrenAccountChart -->
+    <select id="selectChildrenAccountChart" resultMap="AccountChartResult">
+        <include refid="selectAccountChartVo"/>
+        WHERE parent_id = #{parentId} AND del_flag = '0'
+        ORDER BY account_code ASC
+    </select>
+
+</mapper>

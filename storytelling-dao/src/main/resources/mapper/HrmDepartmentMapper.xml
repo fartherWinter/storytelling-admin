@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.hrm.HrmDepartmentMapper">
+
+    <!-- HrmDepartment结果映射 -->
+    <resultMap id="HrmDepartmentResult" type="com.chennian.storytelling.bean.model.HrmDepartment">
+        <result property="id" column="id" />
+        <result property="deptCode" column="dept_code" />
+        <result property="deptName" column="dept_name" />
+        <result property="parentId" column="parent_id" />
+        <result property="parentName" column="parent_name" />
+        <result property="managerId" column="manager_id" />
+        <result property="managerName" column="manager_name" />
+        <result property="phone" column="phone" />
+        <result property="email" column="email" />
+        <result property="address" column="address" />
+        <result property="orderNum" column="order_num" />
+        <result property="status" column="status" />
+        <result property="level" column="level" />
+        <result property="path" column="path" />
+        <result property="children" column="children" />
+    </resultMap>
+
+    <!-- 通用查询语句 -->
+    <sql id="selectHrmDepartmentVo">
+        SELECT d.id, d.dept_code, d.dept_name, d.parent_id, 
+               p.dept_name as parent_name, d.manager_id, 
+               e.name as manager_name, d.phone, d.email, d.address, 
+               d.order_num, d.status, d.level, d.path, d.children,
+               d.create_time, d.update_time
+        FROM hrm_department d
+        LEFT JOIN hrm_department p ON d.parent_id = p.id
+        LEFT JOIN hrm_employee e ON d.manager_id = e.id
+    </sql>
+
+    <!-- selectByParentId -->
+    <select id="selectByParentId" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0'
+        <if test="parentId != null">
+            AND d.parent_id = #{parentId}
+        </if>
+        <if test="parentId == null">
+            AND d.parent_id IS NULL
+        </if>
+        ORDER BY d.order_num ASC, d.create_time ASC
+    </select>
+
+    <!-- selectByDeptCode -->
+    <select id="selectByDeptCode" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0' AND d.dept_code = #{deptCode}
+    </select>
+
+    <!-- selectRootDepartments -->
+    <select id="selectRootDepartments" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0' AND (d.parent_id IS NULL OR d.parent_id = 0)
+        ORDER BY d.order_num ASC, d.create_time ASC
+    </select>
+
+    <!-- selectByManagerId -->
+    <select id="selectByManagerId" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0' AND d.manager_id = #{managerId}
+        ORDER BY d.order_num ASC, d.create_time ASC
+    </select>
+
+    <!-- selectDepartmentTree -->
+    <select id="selectDepartmentTree" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0'
+        ORDER BY d.level ASC, d.order_num ASC, d.create_time ASC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="HrmDepartmentResult">
+        <include refid="selectHrmDepartmentVo"/>
+        WHERE d.del_flag = '0' AND d.status = #{status}
+        ORDER BY d.order_num ASC, d.create_time ASC
+    </select>
+
+</mapper>

@@ -109,7 +109,8 @@ public class SysUserController {
 //        } else if (StringUtils.isNotEmpty(sysUser.getEmail()) && !sysUserService.checkEmailUnique(sysUser)) {
 //            return ServerResponseEntity.showFailMsg("新增用户'" + sysUser.getUserName() + "'失败，邮箱账号已存在");
 //        }
-        //todo 设置操作人员
+        // 设置操作人员
+        sysUser.setCreateBy(SecurityUtils.getUsername());
         sysUser.setPassword("123456");
         Random random = new Random();
         sysUser.setSalt(String.valueOf(random.nextInt()));
@@ -124,7 +125,12 @@ public class SysUserController {
     @Operation(summary = "用户状态修改")
     @EventTrack(title = ModelType.SYSTEM, businessType = BusinessType.UPDATE, description = "用户状态修改")
     public ServerResponseEntity<Integer> changeStatus(@RequestBody SysUser sysUser) {
-        //todo 数据权限校验
+        // 数据权限校验
+        Long currentUserId = SecurityUtils.getUserId();
+        if (!sysUserService.checkUserDataScope(currentUserId, sysUser.getUserId())) {
+            return ServerResponseEntity.showFailMsg("没有权限修改该用户状态");
+        }
+        sysUser.setUpdateBy(SecurityUtils.getUsername());
         return ServerResponseEntity.success(sysUserService.updateUserStatus(sysUser));
     }
 

@@ -239,18 +239,18 @@ public class BatchApiRequestDelegate implements JavaDelegate {
         try {
             // 创建日志对象
             ApiRequestLog log = new ApiRequestLog();
-            log.setRequestUrl(url);
-            log.setRequestMethod(method);
-            log.setRequestParams(requestParams);
-            log.setResponseCode(responseCode);
-            log.setResponseContent(responseContent);
+            log.setUrl(url);
+            log.setMethod(method);
+            log.setParams(requestParams);
+            log.setStatusCode(responseCode);
+            log.setResponseBody(responseContent);
             log.setUserId(userId);
-            log.setUserName(userName);
-            log.setUserIp(userIp);
+            log.setUsername(userName);
+            log.setClientIp(userIp);
             log.setRequestTime(new Date());
             log.setProcessingTime(System.currentTimeMillis() - startTime);
             log.setProcessInstanceId(processInstanceId);
-            log.setSuccess(success);
+            log.setSuccessStatus(success);
             log.setErrorMessage(errorMessage);
             
             // 保存日志

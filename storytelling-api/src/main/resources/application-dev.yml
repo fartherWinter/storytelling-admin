@@ -14,9 +14,9 @@ spring:
         #服务注册地址
         server-addr:
   datasource:
-    url: jdbc:mysql://0.0.0.0:3306/storytelling?allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-    username: root
-    password: 12345678
+    url: ${DB_URL:jdbc:mysql://localhost:3306/storytelling?allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:12345678}
     driverClassName: com.mysql.cj.jdbc.Driver
     hikari:
       minimum-idle: 0
@@ -30,9 +30,10 @@ spring:
       cache-null-values: true
   data:
     redis:
-      host: 0.0.0.0
-      port: 16379
-      database: 0
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      password: ${REDIS_PASSWORD:}
       lettuce:
         pool:
           #最大连接数
@@ -46,11 +47,11 @@ spring:
           #连接超时时间
       connect-timeout: 10s
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VIRTUAL_HOST:/}
     # 消息确认配置
     publisher-confirm-type: correlated
     publisher-returns: true
@@ -78,13 +79,20 @@ spring:
 #  auto-renew: true
 #  activity-timeout: 1800
 wxpay:
-  mch-id:
-  mch-serial-no:
-  private-key-path:
-  api-v3-key:
-  appid:
-  domain:
-  notify-domain:
+  # 商户号
+  mch-id: ${WXPAY_MCH_ID:1234567890}
+  # 商户API证书序列号
+  mch-serial-no: ${WXPAY_MCH_SERIAL_NO:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
+  # 商户私钥文件路径
+  private-key-path: ${WXPAY_PRIVATE_KEY_PATH:classpath:cert/apiclient_key.pem}
+  # APIv3密钥
+  api-v3-key: ${WXPAY_API_V3_KEY:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}
+  # 应用ID
+  appid: ${WXPAY_APPID:wxXXXXXXXXXXXXXXXX}
+  # 微信支付API域名
+  domain: ${WXPAY_DOMAIN:https://api.mch.weixin.qq.com}
+  # 支付回调通知域名
+  notify-domain: ${WXPAY_NOTIFY_DOMAIN:https://your-domain.com}
 file:
   dataPath: C:\Users\chennian\Desktop\qrcode
   environment: dev

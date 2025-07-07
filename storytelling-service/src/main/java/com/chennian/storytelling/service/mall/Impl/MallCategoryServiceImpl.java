@@ -1,4 +1,4 @@
-package com.chennian.storytelling.service.mall.impl;
+package com.chennian.storytelling.service.mall.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,7 +17,6 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 商城分类Service实现类

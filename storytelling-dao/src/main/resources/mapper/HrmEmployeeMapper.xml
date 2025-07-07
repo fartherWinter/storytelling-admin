@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.hrm.HrmEmployeeMapper">
+
+    <!-- HrmEmployee结果映射 -->
+    <resultMap id="HrmEmployeeResult" type="com.chennian.storytelling.bean.model.HrmEmployee">
+        <result property="id" column="id" />
+        <result property="employeeNo" column="employee_no" />
+        <result property="name" column="name" />
+        <result property="gender" column="gender" />
+        <result property="birthDate" column="birth_date" />
+        <result property="idCard" column="id_card" />
+        <result property="phone" column="phone" />
+        <result property="email" column="email" />
+        <result property="address" column="address" />
+        <result property="departmentId" column="department_id" />
+        <result property="departmentName" column="department_name" />
+        <result property="positionId" column="position_id" />
+        <result property="positionName" column="position_name" />
+        <result property="hireDate" column="hire_date" />
+        <result property="resignReason" column="resign_reason" />
+        <result property="resignDate" column="resign_date" />
+        <result property="employmentType" column="employment_type" />
+        <result property="status" column="status" />
+        <result property="salary" column="salary" />
+        <result property="emergencyContact" column="emergency_contact" />
+        <result property="emergencyPhone" column="emergency_phone" />
+    </resultMap>
+
+    <!-- selectByDepartmentId -->
+    <select id="selectByDepartmentId" resultMap="HrmEmployeeResult">
+        <include refid="selectHrmEmployeeVo"/>
+        WHERE department_id = #{departmentId} AND del_flag = '0'
+        ORDER BY employee_no ASC
+    </select>
+
+    <!-- selectByPositionId -->
+    <select id="selectByPositionId" resultMap="HrmEmployeeResult">
+        <include refid="selectHrmEmployeeVo"/>
+        WHERE position_id = #{positionId} AND del_flag = '0'
+        ORDER BY employee_no ASC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="HrmEmployeeResult">
+        <include refid="selectHrmEmployeeVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY employee_no ASC
+    </select>
+
+    <!-- selectByEmployeeNo -->
+    <select id="selectByEmployeeNo" resultMap="HrmEmployeeResult">
+        <include refid="selectHrmEmployeeVo"/>
+        WHERE employee_no = #{employeeNo} AND del_flag = '0'
+    </select>
+
+    <!-- selectEmployeeStatistics -->
+    <select id="selectEmployeeStatistics" resultType="java.util.Map">
+        SELECT 
+            d.department_name,
+            COUNT(e.id) as employee_count,
+            SUM(CASE WHEN e.status = 1 THEN 1 ELSE 0 END) as active_count,
+            SUM(CASE WHEN e.status = 0 THEN 1 ELSE 0 END) as inactive_count,
+            SUM(CASE WHEN e.gender = '男' THEN 1 ELSE 0 END) as male_count,
+            SUM(CASE WHEN e.gender = '女' THEN 1 ELSE 0 END) as female_count,
+            AVG(TIMESTAMPDIFF(YEAR, e.birth_date, CURDATE())) as avg_age
+        FROM hrm_employee e
+        LEFT JOIN hrm_department d ON e.department_id = d.id
+        WHERE e.del_flag = '0'
+        GROUP BY e.department_id, d.department_name
+        ORDER BY d.department_name
+    </select>
+
+</mapper>

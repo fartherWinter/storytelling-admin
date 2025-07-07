@@ -23,7 +23,7 @@ public class WorkflowWebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         // 注册工作流路径拦截器
         registry.addInterceptor(workflowPathInterceptor)
-                .addPathPatterns("/api/**/workflow/**") // 匹配所有工作流API路径
+                .addPathPatterns("/sys/**/workflow/**") // 匹配所有工作流API路径
                 .order(1); // 设置拦截器优先级
     }
 

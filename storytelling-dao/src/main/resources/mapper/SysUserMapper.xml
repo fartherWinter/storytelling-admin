@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SysUserMapper">
+
+    <!-- SysUser结果映射 -->
+    <resultMap id="SysUserResult" type="com.chennian.storytelling.bean.model.SysUser">
+        <id property="userId" column="user_id" />
+        <result property="deptId" column="dept_id" />
+        <result property="userName" column="user_name" />
+        <result property="nickName" column="nick_name" />
+        <result property="userType" column="user_type" />
+        <result property="email" column="email" />
+        <result property="phoneNumber" column="phone_number" />
+        <result property="sex" column="sex" />
+        <result property="avatar" column="avatar" />
+        <result property="password" column="password" />
+        <result property="salt" column="salt" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="loginIp" column="login_ip" />
+        <result property="loginDate" column="login_date" />
+        <result property="pwdUpdateDate" column="pwd_update_date" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="deptName" column="dept_name" />
+        <result property="dept" column="dept" />
+        <result property="roles" column="roles" />
+        <result property="roleId" column="role_id" />
+        <result property="postId" column="post_id" />
+        <result property="curAppKey" column="cur_app_key" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectSysUserVo">
+        select user_id, dept_id, user_name, nick_name, user_type, email, phone_number, sex, avatar, password, salt, status, del_flag, login_ip, login_date, pwd_update_date, create_by, create_time, update_by, update_time, remark from sys_user
+    </sql>
+
+    <!-- selectUserByName -->
+    <select id="selectUserByName" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectSysUserVo"/>
+        where user_name = #{username} and del_flag = 0
+    </select>
+
+    <!-- 修改用户信息 -->
+    <update id="updateUser" parameterType="com.chennian.storytelling.bean.model.SysUser">
+        update sys_user
+        <set>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="userName != null and userName != ''">user_name = #{userName},</if>
+            <if test="nickName != null and nickName != ''">nick_name = #{nickName},</if>
+            <if test="userType != null and userType != ''">user_type = #{userType},</if>
+            <if test="email != null and email != ''">email = #{email},</if>
+            <if test="phoneNumber != null and phoneNumber != ''">phone_number = #{phoneNumber},</if>
+            <if test="sex != null">sex = #{sex},</if>
+            <if test="avatar != null and avatar != ''">avatar = #{avatar},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="salt != null and salt != ''">salt = #{salt},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="loginIp != null and loginIp != ''">login_ip = #{loginIp},</if>
+            <if test="loginDate != null">login_date = #{loginDate},</if>
+            <if test="pwdUpdateDate != null">pwd_update_date = #{pwdUpdateDate},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <!-- 根据条件分页查询用户列表 -->
+    <select id="selectUserList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
+        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.user_type, u.email, u.phone_number, u.sex, u.avatar, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        where u.del_flag = 0
+        <if test="userId != null and userId != 0">
+            AND u.user_id = #{userId}
+        </if>
+        <if test="userName != null and userName != ''">
+            AND u.user_name like concat('%', #{userName}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND u.status = #{status}
+        </if>
+        <if test="phoneNumber != null and phoneNumber != ''">
+            AND u.phone_number like concat('%', #{phoneNumber}, '%')
+        </if>
+        <if test="deptId != null and deptId != 0">
+            AND (u.dept_id = #{deptId} OR u.dept_id IN ( SELECT t.dept_id FROM sys_dept t WHERE find_in_set(#{deptId}, ancestors) ))
+        </if>
+        <!-- 数据范围过滤 -->
+        ${params.dataScope}
+    </select>
+
+    <!-- 根据条件分页查询已配用户角色列表 -->
+    <select id="selectAllocatedList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
+        select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.user_type, u.email, u.phone_number, u.sex, u.avatar, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        left join sys_user_role ur on u.user_id = ur.user_id
+        left join sys_role r on r.role_id = ur.role_id
+        where u.del_flag = 0 and r.role_id = #{roleId}
+        <if test="userName != null and userName != ''">
+            AND u.user_name like concat('%', #{userName}, '%')
+        </if>
+        <if test="phoneNumber != null and phoneNumber != ''">
+            AND u.phone_number like concat('%', #{phoneNumber}, '%')
+        </if>
+        <!-- 数据范围过滤 -->
+        ${params.dataScope}
+    </select>
+
+    <!-- 根据条件分页查询未分配用户角色列表 -->
+    <select id="selectUnallocatedList" parameterType="com.chennian.storytelling.bean.model.SysUser" resultMap="SysUserResult">
+        select distinct u.user_id, u.dept_id, u.user_name, u.nick_name, u.user_type, u.email, u.phone_number, u.sex, u.avatar, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        left join sys_user_role ur on u.user_id = ur.user_id
+        left join sys_role r on r.role_id = ur.role_id
+        where u.del_flag = 0 and (r.role_id != #{roleId} or r.role_id IS NULL)
+        and u.user_id not in (select u.user_id from sys_user u inner join sys_user_role ur on u.user_id = ur.user_id and ur.role_id = #{roleId})
+        <if test="userName != null and userName != ''">
+            AND u.user_name like concat('%', #{userName}, '%')
+        </if>
+        <if test="phoneNumber != null and phoneNumber != ''">
+            AND u.phone_number like concat('%', #{phoneNumber}, '%')
+        </if>
+        <!-- 数据范围过滤 -->
+        ${params.dataScope}
+    </select>
+
+    <!-- 通过用户名查询用户 -->
+    <select id="selectUserByUserName" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectSysUserVo"/>
+        where user_name = #{userName} and del_flag = 0
+    </select>
+
+    <!-- 通过用户ID查询用户 -->
+    <select id="selectUserById" parameterType="Long" resultMap="SysUserResult">
+        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.user_type, u.email, u.phone_number, u.sex, u.avatar, u.password, u.salt, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.update_by, u.update_time, u.remark,
+        d.dept_id, d.parent_id, d.dept_name, d.order_num, d.leader, d.status as dept_status
+        from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        where u.user_id = #{userId}
+    </select>
+
+    <!-- 新增用户信息 -->
+    <insert id="insertUser" parameterType="com.chennian.storytelling.bean.model.SysUser" useGeneratedKeys="true" keyProperty="userId">
+        insert into sys_user(
+        <if test="userId != null and userId != 0">user_id,</if>
+        <if test="deptId != null and deptId != 0">dept_id,</if>
+        <if test="userName != null and userName != ''">user_name,</if>
+        <if test="nickName != null and nickName != ''">nick_name,</if>
+        <if test="userType != null and userType != ''">user_type,</if>
+        <if test="email != null and email != ''">email,</if>
+        <if test="phoneNumber != null and phoneNumber != ''">phone_number,</if>
+        <if test="sex != null">sex,</if>
+        <if test="avatar != null and avatar != ''">avatar,</if>
+        <if test="password != null and password != ''">password,</if>
+        <if test="salt != null and salt != ''">salt,</if>
+        <if test="status != null">status,</if>
+        <if test="createBy != null and createBy != ''">create_by,</if>
+        <if test="remark != null and remark != ''">remark,</if>
+        create_time
+        )values(
+        <if test="userId != null and userId != ''">#{userId},</if>
+        <if test="deptId != null and deptId != ''">#{deptId},</if>
+        <if test="userName != null and userName != ''">#{userName},</if>
+        <if test="nickName != null and nickName != ''">#{nickName},</if>
+        <if test="userType != null and userType != ''">#{userType},</if>
+        <if test="email != null and email != ''">#{email},</if>
+        <if test="phoneNumber != null and phoneNumber != ''">#{phoneNumber},</if>
+        <if test="sex != null">#{sex},</if>
+        <if test="avatar != null and avatar != ''">#{avatar},</if>
+        <if test="password != null and password != ''">#{password},</if>
+        <if test="salt != null and salt != ''">#{salt},</if>
+        <if test="status != null">#{status},</if>
+        <if test="createBy != null and createBy != ''">#{createBy},</if>
+        <if test="remark != null and remark != ''">#{remark},</if>
+        sysdate()
+        )
+    </insert>
+
+    <!-- 修改用户头像 -->
+    <update id="updateUserAvatar">
+        update sys_user set avatar = #{avatar} where user_name = #{userName}
+    </update>
+
+    <!-- 重置用户密码 -->
+    <update id="resetUserPwd">
+        update sys_user set password = #{password} where user_name = #{userName}
+    </update>
+
+    <!-- 通过用户ID删除用户 -->
+    <update id="deleteUserById" parameterType="Long">
+        update sys_user set del_flag = 2 where user_id = #{userId}
+    </update>
+
+    <!-- 批量删除用户信息 -->
+    <update id="deleteUserByIds" parameterType="Long">
+        update sys_user set del_flag = 2 where user_id in
+        <foreach collection="array" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </update>
+
+    <!-- 校验用户名称是否唯一 -->
+    <select id="checkUserNameUnique" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectSysUserVo"/>
+        where user_name = #{userName} and del_flag = 0 limit 1
+    </select>
+
+    <!-- 校验手机号码是否唯一 -->
+    <select id="checkPhoneUnique" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectSysUserVo"/>
+        where phone_number = #{phoneNumber} and del_flag = 0 limit 1
+    </select>
+
+    <!-- 校验email是否唯一 -->
+    <select id="checkEmailUnique" parameterType="String" resultMap="SysUserResult">
+        <include refid="selectSysUserVo"/>
+        where email = #{email} and del_flag = 0 limit 1
+    </select>
+
+    <!-- 分页查询用户 -->
+    <select id="findByPage" resultMap="SysUserResult">
+        select u.user_id, u.dept_id, u.user_name, u.nick_name, u.user_type, u.email, u.phone_number, u.sex, u.avatar, u.status, u.del_flag, u.login_ip, u.login_date, u.create_by, u.create_time, u.remark, d.dept_name, d.leader from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        where u.del_flag = 0
+        <if test="params.userName != null and params.userName != ''">
+            AND u.user_name like concat('%', #{params.userName}, '%')
+        </if>
+        <if test="params.phoneNumber != null and params.phoneNumber != ''">
+            AND u.phone_number like concat('%', #{params.phoneNumber}, '%')
+        </if>
+        <if test="params.status != null and params.status != ''">
+            AND u.status = #{params.status}
+        </if>
+        <if test="params.startTime != null and params.startTime != ''">
+            AND date_format(u.create_time,'%y%m%d') &gt;= date_format(#{params.startTime},'%y%m%d')
+        </if>
+        <if test="params.endTime != null and params.endTime != ''">
+            AND date_format(u.create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+        </if>
+        order by u.create_time desc
+    </select>
+
+    <!-- 获取用户信息 -->
+    <select id="getProfileInfo" parameterType="int" resultType="com.chennian.storytelling.bean.dto.AppProfileDto">
+        select u.user_id, u.user_name, u.nick_name, u.email, u.phone_number, u.sex, u.avatar, u.create_time,
+               d.dept_name
+        from sys_user u
+        left join sys_dept d on u.dept_id = d.dept_id
+        where u.user_id = #{userId} and u.del_flag = 0
+    </select>
+
+</mapper>

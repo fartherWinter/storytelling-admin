@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetMaintenanceMapper">
+
+    <!-- AssetMaintenance结果映射 -->
+    <resultMap id="AssetMaintenanceResult" type="com.chennian.storytelling.bean.model.AssetMaintenance">
+        <id property="id" column="id" />
+        <result property="assetId" column="asset_id" />
+        <result property="assetNo" column="asset_no" />
+        <result property="assetName" column="asset_name" />
+        <result property="maintenanceType" column="maintenance_type" />
+        <result property="maintenanceDate" column="maintenance_date" />
+        <result property="maintenanceContent" column="maintenance_content" />
+        <result property="faultDescription" column="fault_description" />
+        <result property="maintenanceResult" column="maintenance_result" />
+        <result property="maintenanceCost" column="maintenance_cost" />
+        <result property="maintenancePersonnel" column="maintenance_personnel" />
+        <result property="maintenanceUnit" column="maintenance_unit" />
+        <result property="nextMaintenanceDate" column="next_maintenance_date" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectAssetMaintenanceVo">
+        SELECT id, asset_id, asset_no, asset_name, maintenance_type, maintenance_date, maintenance_content, fault_description, maintenance_result, maintenance_cost, maintenance_personnel, maintenance_unit, next_maintenance_date, status, remark, create_time, update_time, create_by, update_by
+        FROM asset_maintenance
+    </sql>
+
+    <!-- selectByAssetId -->
+    <select id="selectByAssetId" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE asset_id = #{assetId} AND del_flag = '0'
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- selectByMaintenanceType -->
+    <select id="selectByMaintenanceType" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE maintenance_type = #{maintenanceType} AND del_flag = '0'
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- selectByMaintenanceDateRange -->
+    <select id="selectByMaintenanceDateRange" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE maintenance_date BETWEEN #{startDate} AND #{endDate} AND del_flag = '0'
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY maintenance_date DESC
+    </select>
+
+    <!-- selectUpcomingMaintenance -->
+    <select id="selectUpcomingMaintenance" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE next_maintenance_date IS NOT NULL 
+          AND next_maintenance_date <= DATE_ADD(CURDATE(), INTERVAL #{days} DAY)
+          AND next_maintenance_date >= CURDATE()
+          AND del_flag = '0'
+        ORDER BY next_maintenance_date ASC
+    </select>
+
+    <!-- selectMaintenanceStatistics -->
+    <select id="selectMaintenanceStatistics" resultType="java.util.Map">
+        SELECT 
+            maintenance_type,
+            COUNT(*) as maintenance_count,
+            SUM(maintenance_cost) as total_cost,
+            AVG(maintenance_cost) as avg_cost,
+            MIN(maintenance_date) as earliest_date,
+            MAX(maintenance_date) as latest_date
+        FROM asset_maintenance
+        WHERE maintenance_date BETWEEN #{startDate} AND #{endDate} AND del_flag = '0'
+        GROUP BY maintenance_type
+        ORDER BY maintenance_count DESC
+    </select>
+
+    <!-- selectMaintenanceCostStatistics -->
+    <select id="selectMaintenanceCostStatistics" resultType="java.util.Map">
+        SELECT 
+            ac.category_name as asset_category,
+            COUNT(am.id) as maintenance_count,
+            SUM(am.maintenance_cost) as total_cost,
+            AVG(am.maintenance_cost) as avg_cost,
+            MIN(am.maintenance_cost) as min_cost,
+            MAX(am.maintenance_cost) as max_cost
+        FROM asset_maintenance am
+        LEFT JOIN asset_info ai ON am.asset_id = ai.id
+        LEFT JOIN asset_category ac ON ai.category_id = ac.id
+        WHERE am.maintenance_date BETWEEN #{startDate} AND #{endDate} 
+          AND am.del_flag = '0' AND ai.del_flag = '0' AND ac.del_flag = '0'
+        GROUP BY ac.id, ac.category_name
+        ORDER BY total_cost DESC
+    </select>
+
+    <!-- selectByMaintenancePersonnel -->
+    <select id="selectByMaintenancePersonnel" resultMap="AssetMaintenanceResult">
+        <include refid="selectAssetMaintenanceVo"/>
+        WHERE maintenance_personnel = #{maintenancePersonnel} AND del_flag = '0'
+        ORDER BY maintenance_date DESC
+    </select>
+
+</mapper>

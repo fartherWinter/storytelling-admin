@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chennian.storytelling.service.WorkflowModelService;
+import com.chennian.storytelling.common.enums.WorkflowResponseEnum;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
-import com.chennian.storytelling.common.response.ResponseEnum;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -49,7 +49,7 @@ public class WorkflowDesignerController {
             stencilNode.put("namespace", "http://b3mn.org/stencilset/bpmn2.0#");
             return ServerResponseEntity.success(stencilNode);
         } catch (Exception e) {
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -137,7 +137,7 @@ public class WorkflowDesignerController {
             // 获取模型的XML内容
             String xml = workflowModelService.getModelXml(modelId);
             if (xml == null) {
-                return ServerResponseEntity.fail(ResponseEnum.PROCESS_INSTANCE_NOT_FOUND.getCode(), "模型数据为空，无法转换");
+                return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_CONVERT_FAILED);
 
             }
             
@@ -145,7 +145,7 @@ public class WorkflowDesignerController {
             result.put("xml", xml);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_MODEL_CONVERT_FAILED);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_CONVERT_FAILED);
         }
     }
     
@@ -162,7 +162,7 @@ public class WorkflowDesignerController {
             result.put("deploymentId", deploymentId);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_DEPLOY_FAILED);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.PROCESS_DEPLOY_FAILED);
         }
     }
 }

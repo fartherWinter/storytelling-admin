@@ -15,7 +15,7 @@ import org.springframework.context.annotation.FilterType;
  * @date 2025/4/28.
  */
 @SpringBootApplication
-@ComponentScan(basePackages = "com.chennian",
+@ComponentScan(basePackages = "com.chennian.storytelling",
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {WxPayConfig.class}

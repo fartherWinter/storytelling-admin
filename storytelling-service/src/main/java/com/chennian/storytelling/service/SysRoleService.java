@@ -9,9 +9,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
-* @author chen
-* @createDate 2025-05-06 19:11:40
-*/
+ * 统一角色服务接口
+ * @author chen
+ * @createDate 2025-05-06 19:11:40
+ */
 public interface SysRoleService extends IService<SysRole> {
     /**
      * 根据条件分页查询角色数据
@@ -172,5 +173,46 @@ public interface SysRoleService extends IService<SysRole> {
      * @return 结果
      */
     public int insertAuthUsers(Long roleId, Long[] userIds);
+    
+    // ==================== 工作流角色相关方法 ====================
+    
+    /**
+     * 查询工作流角色列表
+     * @return 工作流角色列表
+     */
+    public List<SysRole> selectWorkflowRoles();
+    
+    /**
+     * 根据用户ID和部门ID查询角色列表
+     * @param userId 用户ID
+     * @param deptId 部门ID
+     * @return 角色列表
+     */
+    public List<SysRole> selectRolesByUserIdAndDept(Long userId, Long deptId);
+    
+    /**
+     * 为用户分配角色（支持部门、生效时间等）
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     * @param deptId 部门ID
+     * @return 分配结果
+     */
+    public boolean assignRoleToUser(Long userId, Long roleId, Long deptId);
+    
+    /**
+     * 根据角色类型查询角色列表
+     * @param roleType 角色类型（SYSTEM、WORKFLOW、CUSTOM）
+     * @return 角色列表
+     */
+    public List<SysRole> selectRolesByType(String roleType);
+    
+    /**
+     * 检查用户在指定部门是否具有指定角色
+     * @param userId 用户ID
+     * @param roleId 角色ID
+     * @param deptId 部门ID
+     * @return 是否具有角色
+     */
+    public boolean hasRoleInDept(Long userId, Long roleId, Long deptId);
 
 }

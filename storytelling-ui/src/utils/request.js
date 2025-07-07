@@ -11,17 +11,24 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
+      
     // 在发送请求之前做些什么
     const token = getToken()
     if (token) {
       // sa-token认证，将token添加到请求头
-      config.headers['satoken'] = token
+      config.headers['token'] = token
     }
+
     return config
   },
   error => {
     // 对请求错误做些什么
     console.error(error)
+    // Token过期处理（401状态码）
+  if (error.response.status === 401) {
+    localStorage.removeItem('token')
+    router.push('/login')
+  }
     return Promise.reject(error)
   }
 )

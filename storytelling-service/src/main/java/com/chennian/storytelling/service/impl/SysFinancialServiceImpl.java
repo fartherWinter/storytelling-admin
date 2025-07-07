@@ -131,7 +131,7 @@ public class SysFinancialServiceImpl extends ServiceImpl<FinancialTransactionMap
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteTransactionByIds(Long[] transactionIds) {
-        return financialTransactionMapper.deleteBatchIds(Arrays.asList(transactionIds));
+        return financialTransactionMapper.deleteByIds(Arrays.asList(transactionIds));
     }
 
     /**

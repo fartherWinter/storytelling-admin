@@ -23,10 +23,13 @@ spring:
       discovery:
         #服务注册地址
         server-addr: 127.0.0.1:8848
+  security:
+    enabled: false
   cache:
     type: redis
     redis:
       cache-null-values: true
+
   data:
     redis:
       host: 0.0.0.0
@@ -86,8 +89,7 @@ spring:
 flowable:
   database-schema-update: true
   async-executor-activate: false
-security:
-  authorization: enabled
+
 fileManageConfig:
   ## 图片管理
   picConfig:

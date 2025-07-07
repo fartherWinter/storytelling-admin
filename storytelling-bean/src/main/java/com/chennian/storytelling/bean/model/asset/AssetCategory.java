@@ -1,6 +1,7 @@
 package com.chennian.storytelling.bean.model.asset;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -28,68 +29,81 @@ public class AssetCategory implements Serializable {
     /**
      * 类别编码
      */
+    @TableField(value = "category_code")
     private String categoryCode;
 
     /**
      * 类别名称
      */
+    @TableField(value = "category_name")
     private String categoryName;
 
     /**
      * 上级类别ID
      */
+    @TableField(value = "parent_id")
     private Long parentId;
 
     /**
      * 上级类别名称
      */
+    @TableField(value = "parent_name")
     private String parentName;
 
     /**
      * 类别描述
      */
+    @TableField(value = "description")
     private String description;
 
     /**
      * 排序
      */
+    @TableField(value = "order_num")
     private Integer orderNum;
 
     /**
      * 状态（1正常 0停用）
      */
+    @TableField(value = "status")
     private Integer status;
 
     /**
      * 层级
      */
+    @TableField(value = "level")
     private Integer level;
 
     /**
      * 路径
      */
+    @TableField(value = "path")
     private String path;
 
     /**
      * 创建时间
      */
+    @TableField(value = "create_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
     /**
      * 更新时间
      */
+    @TableField(value = "update_time")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
 
     /**
      * 创建人
      */
+    @TableField(value = "create_by")
     private String createBy;
 
     /**
      * 更新人
      */
+    @TableField(value = "update_by")
     private String updateBy;
 
     public Long getId() {

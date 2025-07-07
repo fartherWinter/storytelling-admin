@@ -59,7 +59,11 @@ public class SysDeptController {
     @PostMapping("/info/{sysDepId}")
     @Operation(summary = "根据部门编号获取详细信息")
     public ServerResponseEntity<SysDept> info(@PathVariable("sysDepId") String sysDepId) {
-        //todo 校验部门是否有数据权限
+        // 校验部门是否有数据权限
+        Long currentUserId = Long.valueOf(SecurityUtils.getUser());
+        if (!sysDeptService.checkDeptDataScope(currentUserId, Long.valueOf(sysDepId))) {
+            return ServerResponseEntity.showFailMsg("没有权限访问该部门信息");
+        }
         return ServerResponseEntity.success(sysDeptService.getById(sysDepId));
     }
 
@@ -73,7 +77,11 @@ public class SysDeptController {
     @Operation(summary = "修改")
     public ServerResponseEntity<Integer> update(@RequestBody SysDept sysDept) {
         Long deptId = sysDept.getDeptId();
-        //todo 部门校验
+        // 部门校验
+        Long currentUserId = Long.valueOf(SecurityUtils.getUser());
+        if (!sysDeptService.checkDeptDataScope(currentUserId, deptId)) {
+            return ServerResponseEntity.showFailMsg("没有权限修改该部门信息");
+        }
         if (!sysDeptService.checkDeptNameUnique(sysDept)) {
             return ServerResponseEntity.showFailMsg("修改部门'" + sysDept.getDeptName() + "'失败，部门名称已存在");
         } else if (sysDept.getParentId().equals(deptId)) {
@@ -81,7 +89,8 @@ public class SysDeptController {
         } else if (StringUtils.equals(UserConstants.DEPT_DISABLE, sysDept.getStatus()) && sysDeptService.selectNormalChildrenDeptById(deptId) > 0) {
             return ServerResponseEntity.showFailMsg("该部门包含未停用的子部门！");
         }
-        //todo 增加操作人员选项
+        // 增加操作人员选项
+        sysDept.setUpdateBy(SecurityUtils.getUsername());
         return ServerResponseEntity.success(sysDeptService.updateDept(sysDept));
     }
 
@@ -94,7 +103,8 @@ public class SysDeptController {
         if (!sysDeptService.checkDeptNameUnique(sysDept)) {
             return ServerResponseEntity.showFailMsg("新增部门'" + sysDept.getDeptName() + "'失败，部门名称已存在");
         }
-        //todo 增加操作人员选项
+        // 增加操作人员选项
+        sysDept.setCreateBy(SecurityUtils.getUsername());
         return ServerResponseEntity.success(sysDeptService.insertDept(sysDept));
     }
 
@@ -110,7 +120,11 @@ public class SysDeptController {
         if (sysDeptService.checkDeptExistUser(deptId)) {
             return ServerResponseEntity.showFailMsg("部门存在用户,不允许删除");
         }
-        //todo 检查数据权限
+        // 检查数据权限
+        Long currentUserId = Long.valueOf(SecurityUtils.getUser());
+        if (!sysDeptService.checkDeptDataScope(currentUserId, deptId)) {
+            return ServerResponseEntity.showFailMsg("没有权限删除该部门");
+        }
         return ServerResponseEntity.success(sysDeptService.deleteDeptById(deptId));
     }
 

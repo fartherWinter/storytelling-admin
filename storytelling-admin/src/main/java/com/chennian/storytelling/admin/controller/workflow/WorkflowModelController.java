@@ -26,6 +26,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.chennian.storytelling.common.redis.RedisCache;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.common.utils.PageParam;
+import com.chennian.storytelling.common.enums.WorkflowResponseEnum;
 import com.chennian.storytelling.bean.dto.WorkflowModelDTO;
 import com.chennian.storytelling.service.WorkflowModelService;
 
@@ -81,7 +82,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(modelId);
         } catch (Exception e) {
             logger.error("创建工作流模型失败", e);
-            return ServerResponseEntity.fail("500", "创建工作流模型失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_CREATE_FAILED);
         }
     }
     
@@ -112,7 +113,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             logger.error("更新工作流模型失败", e);
-            return ServerResponseEntity.fail("500", "更新工作流模型失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_UPDATE_FAILED);
         }
     }
     
@@ -140,7 +141,7 @@ public class WorkflowModelController {
             model = workflowModelService.getModel(modelId);
             if (model == null) {
                 logger.warn("未找到工作流模型, ID: {}", modelId);
-                return ServerResponseEntity.fail("404", "未找到工作流模型");
+                return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_NOT_FOUND);
             }
             
             // 将数据存入缓存
@@ -150,7 +151,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(model);
         } catch (Exception e) {
             logger.error("获取工作流模型失败", e);
-            return ServerResponseEntity.fail("500", "获取工作流模型失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -190,7 +191,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(models);
         } catch (Exception e) {
             logger.error("查询工作流模型列表失败", e);
-            return ServerResponseEntity.fail("500", "查询工作流模型列表失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -231,7 +232,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(pageResult);
         } catch (Exception e) {
             logger.error("分页查询工作流模型列表失败", e);
-            return ServerResponseEntity.fail("500", "分页查询工作流模型列表失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -260,7 +261,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             logger.error("删除工作流模型失败", e);
-            return ServerResponseEntity.fail("500", "删除工作流模型失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_DELETE_FAILED);
         }
     }
     
@@ -285,7 +286,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(deploymentId);
         } catch (Exception e) {
             logger.error("部署工作流模型失败", e);
-            return ServerResponseEntity.fail("500", "部署工作流模型失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_DEPLOY_FAILED);
         }
     }
     
@@ -313,7 +314,7 @@ public class WorkflowModelController {
             xml = workflowModelService.getModelXml(modelId);
             if (xml == null) {
                 logger.warn("未找到工作流模型XML, ID: {}", modelId);
-                return ServerResponseEntity.fail("404", "未找到工作流模型XML");
+                return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_XML_GET_FAILED);
             }
             
             // 将数据存入缓存
@@ -323,7 +324,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(xml);
         } catch (Exception e) {
             logger.error("获取工作流模型XML失败", e);
-            return ServerResponseEntity.fail("500", "获取工作流模型XML失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_XML_GET_FAILED);
         }
     }
     
@@ -356,7 +357,7 @@ public class WorkflowModelController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             logger.error("保存工作流模型XML失败", e);
-            return ServerResponseEntity.fail("500", "保存工作流模型XML失败: " + e.getMessage());
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_MODEL_XML_SAVE_FAILED);
         }
     }
     

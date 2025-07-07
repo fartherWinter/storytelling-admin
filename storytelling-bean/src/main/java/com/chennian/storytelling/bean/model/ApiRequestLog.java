@@ -1,183 +1,152 @@
 package com.chennian.storytelling.bean.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+import org.springframework.data.mongodb.core.index.Indexed;
 import java.io.Serializable;
 import java.util.Date;
+import lombok.Data;
 
 /**
- * API请求日志实体类
- * 用于记录用户请求Flask项目API的信息
- *
- * @author chennian
+ * API请求日志
+ * @author chen
+ * MongoDB文档模型
  */
+@Document(collection = "api_request_log")
+@Data
 public class ApiRequestLog implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /** 日志ID */
-    private Long id;
-    
-    /** 请求URL */
-    private String requestUrl;
-    
-    /** 请求方法 */
-    private String requestMethod;
-    
-    /** 请求参数 */
-    private String requestParams;
-    
-    /** 响应状态码 */
-    private Integer responseCode;
-    
-    /** 响应内容 */
-    private String responseContent;
-    
-    /** 用户ID */
+    /**
+     * 主键ID
+     */
+    @Id
+    private String id;
+
+    /**
+     * 请求ID
+     */
+    @Field("request_id")
+    @Indexed
+    private String requestId;
+
+    /**
+     * 用户ID
+     */
+    @Field("user_id")
+    @Indexed
     private String userId;
-    
-    /** 用户名 */
-    private String userName;
-    
-    /** 用户IP */
-    private String userIp;
-    
-    /** 请求时间 */
+
+    /**
+     * 用户名
+     */
+    @Field("username")
+    @Indexed
+    private String username;
+
+    /**
+     * 请求方法
+     */
+    @Field("method")
+    private String method;
+
+    /**
+     * 请求URL
+     */
+    @Field("url")
+    @Indexed
+    private String url;
+
+    /**
+     * 请求参数
+     */
+    @Field("params")
+    private String params;
+
+    /**
+     * 请求体
+     */
+    @Field("request_body")
+    private String requestBody;
+
+    /**
+     * 响应状态码
+     */
+    @Field("status_code")
+    @Indexed
+    private Integer statusCode;
+
+    /**
+     * 响应体
+     */
+    @Field("response_body")
+    private String responseBody;
+
+    /**
+     * 请求时间
+     */
+    @Field("request_time")
+    @Indexed
     private Date requestTime;
-    
-    /** 处理时间(毫秒) */
-    private Long processingTime;
-    
-    /** 流程实例ID */
-    private String processInstanceId;
-    
-    /** 是否成功 */
-    private Boolean success;
-    
-    /** 错误信息 */
+
+    /**
+     * 响应时间
+     */
+    @Field("response_time")
+    private Date responseTime;
+
+    /**
+     * 处理时长（毫秒）
+     */
+    @Field("duration")
+    private Long duration;
+
+    /**
+     * 客户端IP
+     */
+    @Field("client_ip")
+    @Indexed
+    private String clientIp;
+
+    /**
+     * 用户代理
+     */
+    @Field("user_agent")
+    private String userAgent;
+
+    /**
+     * 异常信息
+     */
+    @Field("error_message")
     private String errorMessage;
 
-    public Long getId() {
-        return id;
-    }
+    /**
+     * 流程实例ID
+     */
+    @Field("process_instance_id")
+    @Indexed
+    private String processInstanceId;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    /**
+     * 处理时长（毫秒）
+     */
+    @Field("processing_time")
+    private Long processingTime;
 
-    public String getRequestUrl() {
-        return requestUrl;
-    }
+    /**
+     * 成功状态
+     */
+    @Field("success_status")
+    @Indexed
+    private Boolean successStatus;
 
-    public void setRequestUrl(String requestUrl) {
-        this.requestUrl = requestUrl;
-    }
+    /**
+     * 请求URL
+     */
+    @Field(value = "request_url")
+    private String requestUrl;
 
-    public String getRequestMethod() {
-        return requestMethod;
-    }
 
-    public void setRequestMethod(String requestMethod) {
-        this.requestMethod = requestMethod;
-    }
-
-    public String getRequestParams() {
-        return requestParams;
-    }
-
-    public void setRequestParams(String requestParams) {
-        this.requestParams = requestParams;
-    }
-
-    public Integer getResponseCode() {
-        return responseCode;
-    }
-
-    public void setResponseCode(Integer responseCode) {
-        this.responseCode = responseCode;
-    }
-
-    public String getResponseContent() {
-        return responseContent;
-    }
-
-    public void setResponseContent(String responseContent) {
-        this.responseContent = responseContent;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getUserIp() {
-        return userIp;
-    }
-
-    public void setUserIp(String userIp) {
-        this.userIp = userIp;
-    }
-
-    public Date getRequestTime() {
-        return requestTime;
-    }
-
-    public void setRequestTime(Date requestTime) {
-        this.requestTime = requestTime;
-    }
-
-    public Long getProcessingTime() {
-        return processingTime;
-    }
-
-    public void setProcessingTime(Long processingTime) {
-        this.processingTime = processingTime;
-    }
-
-    public String getProcessInstanceId() {
-        return processInstanceId;
-    }
-
-    public void setProcessInstanceId(String processInstanceId) {
-        this.processInstanceId = processInstanceId;
-    }
-
-    public Boolean getSuccess() {
-        return success;
-    }
-
-    public void setSuccess(Boolean success) {
-        this.success = success;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    @Override
-    public String toString() {
-        return "ApiRequestLog{" +
-                "id=" + id +
-                ", requestUrl='" + requestUrl + '\'' +
-                ", requestMethod='" + requestMethod + '\'' +
-                ", userId='" + userId + '\'' +
-                ", userName='" + userName + '\'' +
-                ", userIp='" + userIp + '\'' +
-                ", requestTime=" + requestTime +
-                ", success=" + success +
-                '}';
-    }
 }

@@ -6,7 +6,7 @@ import com.chennian.storytelling.common.enums.ModelType;
 import com.chennian.storytelling.common.enums.OperatorType;
 import com.chennian.storytelling.bean.vo.CustomerStatisticsVO;
 import com.chennian.storytelling.bean.vo.HotProductVO;
-import com.chennian.storytelling.bean.vo.InventoryStatisticsVO;
+import com.chennian.storytelling.bean.vo.mall.InventoryStatisticsVO;
 import com.chennian.storytelling.bean.vo.SalesStatisticsVO;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.CustomerService;

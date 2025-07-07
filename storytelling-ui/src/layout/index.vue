@@ -63,10 +63,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { removeToken } from '@/utils/auth'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import request from '@/utils/request'
 import SidebarItem from './components/SidebarItem.vue'
 import Breadcrumb from './components/Breadcrumb.vue'
 import AppMain from './components/AppMain.vue'
@@ -77,6 +78,10 @@ const router = useRouter()
 
 // 侧边栏折叠状态
 const isCollapse = ref(false)
+
+// 菜单数据
+const menuList = ref([])
+const loading = ref(false)
 
 // 切换侧边栏折叠状态
 const toggleSideBar = () => {
@@ -92,10 +97,62 @@ const activeMenu = computed(() => {
   return path
 })
 
-// 路由列表
+// 获取菜单列表
+const getMenuList = async () => {
+  try {
+    loading.value = true
+    const response = await request({
+      url: '/sys/menu/list',
+      method: 'post',
+      data: {}
+    })
+    
+    if (response.code === '200') {
+      menuList.value = response.data || []
+      // 将菜单数据转换为路由格式
+      convertMenuToRoutes(response.data || [])
+    } else {
+      ElMessage.error(response.msg || '获取菜单失败')
+    }
+  } catch (error) {
+    console.error('获取菜单失败:', error)
+    ElMessage.error('获取菜单失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 将菜单数据转换为路由格式
+const convertMenuToRoutes = (menus) => {
+  const convertedRoutes = menus.map(menu => {
+    const route = {
+      path: menu.path || '/',
+      name: menu.componentName || menu.name,
+      component: menu.component,
+      meta: {
+        title: menu.name,
+        icon: menu.icon,
+        hidden: !menu.visible,
+        keepAlive: menu.keepAlive,
+        alwaysShow: menu.alwaysShow
+      },
+      children: menu.children && menu.children.length > 0 ? convertMenuToRoutes(menu.children) : []
+    }
+    return route
+  }).filter(route => !route.meta.hidden && route.meta.title)
+  
+  // 动态添加路由
+  convertedRoutes.forEach(route => {
+    if (!router.hasRoute(route.name)) {
+      router.addRoute(route)
+    }
+  })
+}
+
+// 路由列表 - 现在从菜单数据获取
 const routes = computed(() => {
-  return router.options.routes.filter(route => {
-    return !route.hidden && !route.meta?.hidden && route.path !== '/login'
+  return menuList.value.filter(menu => {
+    return menu.visible && menu.type !== 2 && menu.status === 0 // 过滤隐藏菜单和按钮，只显示启用状态
   })
 })
 
@@ -115,6 +172,11 @@ const logout = () => {
     // 用户取消退出
   })
 }
+
+// 组件挂载时获取菜单
+onMounted(() => {
+  getMenuList()
+})
 </script>
 
 <style scoped>

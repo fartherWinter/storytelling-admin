@@ -100,6 +100,12 @@ public class SysRole implements Serializable {
     @TableField(value = "remark")
     private String remark;
 
+    /**
+     * 角色类型（SYSTEM-系统角色，WORKFLOW-工作流角色，CUSTOM-自定义角色）
+     */
+    @TableField(value = "role_type")
+    private String roleType;
+
     @TableField(exist = false)
     private boolean flag = false;
 

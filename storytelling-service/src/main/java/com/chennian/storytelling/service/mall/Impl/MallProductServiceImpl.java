@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -208,5 +209,38 @@ public class MallProductServiceImpl extends ServiceImpl<MallProductMapper, MallP
             return this.updateById(updateProduct) ? 1 : 0;
         }
         return 0;
+    }
+    
+    @Override
+    public List<MallProduct> getRecommendedProducts(Long userId, Integer limit) {
+        // 简单实现：返回最新的推荐商品
+        LambdaQueryWrapper<MallProduct> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MallProduct::getStatus, 1)
+                   .orderByDesc(MallProduct::getCreateTime)
+                   .last("LIMIT " + (limit != null ? limit : 10));
+        return this.list(queryWrapper);
+    }
+    
+    @Override
+    public List<MallProduct> getRelatedProducts(Long productId, Integer limit) {
+        // 获取当前商品信息
+        MallProduct currentProduct = this.getById(productId);
+        if (currentProduct == null) {
+            return new ArrayList<>();
+        }
+        
+        // 根据分类和品牌推荐相关商品
+        LambdaQueryWrapper<MallProduct> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MallProduct::getStatus, 1)
+                   .ne(MallProduct::getId, productId)
+                   .and(wrapper -> wrapper
+                       .eq(MallProduct::getCategoryId, currentProduct.getCategoryId())
+                       .or()
+                       .eq(MallProduct::getBrandId, currentProduct.getBrandId())
+                   )
+                   .orderByDesc(MallProduct::getCreateTime)
+                   .last("LIMIT " + (limit != null ? limit : 6));
+        
+        return this.list(queryWrapper);
     }
 }

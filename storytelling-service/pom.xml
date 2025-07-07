@@ -34,6 +34,11 @@
             <artifactId>storytelling-common</artifactId>
             <version>${chennian.storytelling.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.chennian</groupId>
+            <artifactId>storytelling-dao</artifactId>
+            <version>${chennian.storytelling.version}</version>
+        </dependency>
         <!-- openfeign 组件依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -98,7 +103,12 @@
             <artifactId>flowable-ui-modeler-conf</artifactId>
             <version>${flowable.version}</version>
         </dependency>
-        
+        <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
         <!-- Spring WebSocket 依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -113,8 +123,8 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
+            <version>7.8.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

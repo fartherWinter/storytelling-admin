@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SysPostMapper">
+
+    <!-- SysPost结果映射 -->
+    <resultMap id="SysPostResult" type="com.chennian.storytelling.bean.model.SysPost">
+        <id property="postId" column="post_id" />
+        <result property="postCode" column="post_code" />
+        <result property="postName" column="post_name" />
+        <result property="postSort" column="post_sort" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectSysPostVo">
+        select post_id, post_code, post_name, post_sort, status, create_by, create_time, update_by, update_time, remark
+        from sys_post
+    </sql>
+
+    <!-- selectPostList -->
+    <select id="selectPostList" parameterType="SysPost" resultMap="SysPostResult">
+        <include refid="selectSysPostVo"/>
+        <where>
+            <if test="postCode != null and postCode != ''">
+                AND post_code like concat('%', #{postCode}, '%')
+            </if>
+            <if test="postName != null and postName != ''">
+                AND post_name like concat('%', #{postName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by post_sort
+    </select>
+
+    <!-- selectPostAll -->
+    <select id="selectPostAll" resultMap="SysPostResult">
+        <include refid="selectSysPostVo"/>
+        order by post_sort
+    </select>
+
+    <!-- selectPostById -->
+    <select id="selectPostById" resultMap="SysPostResult">
+        <include refid="selectSysPostVo"/>
+        where post_id = #{postId}
+    </select>
+
+    <!-- selectPostListByUserId -->
+    <select id="selectPostListByUserId" resultType="Long">
+        select p.post_id
+        from sys_post p
+        left join sys_user_post up on up.post_id = p.post_id
+        left join sys_user u on u.user_id = up.user_id
+        where u.user_id = #{userId}
+    </select>
+
+    <!-- selectPostsByUserName -->
+    <select id="selectPostsByUserName" resultMap="SysPostResult">
+        select p.post_id, p.post_code, p.post_name, p.post_sort, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark
+        from sys_post p
+        left join sys_user_post up on up.post_id = p.post_id
+        left join sys_user u on u.user_id = up.user_id
+        where u.user_name = #{userName}
+    </select>
+
+    <!-- deletePostById -->
+    <delete id="deletePostById">
+        delete from sys_post where post_id = #{postId}
+    </delete>
+
+    <!-- deletePostByIds -->
+    <delete id="deletePostByIds">
+        delete from sys_post where post_id in
+        <foreach collection="array" item="postId" open="(" separator="," close=")">
+            #{postId}
+        </foreach>
+    </delete>
+
+    <!-- updatePost -->
+    <update id="updatePost" parameterType="SysPost">
+        update sys_post
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="postCode != null and postCode != ''">post_code = #{postCode},</if>
+            <if test="postName != null and postName != ''">post_name = #{postName},</if>
+            <if test="postSort != null">post_sort = #{postSort},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </trim>
+        where post_id = #{postId}
+    </update>
+
+    <!-- insertPost -->
+    <insert id="insertPost" parameterType="SysPost" useGeneratedKeys="true" keyProperty="postId">
+        insert into sys_post
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="postCode != null and postCode != ''">post_code,</if>
+            <if test="postName != null and postName != ''">post_name,</if>
+            <if test="postSort != null">post_sort,</if>
+            <if test="status != null">status,</if>
+            <if test="remark != null">remark,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="postCode != null and postCode != ''">#{postCode},</if>
+            <if test="postName != null and postName != ''">#{postName},</if>
+            <if test="postSort != null">#{postSort},</if>
+            <if test="status != null">#{status},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <!-- checkPostNameUnique -->
+    <select id="checkPostNameUnique" resultMap="SysPostResult">
+        <include refid="selectSysPostVo"/>
+        where post_name = #{postName} limit 1
+    </select>
+
+    <!-- checkPostCodeUnique -->
+    <select id="checkPostCodeUnique" resultMap="SysPostResult">
+        <include refid="selectSysPostVo"/>
+        where post_code = #{postCode} limit 1
+    </select>
+
+    <!-- quickEnable -->
+    <update id="quickEnable">
+        update sys_post set status = #{status} where post_id = #{postId}
+    </update>
+
+</mapper>

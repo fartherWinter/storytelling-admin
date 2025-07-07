@@ -72,7 +72,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
                 queryWrapper.eq(Customer::getCustomerType, customer.getCustomerType());
             }
             // 根据状态精确查询
-            if (StringUtils.hasText(customer.getStatus())) {
+            if (customer.getStatus() != null) {
                 queryWrapper.eq(Customer::getStatus, customer.getStatus());
             }
         }
@@ -418,7 +418,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         vo.setPendingOrders(pendingCount);
         
         // 设置客户等级
-        vo.setLevel(customer.getLevel());
+        vo.setLevel(String.valueOf(customer.getLevel()));
         
         // 获取最近跟进记录
         List<CustomerFollowupVO> followups = getFollowupRecords(customerId);
@@ -744,7 +744,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
                 queryWrapper.eq(Customer::getCustomerType, customer.getCustomerType());
             }
             // 根据状态精确查询
-            if (StringUtils.hasText(customer.getStatus())) {
+            if (customer.getStatus() != null) {
                 queryWrapper.eq(Customer::getStatus, customer.getStatus());
             }
         }
@@ -826,7 +826,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         customer.setContactPerson(customerVO.getContactPerson());
         customer.setContactPhone(customerVO.getContactPhone());
         // 默认状态为正常
-        customer.setStatus("1");
+        customer.setStatus(1);
         
         // 设置其他默认值
         // 生成临时编码
@@ -834,7 +834,7 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         // 默认类型
         customer.setCustomerType("1");
         // 默认等级
-        customer.setLevel(customerVO.getLevel() != null ? customerVO.getLevel() : "3");
+        customer.setLevel(customerVO.getLevel() != null ? Integer.valueOf(customerVO.getLevel()) : 3);
         customer.setCreateTime(new Date());
         // 标记为移动端创建
         customer.setCreateBy("mobile");
@@ -856,8 +856,8 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         mobileCustomer.setCustomerName(customer.getCustomerName());
         mobileCustomer.setContactPerson(customer.getContactPerson());
         mobileCustomer.setContactPhone(customer.getContactPhone());
-        mobileCustomer.setStatus(customer.getStatus());
-        mobileCustomer.setLevel(customer.getLevel());
+        mobileCustomer.setStatus(String.valueOf(customer.getStatus()));
+        mobileCustomer.setLevel(customer.getLevel().toString());
         
         // 设置最近订单（模拟数据）
         Map<String, Object> recentOrder = new HashMap<>();

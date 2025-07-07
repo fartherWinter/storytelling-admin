@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.chennian.storytelling.bean.enums.NotificationTypeEnum;
+import com.chennian.storytelling.bean.enums.EnableStatusEnum;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -31,16 +33,44 @@ public class SysNotice implements Serializable {
     private String noticeTitle;
 
     /**
-     * 公告类型（1通知 2公告）
+     * 公告类型
      */
     @TableField(value = "notice_type")
-    private String noticeType;
+    private Integer noticeType;
+    
+    /**
+     * 获取公告类型枚举
+     */
+    public NotificationTypeEnum getNoticeTypeEnum() {
+        return NotificationTypeEnum.getByCode(this.noticeType);
+    }
+    
+    /**
+     * 设置公告类型枚举
+     */
+    public void setNoticeTypeEnum(NotificationTypeEnum typeEnum) {
+        this.noticeType = typeEnum != null ? typeEnum.getCode() : null;
+    }
 
     /**
-     * 公告状态（0正常 1关闭）
+     * 公告状态
      */
     @TableField(value = "status")
-    private String status;
+    private Integer status;
+    
+    /**
+     * 获取状态枚举
+     */
+    public EnableStatusEnum getStatusEnum() {
+        return EnableStatusEnum.getByCode(this.status);
+    }
+    
+    /**
+     * 设置状态枚举
+     */
+    public void setStatusEnum(EnableStatusEnum statusEnum) {
+        this.status = statusEnum != null ? Integer.valueOf(statusEnum.getCode()) : null;
+    }
 
     /**
      * 创建者

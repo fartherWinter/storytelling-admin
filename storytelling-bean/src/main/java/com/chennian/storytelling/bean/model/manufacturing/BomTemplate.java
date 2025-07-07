@@ -1,5 +1,9 @@
 package com.chennian.storytelling.bean.model.manufacturing;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -13,39 +17,51 @@ import java.util.Date;
  * @author storytelling
  * @date 2024-01-01
  */
+@TableName("bom_template")
 public class BomTemplate {
     
     /** BOM模板ID */
+    @TableId(value = "bom_id", type = IdType.AUTO)
     private Long bomId;
     
     /** BOM编号 */
+    @TableField("bom_code")
     private String bomCode;
     
     /** BOM名称 */
+    @TableField("bom_name")
     private String bomName;
     
     /** BOM版本 */
+    @TableField("bom_version")
     private String bomVersion;
     
     /** BOM类型（1-标准BOM 2-工程BOM 3-制造BOM 4-成本BOM） */
+    @TableField("bom_type")
     private Integer bomType;
     
     /** BOM状态（0-草稿 1-审核中 2-已审核 3-已发布 4-已冻结 5-已作废） */
+    @TableField("bom_status")
     private Integer bomStatus;
     
     /** 产品ID */
+    @TableField("product_id")
     private Long productId;
     
     /** 产品编号 */
+    @TableField("product_code")
     private String productCode;
     
     /** 产品名称 */
+    @TableField("product_name")
     private String productName;
     
     /** 产品规格 */
+    @TableField("product_spec")
     private String productSpec;
     
     /** 产品单位 */
+    @TableField("product_unit")
     private String productUnit;
     
     /** 基础数量 */

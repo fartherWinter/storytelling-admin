@@ -1,9 +1,14 @@
 package com.chennian.storytelling.common.response;
 
+
+import com.chennian.storytelling.common.enums.InventoryErrorCode;
+import com.chennian.storytelling.common.enums.MallResponseEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.Objects;
+
+import com.chennian.storytelling.common.enums.WorkflowResponseEnum;
 
 /**
  * 响应实体类
@@ -39,6 +44,8 @@ public class ServerResponseEntity<T> implements Serializable {
     private Long timestamp;
 
     private String sign;
+
+
 
     public String getSign() {
         return sign;
@@ -161,6 +168,30 @@ public class ServerResponseEntity<T> implements Serializable {
         ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
         serverResponseEntity.setMsg(responseEnum.getMsg());
         serverResponseEntity.setCode(responseEnum.value());
+        return serverResponseEntity;
+    }
+
+    public static <T> ServerResponseEntity<T> fail(MallResponseEnum responseEnum) {
+        log.error(responseEnum.toString());
+        ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
+        serverResponseEntity.setMsg(responseEnum.getMessage());
+        serverResponseEntity.setCode(String.valueOf(responseEnum.getCode()));
+        return serverResponseEntity;
+    }
+
+    public static <T> ServerResponseEntity<T> fail(WorkflowResponseEnum responseEnum) {
+        log.error(responseEnum.toString());
+        ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
+        serverResponseEntity.setMsg(responseEnum.getMessage());
+        serverResponseEntity.setCode(String.valueOf(responseEnum.getCode()));
+        return serverResponseEntity;
+    }
+
+    public static <T> ServerResponseEntity<T> fail(InventoryErrorCode responseEnum) {
+        log.error(responseEnum.toString());
+        ServerResponseEntity<T> serverResponseEntity = new ServerResponseEntity<>();
+        serverResponseEntity.setMsg(responseEnum.getMessage());
+        serverResponseEntity.setCode(String.valueOf(responseEnum.getCode()));
         return serverResponseEntity;
     }
 

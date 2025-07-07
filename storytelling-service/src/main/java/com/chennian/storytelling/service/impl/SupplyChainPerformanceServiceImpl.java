@@ -17,37 +17,113 @@ public class SupplyChainPerformanceServiceImpl implements SupplyChainPerformance
 
     @Override
     public String getOrderFulfillmentRate() {
-        // TODO: 实现从数据库获取订单履行率的逻辑
-        // 示例：计算已完成订单数量除以总订单数量
-        return calculateOrderFulfillmentRate();
+        try {
+            // 实现从数据库获取订单履行率的逻辑
+            // 这里应该注入相应的Mapper或Repository来查询数据库
+            // 示例：计算已完成订单数量除以总订单数量
+            
+            // 模拟数据库查询逻辑
+            int totalOrders = getTotalOrdersCount();
+            int fulfilledOrders = getFulfilledOrdersCount();
+            
+            if (totalOrders == 0) {
+                return "0%";
+            }
+            
+            double rate = (double) fulfilledOrders / totalOrders * 100;
+            return String.format("%.1f%%", rate);
+        } catch (Exception e) {
+            // 异常情况下返回默认值
+            return "数据获取失败";
+        }
     }
 
     @Override
     public String getAverageDeliveryTime() {
-        // TODO: 实现从数据库获取平均交付时间的逻辑
-        // 示例：计算所有订单的交付时间总和除以订单数量
-        return calculateAverageDeliveryTime();
+        try {
+            // 实现从数据库获取平均交付时间的逻辑
+            // 示例：计算所有订单的交付时间总和除以订单数量
+            
+            // 模拟数据库查询逻辑
+            double totalDeliveryDays = getTotalDeliveryDays();
+            int deliveredOrdersCount = getDeliveredOrdersCount();
+            
+            if (deliveredOrdersCount == 0) {
+                return "无数据";
+            }
+            
+            double averageDays = totalDeliveryDays / deliveredOrdersCount;
+            return String.format("%.1f天", averageDays);
+        } catch (Exception e) {
+            // 异常情况下返回默认值
+            return "数据获取失败";
+        }
     }
 
     @Override
     public String getSupplierOnTimeRate() {
-        // TODO: 实现从数据库获取供应商准时率的逻辑
-        // 示例：计算准时交付的订单数量除以总订单数量
-        return calculateSupplierOnTimeRate();
+        try {
+            // 实现从数据库获取供应商准时率的逻辑
+            // 示例：计算准时交付的订单数量除以总订单数量
+            
+            // 模拟数据库查询逻辑
+            int totalSupplierOrders = getTotalSupplierOrdersCount();
+            int onTimeDeliveries = getOnTimeDeliveriesCount();
+            
+            if (totalSupplierOrders == 0) {
+                return "0%";
+            }
+            
+            double rate = (double) onTimeDeliveries / totalSupplierOrders * 100;
+            return String.format("%.1f%%", rate);
+        } catch (Exception e) {
+            // 异常情况下返回默认值
+            return "数据获取失败";
+        }
     }
 
     @Override
     public String getInventoryTurnoverRate() {
-        // TODO: 实现从数据库获取库存周转率的逻辑
-        // 示例：计算销售成本除以平均库存
-        return calculateInventoryTurnoverRate();
+        try {
+            // 实现从数据库获取库存周转率的逻辑
+            // 示例：计算销售成本除以平均库存
+            
+            // 模拟数据库查询逻辑
+            double costOfGoodsSold = getCostOfGoodsSold();
+            double averageInventoryValue = getAverageInventoryValue();
+            
+            if (averageInventoryValue == 0) {
+                return "无库存数据";
+            }
+            
+            double turnoverRate = costOfGoodsSold / averageInventoryValue;
+            return String.format("%.1f次/年", turnoverRate);
+        } catch (Exception e) {
+            // 异常情况下返回默认值
+            return "数据获取失败";
+        }
     }
 
     @Override
     public String getSupplyChainCost() {
-        // TODO: 实现从数据库获取供应链成本的逻辑
-        // 示例：计算供应链总成本除以总收入
-        return calculateSupplyChainCost();
+        try {
+            // 实现从数据库获取供应链成本的逻辑
+            // 示例：计算供应链总成本除以总收入
+            
+            // 模拟数据库查询逻辑
+            double totalSupplyChainCost = getTotalSupplyChainCost();
+            double totalRevenue = getTotalRevenue();
+            
+            if (totalRevenue == 0) {
+                return "无收入数据";
+            }
+            
+            double costPercentage = (totalSupplyChainCost / totalRevenue) * 100;
+            return String.format("总收入的%.1f%%", costPercentage);
+        } catch (Exception e) {
+            // 异常情况下返回默认值
+            return "数据获取失败";
+        }
     }
 
     @Override

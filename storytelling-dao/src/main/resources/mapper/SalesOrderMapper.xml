@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SalesOrderMapper">
+
+    <!-- SalesOrder结果映射 -->
+    <resultMap id="SalesOrderResult" type="com.chennian.storytelling.bean.model.SalesOrder">
+        <id property="orderId" column="order_id" />
+        <result property="orderNo" column="order_no" />
+        <result property="customerId" column="customer_id" />
+        <result property="totalAmount" column="total_amount" />
+        <result property="status" column="status" />
+        <result property="expectedDeliveryDate" column="expected_delivery_date" />
+        <result property="actualDeliveryDate" column="actual_delivery_date" />
+        <result property="salespersonId" column="salesperson_id" />
+        <result property="approverId" column="approver_id" />
+        <result property="approveTime" column="approve_time" />
+        <result property="shippingAddress" column="shipping_address" />
+        <result property="shippingContact" column="shipping_contact" />
+        <result property="shippingPhone" column="shipping_phone" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="customerName" column="customer_name" />
+        <result property="items" column="items" />
+    </resultMap>
+
+    <!-- findSalesOrdersByProductId -->
+    <select id="findSalesOrdersByProductId" resultMap="SalesOrderResult">
+        SELECT so.*, c.customer_name, c.contact_person
+        FROM erp_sales_order so
+        LEFT JOIN erp_customer c ON so.customer_id = c.customer_id
+        WHERE EXISTS (
+            SELECT 1 FROM erp_sales_order_item soi 
+            WHERE soi.order_id = so.order_id AND soi.product_id = #{productId}
+        )
+        ORDER BY so.create_time DESC
+    </select>
+
+    <!-- findSalesOrdersByCustomerId -->
+    <select id="findSalesOrdersByCustomerId" resultMap="SalesOrderResult">
+        SELECT so.*, c.customer_name, c.contact_person
+        FROM erp_sales_order so
+        LEFT JOIN erp_customer c ON so.customer_id = c.customer_id
+        WHERE so.customer_id = #{customerId}
+        ORDER BY so.create_time DESC
+    </select>
+
+    <!-- updateOrderStatus -->
+    <update id="updateOrderStatus">
+        UPDATE erp_sales_order 
+        SET status = #{status}, update_time = NOW()
+        WHERE order_id = #{orderId}
+    </update>
+
+    <!-- getSalesAmount -->
+    <select id="getSalesAmount" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0)
+        FROM erp_sales_order
+        WHERE status = 'COMPLETED'
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time <= #{endDate}
+        </if>
+    </select>
+
+    <!-- getHotProducts -->
+    <select id="getHotProducts" resultType="map">
+        SELECT p.product_id, p.product_name, SUM(soi.quantity) as total_quantity
+        FROM erp_sales_order_item soi
+        LEFT JOIN erp_product p ON soi.product_id = p.product_id
+        LEFT JOIN erp_sales_order so ON soi.order_id = so.order_id
+        WHERE so.status = 'COMPLETED'
+        GROUP BY p.product_id, p.product_name
+        ORDER BY total_quantity DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- getCategoryStats -->
+    <select id="getCategoryStats" resultType="map">
+        SELECT pc.category_name, COUNT(DISTINCT so.order_id) as order_count, SUM(soi.quantity) as total_quantity
+        FROM erp_sales_order_item soi
+        LEFT JOIN erp_product p ON soi.product_id = p.product_id
+        LEFT JOIN erp_product_category pc ON p.category_id = pc.category_id
+        LEFT JOIN erp_sales_order so ON soi.order_id = so.order_id
+        WHERE so.status = 'COMPLETED'
+        GROUP BY pc.category_id, pc.category_name
+        ORDER BY order_count DESC
+    </select>
+
+</mapper>

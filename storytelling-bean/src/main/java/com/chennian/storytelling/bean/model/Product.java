@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.chennian.storytelling.bean.enums.EnableStatusEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -79,10 +80,24 @@ public class Product implements Serializable {
     private Integer maxStock;
 
     /**
-     * 状态（0正常 1停用）
+     * 状态
      */
     @TableField(value = "status")
-    private String status;
+    private Integer status;
+    
+    /**
+     * 获取状态枚举
+     */
+    public EnableStatusEnum getStatusEnum() {
+        return EnableStatusEnum.getByCode(this.status);
+    }
+    
+    /**
+     * 设置状态枚举
+     */
+    public void setStatusEnum(EnableStatusEnum statusEnum) {
+        this.status = statusEnum != null ? Integer.valueOf(statusEnum.getCode()) : null;
+    }
 
     /**
      * 备注

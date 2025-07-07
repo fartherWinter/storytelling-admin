@@ -1,5 +1,9 @@
 package com.chennian.storytelling.bean.model.manufacturing;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -13,39 +17,51 @@ import java.util.Date;
  * @author storytelling
  * @date 2024-01-01
  */
+@TableName("equipment")
 public class Equipment {
     
     /** 设备ID */
+    @TableId(value = "equipment_id", type = IdType.AUTO)
     private Long equipmentId;
     
     /** 设备编号 */
+    @TableField("equipment_code")
     private String equipmentCode;
     
     /** 设备名称 */
+    @TableField("equipment_name")
     private String equipmentName;
     
     /** 设备类型 */
+    @TableField("equipment_type")
     private String equipmentType;
     
     /** 设备分类 */
+    @TableField("equipment_category")
     private String equipmentCategory;
     
     /** 设备状态（0-停机 1-运行 2-维护 3-故障 4-待机 5-报废） */
+    @TableField("equipment_status")
     private Integer equipmentStatus;
     
     /** 生产线ID */
+    @TableField("line_id")
     private Long lineId;
     
     /** 生产线名称 */
+    @TableField("line_name")
     private String lineName;
     
     /** 车间ID */
+    @TableField("workshop_id")
     private Long workshopId;
     
     /** 车间名称 */
+    @TableField("workshop_name")
     private String workshopName;
     
     /** 设备位置 */
+    @TableField("location")
     private String location;
     
     /** 制造商 */

@@ -6,18 +6,20 @@ import com.chennian.storytelling.bean.model.mall.MallSubOrder;
 import com.chennian.storytelling.common.annotation.EventTrack;
 import com.chennian.storytelling.common.enums.BusinessType;
 import com.chennian.storytelling.common.enums.MallResponseEnum;
-import com.chennian.storytelling.common.enums.MallOrderStatus;
 import com.chennian.storytelling.common.enums.ModelType;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.service.mall.MallOrderService;
 import com.chennian.storytelling.service.mall.MallSubOrderService;
+import com.chennian.storytelling.service.mall.MallWxPayService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * 商城订单Controller
@@ -35,6 +37,9 @@ public class MallOrderController {
     
     @Autowired
     private MallSubOrderService mallSubOrderService;
+    
+    @Autowired
+    private MallWxPayService mallWxPayService;
     
     /**
      * 分页查询订单列表
@@ -91,12 +96,36 @@ public class MallOrderController {
     @PostMapping("/pay/{orderId}")
     @Operation(summary = "支付订单")
     @EventTrack(title = ModelType.MALL, businessType = BusinessType.UPDATE, description = "支付订单")
-    public ServerResponseEntity<Void> pay(@PathVariable Long orderId, @RequestParam Integer payType) {
-        int success = mallOrderService.payOrder(orderId, payType);
-        if (success>0) {
-            return ServerResponseEntity.success();
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.ORDER_PAY_FAIL.getCode(), MallResponseEnum.ORDER_PAY_FAIL.getMessage());
+    public ServerResponseEntity<Object> pay(@PathVariable Long orderId, @RequestParam Integer payType, @RequestParam(required = false) String openId) {
+        try {
+            // 1 = 微信支付
+            if (payType == 1) {
+                if (openId != null && !openId.isEmpty()) {
+                    // JSAPI支付（小程序/公众号）
+                    String prepayId = mallWxPayService.createJsApiPayOrder(orderId, openId);
+                    Map<String, String> result = new HashMap<>();
+                    result.put("prepay_id", prepayId);
+                    result.put("pay_type", "jsapi");
+                    return ServerResponseEntity.success(result);
+                } else {
+                    // Native支付（扫码）
+                    String codeUrl = mallWxPayService.createNativePayOrder(orderId);
+                    Map<String, String> result = new HashMap<>();
+                    result.put("code_url", codeUrl);
+                    result.put("pay_type", "native");
+                    return ServerResponseEntity.success(result);
+                }
+            } else {
+                // 其他支付方式，直接更新订单状态
+                int success = mallOrderService.payOrder(orderId, payType);
+                if (success > 0) {
+                    return ServerResponseEntity.success();
+                } else {
+                    return ServerResponseEntity.fail(MallResponseEnum.ORDER_PAY_FAIL.getCode(), MallResponseEnum.ORDER_PAY_FAIL.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            return ServerResponseEntity.fail(500, "支付失败：" + e.getMessage());
         }
     }
     

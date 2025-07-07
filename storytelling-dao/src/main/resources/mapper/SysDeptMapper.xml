@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SysDeptMapper">
+
+    <!-- SysDept结果映射 -->
+    <resultMap id="SysDeptResult" type="com.chennian.storytelling.bean.model.SysDept">
+        <id property="deptId" column="dept_id" />
+        <result property="parentId" column="parent_id" />
+        <result property="ancestors" column="ancestors" />
+        <result property="deptName" column="dept_name" />
+        <result property="orderNum" column="order_num" />
+        <result property="leader" column="leader" />
+        <result property="phone" column="phone" />
+        <result property="email" column="email" />
+        <result property="status" column="status" />
+        <result property="delFlag" column="del_flag" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="parentName" column="parent_name" />
+        <result property="pageParam" column="page_param" />
+    </resultMap>
+
+    <sql id="selectSysDeptVo">
+        select dept_id, parent_id, ancestors, dept_name, order_num, leader, phone, email, status, del_flag, create_by, create_time, update_by, update_time
+        from sys_dept
+    </sql>
+
+    <!-- selectDeptList -->
+    <select id="selectDeptList" parameterType="SysDept" resultMap="SysDeptResult">
+        <include refid="selectSysDeptVo"/>
+        <where>
+            <if test="deptName != null and deptName != ''">
+                AND dept_name like concat('%', #{deptName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            AND del_flag = '0'
+        </where>
+        order by parent_id, order_num
+    </select>
+
+    <!-- selectDeptListByRoleId -->
+    <select id="selectDeptListByRoleId" resultType="Long">
+        select d.dept_id
+        from sys_dept d
+        left join sys_role_dept rd on d.dept_id = rd.dept_id
+        where rd.role_id = #{roleId}
+        <if test="deptCheckStrictly">
+            and d.dept_id not in (select d.parent_id from sys_dept d inner join sys_role_dept rd on d.dept_id = rd.dept_id and rd.role_id = #{roleId})
+        </if>
+        order by d.parent_id, d.order_num
+    </select>
+
+    <!-- selectDeptById -->
+    <select id="selectDeptById" resultMap="SysDeptResult">
+        <include refid="selectSysDeptVo"/>
+        where dept_id = #{deptId}
+    </select>
+
+    <!-- selectChildrenDeptById -->
+    <select id="selectChildrenDeptById" resultMap="SysDeptResult">
+        <include refid="selectSysDeptVo"/>
+        where find_in_set(#{deptId}, ancestors)
+    </select>
+
+    <!-- selectNormalChildrenDeptById -->
+    <select id="selectNormalChildrenDeptById" resultType="int">
+        select count(*) from sys_dept where status = '0' and del_flag = '0' and find_in_set(#{deptId}, ancestors)
+    </select>
+
+    <!-- hasChildByDeptId -->
+    <select id="hasChildByDeptId" resultType="int">
+        select count(1) from sys_dept where parent_id = #{deptId} and del_flag = '0' limit 1
+    </select>
+
+    <!-- checkDeptExistUser -->
+    <select id="checkDeptExistUser" resultType="int">
+        select count(1) from sys_user where dept_id = #{deptId} and del_flag = '0'
+    </select>
+
+    <!-- checkDeptNameUnique -->
+    <select id="checkDeptNameUnique" resultMap="SysDeptResult">
+        <include refid="selectSysDeptVo"/>
+        where dept_name = #{deptName} and parent_id = #{parentId} and del_flag = '0' limit 1
+    </select>
+
+    <!-- insertDept -->
+    <insert id="insertDept" parameterType="SysDept" useGeneratedKeys="true" keyProperty="deptId">
+        insert into sys_dept
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">parent_id,</if>
+            <if test="ancestors != null">ancestors,</if>
+            <if test="deptName != null and deptName != ''">dept_name,</if>
+            <if test="orderNum != null">order_num,</if>
+            <if test="leader != null">leader,</if>
+            <if test="phone != null">phone,</if>
+            <if test="email != null">email,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time,
+            del_flag
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="parentId != null">#{parentId},</if>
+            <if test="ancestors != null">#{ancestors},</if>
+            <if test="deptName != null and deptName != ''">#{deptName},</if>
+            <if test="orderNum != null">#{orderNum},</if>
+            <if test="leader != null">#{leader},</if>
+            <if test="phone != null">#{phone},</if>
+            <if test="email != null">#{email},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate(),
+            '0'
+        </trim>
+    </insert>
+
+    <!-- updateDept -->
+    <update id="updateDept" parameterType="SysDept">
+        update sys_dept
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="ancestors != null">ancestors = #{ancestors},</if>
+            <if test="deptName != null and deptName != ''">dept_name = #{deptName},</if>
+            <if test="orderNum != null">order_num = #{orderNum},</if>
+            <if test="leader != null">leader = #{leader},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </trim>
+        where dept_id = #{deptId}
+    </update>
+
+    <!-- updateDeptStatusNormal -->
+    <update id="updateDeptStatusNormal">
+        update sys_dept set status = '0' where dept_id in
+        <foreach collection="array" item="deptId" open="(" separator="," close=")">
+            #{deptId}
+        </foreach>
+    </update>
+
+    <!-- updateDeptChildren -->
+    <update id="updateDeptChildren">
+        update sys_dept set ancestors =
+        <foreach collection="depts" item="item" index="index" separator=" " open="case dept_id" close="end">
+            when #{item.deptId} then #{item.ancestors}
+        </foreach>
+        where dept_id in
+        <foreach collection="depts" item="item" index="index" separator="," open="(" close=")">
+            #{item.deptId}
+        </foreach>
+    </update>
+
+    <!-- deleteDeptById -->
+    <update id="deleteDeptById">
+        update sys_dept set del_flag = '2' where dept_id = #{deptId}
+    </update>
+
+    <!-- quickEnable -->
+    <update id="quickEnable">
+        update sys_dept set status = #{status} where dept_id = #{deptId}
+    </update>
+
+</mapper>

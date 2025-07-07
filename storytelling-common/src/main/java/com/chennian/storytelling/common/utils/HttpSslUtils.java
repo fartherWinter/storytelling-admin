@@ -18,7 +18,7 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;

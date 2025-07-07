@@ -986,9 +986,15 @@ public class WorkflowReportServiceImpl implements WorkflowReportService {
         List<WorkflowReportDTO.ReportTemplateDTO> templates = new ArrayList<>();
 
         try {
-            // TODO: 从数据库查询报表模板
-            // 这里可以通过WfReportConfigMapper查询模板配置
-            // 目前使用默认模板，后续可以扩展为从数据库动态加载
+            // 从数据库查询报表模板
+            // 首先尝试从数据库获取模板配置
+            List<WorkflowReportDTO.ReportTemplateDTO> dbTemplates = wfReportConfigMapper.selectReportTemplates();
+            if (dbTemplates != null && !dbTemplates.isEmpty()) {
+                templates.addAll(dbTemplates);
+                log.info("从数据库加载报表模板，数量: {}", dbTemplates.size());
+            } else {
+                log.info("数据库中无报表模板，使用默认模板");
+            }
 
             // 创建默认模板（修复字段不匹配问题）
             WorkflowReportDTO.ReportTemplateDTO efficiencyTemplate = new WorkflowReportDTO.ReportTemplateDTO();
@@ -1090,7 +1096,7 @@ public class WorkflowReportServiceImpl implements WorkflowReportService {
         try {
             // 从数据库获取实时数据
             List<WfInstance> runningInstances = wfInstanceMapper.selectRunningInstances();
-            List<PendingTaskDTO> pendingTasks = wfTaskMapper.selectPendingTasks();
+            List<PendingTaskDTO> pendingTasks = wfTaskMapper.selectPendingTaskStatistics();
             List<TodayCompletedInstanceDTO> todayCompleted = wfInstanceMapper.selectTodayCompletedInstances();
             List<AverageProcessingTimeDTO> avgProcessingTime = wfInstanceMapper.selectAverageProcessingTime();
 

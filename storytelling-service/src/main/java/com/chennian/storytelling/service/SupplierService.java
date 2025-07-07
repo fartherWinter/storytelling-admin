@@ -3,8 +3,8 @@ package com.chennian.storytelling.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chennian.storytelling.bean.model.Supplier;
-import com.chennian.storytelling.bean.vo.SupplierCollaborationMessageVO;
-import com.chennian.storytelling.bean.vo.SupplierPerformanceVO;
+import com.chennian.storytelling.bean.vo.mall.SupplierCollaborationMessageVO;
+import com.chennian.storytelling.bean.vo.mall.SupplierPerformanceVO;
 import com.chennian.storytelling.common.utils.PageParam;
 
 import java.util.List;

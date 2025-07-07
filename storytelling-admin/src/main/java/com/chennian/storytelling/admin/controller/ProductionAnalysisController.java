@@ -7,8 +7,6 @@ import com.chennian.storytelling.common.enums.ModelType;
 import com.chennian.storytelling.common.enums.OperatorType;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.service.ProductionAnalysisService;
-import com.chennian.storytelling.bean.vo.ProductionStatisticsVO;
-import com.chennian.storytelling.bean.vo.ProductionEfficiencyVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;

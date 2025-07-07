@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 
+import com.chennian.storytelling.common.enums.WorkflowResponseEnum;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
-import com.chennian.storytelling.common.response.ResponseEnum;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +27,7 @@ public class WorkflowExceptionHandler {
     @ExceptionHandler(WorkflowException.class)
     public ServerResponseEntity<Void> handleWorkflowException(WorkflowException e) {
         log.error("工作流异常: {}", e.getMessage(), e);
-        return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
@@ -52,7 +52,7 @@ public class WorkflowExceptionHandler {
         }
         
         log.warn("参数验证异常: {}", errorMessage);
-        return ServerResponseEntity.fail(ResponseEnum.METHOD_ARGUMENT_NOT_VALID);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
@@ -61,7 +61,7 @@ public class WorkflowExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ServerResponseEntity<Void> handleIllegalArgumentException(IllegalArgumentException e) {
         log.warn("参数异常: {}", e.getMessage());
-        return ServerResponseEntity.fail(ResponseEnum.METHOD_ARGUMENT_NOT_VALID);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
@@ -70,7 +70,7 @@ public class WorkflowExceptionHandler {
     @ExceptionHandler(NullPointerException.class)
     public ServerResponseEntity<Void> handleNullPointerException(NullPointerException e) {
         log.error("空指针异常", e);
-        return ServerResponseEntity.fail(ResponseEnum.EXCEPTION);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
@@ -79,7 +79,7 @@ public class WorkflowExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ServerResponseEntity<Void> handleRuntimeException(RuntimeException e) {
         log.error("运行时异常: {}", e.getMessage(), e);
-        return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**
@@ -88,7 +88,7 @@ public class WorkflowExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ServerResponseEntity<Void> handleException(Exception e) {
         log.error("系统异常: {}", e.getMessage(), e);
-        return ServerResponseEntity.fail(ResponseEnum.EXCEPTION);
+        return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
     }
 
     /**

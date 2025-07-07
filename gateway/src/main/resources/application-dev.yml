@@ -41,6 +41,9 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+      # 添加全局默认过滤器
+      default-filters:
+        - DedupeResponseHeader=X-Real-IP, RETAIN_UNIQUE # 防止IP头重复
       routes:
         - id: storytelling-admin
           uri: http://localhost:8085
@@ -66,7 +69,7 @@ spring:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]': # 匹配所有路径
-            allowed-origin-patterns: "http://localhost:3001" # 允许的源（支持通配符）
+            allowed-origin-patterns: "http://localhost:3000" # 允许的源（支持通配符）
             allowed-methods:
               - GET
               - POST

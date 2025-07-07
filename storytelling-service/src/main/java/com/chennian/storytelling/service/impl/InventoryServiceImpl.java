@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chennian.storytelling.bean.model.Inventory;
 import com.chennian.storytelling.bean.model.Product;
-import com.chennian.storytelling.bean.vo.InventoryStatisticsVO;
+import com.chennian.storytelling.bean.vo.mall.InventoryStatisticsVO;
 import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.dao.InventoryMapper;
 import com.chennian.storytelling.dao.ProductMapper;

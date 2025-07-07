@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chennian.storytelling.bean.bo.ProductSearchBo;
+import com.chennian.storytelling.bean.enums.EnableStatusEnum;
 import com.chennian.storytelling.bean.model.Inventory;
 import com.chennian.storytelling.bean.model.Product;
 import com.chennian.storytelling.bean.model.SalesOrder;
@@ -60,7 +61,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
             if (product.getCategoryId() != null) {
                 queryWrapper.eq(Product::getCategoryId, product.getCategoryId());
             }
-            if (StringUtils.hasText(product.getStatus())) {
+            if (product.getStatus() != null) {
                 queryWrapper.eq(Product::getStatus, product.getStatus());
             }
         }
@@ -87,7 +88,7 @@ public class ProductServiceImpl extends ServiceImpl<ProductMapper, Product> impl
     public int insertProduct(Product product) {
         // 设置默认状态为正常
         if (product.getStatus() == null) {
-            product.setStatus("0");
+            product.setStatus(EnableStatusEnum.DISABLED.getCode());
         }
         return productMapper.insert(product);
     }

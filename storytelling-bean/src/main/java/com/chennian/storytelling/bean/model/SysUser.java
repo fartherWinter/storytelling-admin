@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.chennian.storytelling.bean.enums.GenderEnum;
+import com.chennian.storytelling.bean.enums.EnableStatusEnum;
+import com.chennian.storytelling.bean.enums.DelFlagEnum;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -62,10 +65,24 @@ public class SysUser implements Serializable {
     private String phoneNumber;
 
     /**
-     * 用户性别（0男 1女 2未知）
+     * 用户性别
      */
     @TableField(value = "sex")
-    private String sex;
+    private Integer sex;
+    
+    /**
+     * 获取性别枚举
+     */
+    public GenderEnum getSexEnum() {
+        return GenderEnum.getByCode(this.sex);
+    }
+    
+    /**
+     * 设置性别枚举
+     */
+    public void setSexEnum(GenderEnum genderEnum) {
+        this.sex = genderEnum != null ? genderEnum.getCode() : null;
+    }
 
     /**
      * 头像路径
@@ -86,16 +103,44 @@ public class SysUser implements Serializable {
     private String salt;
 
     /**
-     * 账号状态（0正常 1停用）
+     * 账号状态
      */
     @TableField(value = "status")
-    private String status;
+    private Integer status;
+    
+    /**
+     * 获取状态枚举
+     */
+    public EnableStatusEnum getStatusEnum() {
+        return EnableStatusEnum.getByCode(this.status);
+    }
+    
+    /**
+     * 设置状态枚举
+     */
+    public void setStatusEnum(EnableStatusEnum statusEnum) {
+        this.status = statusEnum != null ? statusEnum.getCode() : null;
+    }
 
     /**
-     * 删除标志（0代表存在 2代表删除）
+     * 删除标志
      */
     @TableField(value = "del_flag")
-    private String delFlag;
+    private Integer delFlag;
+    
+    /**
+     * 获取删除标志枚举
+     */
+    public DelFlagEnum getDelFlagEnum() {
+        return DelFlagEnum.getByCode(this.delFlag);
+    }
+    
+    /**
+     * 设置删除标志枚举
+     */
+    public void setDelFlagEnum(DelFlagEnum delFlagEnum) {
+        this.delFlag = delFlagEnum != null ? delFlagEnum.getCode() : null;
+    }
 
     /**
      * 最后登录IP

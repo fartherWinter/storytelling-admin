@@ -66,7 +66,7 @@ function handleLogin() {
         uuid: loginForm.value.uuid
       }).then(res => {
         if (res.code === '200') {
-          setToken(res.data.token)
+          setToken(res.data.key)
           ElMessage.success('登录成功')
           router.push('/')
         } else {

@@ -8,6 +8,7 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
       enabled: true
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -35,4 +36,12 @@ mybatis-plus:
 sa-token:
   token-name: token
   timeout: 86400
-  token-style: random-32
+  token-style: jwt
+  #jwt密钥
+  jwt-secret-key: chennian
+  is-share: true    # 在微服务环境中共享Token
+  # Spring Boot 3 关键配置
+  client-ip-header: X-Real-IP
+  check-id-token: false # 禁用旧版检查
+  token-session-check-login: false # 禁用session检查
+  token-prefix: "" # 不使用前缀

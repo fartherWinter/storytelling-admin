@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SysPermissionMapper">
+
+    <!-- SysPermission结果映射 -->
+    <resultMap id="SysPermissionResult" type="com.chennian.storytelling.bean.model.SysPermission">
+        <id property="permissionId" column="permission_id" />
+        <result property="permissionName" column="permission_name" />
+        <result property="permissionCode" column="permission_code" />
+        <result property="permissionType" column="permission_type" />
+        <result property="resourceUrl" column="resource_url" />
+        <result property="parentId" column="parent_id" />
+        <result property="sortOrder" column="sort_order" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+        <result property="children" column="children" />
+        <result property="parentName" column="parent_name" />
+        <result property="level" column="level" />
+        <result property="icon" column="icon" />
+        <result property="isFrame" column="is_frame" />
+        <result property="isCache" column="is_cache" />
+        <result property="visible" column="visible" />
+        <result property="component" column="component" />
+        <result property="query" column="query" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectSysPermissionVo">
+        SELECT permission_id, permission_name, permission_code, permission_type, resource_url, parent_id, sort_order, status, create_by, create_time, update_by, update_time, remark, children, parent_name, level, icon, is_frame, is_cache, visible, component, query
+        FROM sys_permission
+    </sql>
+
+    <!-- selectPermissionList -->
+    <select id="selectPermissionList" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE 1=1
+        <if test="permissionType != null and permissionType != ''">
+            AND permission_type = #{permissionType}
+        </if>
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectPermissionById -->
+    <select id="selectPermissionById" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_id = #{permissionId}
+    </select>
+
+    <!-- selectPermissionsByRoleId -->
+    <select id="selectPermissionsByRoleId" resultMap="SysPermissionResult">
+        SELECT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        WHERE rp.role_id = #{roleId}
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectPermissionCodesByUserId -->
+    <select id="selectPermissionCodesByUserId" resultType="java.lang.String">
+        SELECT DISTINCT p.permission_code
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.status = '0'
+    </select>
+
+    <!-- checkUserPermission -->
+    <select id="checkUserPermission" resultType="java.lang.Integer">
+        SELECT COUNT(1)
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_code = #{permissionCode}
+        AND p.status = '0'
+    </select>
+
+    <!-- selectWorkflowPermissionsPage -->
+    <select id="selectWorkflowPermissionsPage" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_type = 'workflow'
+        <if test="params.permissionName != null and params.permissionName != ''">
+            AND permission_name LIKE CONCAT('%', #{params.permissionName}, '%')
+        </if>
+        <if test="params.status != null and params.status != ''">
+            AND status = #{params.status}
+        </if>
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectWorkflowPermissions -->
+    <select id="selectWorkflowPermissions" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_type = 'workflow'
+        AND status = '0'
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+
+
+    <!-- selectWorkflowPermissionsByUserId -->
+    <select id="selectWorkflowPermissionsByUserId" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'workflow'
+        AND p.status = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectUserProcessPermissions -->
+    <select id="selectUserProcessPermissions" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'workflow'
+        AND p.resource_url LIKE CONCAT('%', #{processKey}, '%')
+        AND p.status = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectUserTaskPermissions -->
+    <select id="selectUserTaskPermissions" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'workflow'
+        AND p.resource_url LIKE CONCAT('%', #{taskKey}, '%')
+        AND p.status = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+
+
+
+
+    <!-- selectUserWorkflowPermissionHistory -->
+    <select id="selectUserWorkflowPermissionHistory" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'workflow'
+        AND p.status = '0'
+        <if test="startTime != null">
+            AND p.create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND p.create_time <= #{endTime}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <!-- countWorkflowPermissionDistribution -->
+    <select id="countWorkflowPermissionDistribution" resultType="java.util.Map">
+        SELECT 
+            p.permission_type as permissionType,
+            COUNT(*) as count
+        FROM sys_permission p
+        WHERE p.permission_type = 'workflow'
+        AND p.status = '0'
+        GROUP BY p.permission_type
+    </select>
+
+
+
+    <!-- selectWorkflowPermissionTemplates -->
+    <select id="selectWorkflowPermissionTemplates" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_type = 'workflow'
+        AND status = '0'
+        AND remark LIKE '%template%'
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+
+
+    <!-- selectWorkflowPermissionInheritance -->
+    <select id="selectWorkflowPermissionInheritance" resultMap="SysPermissionResult">
+        WITH RECURSIVE permission_tree AS (
+            SELECT permission_id, permission_name, permission_code, permission_type, resource_url, parent_id, sort_order, status, create_by, create_time, update_by, update_time, remark, children, parent_name, level, icon, is_frame, is_cache, visible, component, query, 0 as depth
+            FROM sys_permission
+            WHERE permission_id = #{permissionId}
+            AND permission_type = 'workflow'
+            UNION ALL
+            SELECT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query, pt.depth + 1
+            FROM sys_permission p
+            INNER JOIN permission_tree pt ON p.parent_id = pt.permission_id
+            WHERE p.permission_type = 'workflow'
+        )
+        SELECT * FROM permission_tree
+        ORDER BY depth ASC, sort_order ASC
+    </select>
+
+
+
+    <!-- insertPermission -->
+    <insert id="insertPermission" parameterType="SysPermission">
+        INSERT INTO sys_permission (
+            <if test="permissionId != null">permission_id,</if>
+            permission_name,
+            permission_code,
+            permission_type,
+            resource_url,
+            parent_id,
+            sort_order,
+            status,
+            create_by,
+            create_time,
+            remark,
+            icon,
+            is_frame,
+            is_cache,
+            visible,
+            component,
+            query
+        ) VALUES (
+            <if test="permissionId != null">#{permissionId},</if>
+            #{permissionName},
+            #{permissionCode},
+            #{permissionType},
+            #{resourceUrl},
+            #{parentId},
+            #{sortOrder},
+            #{status},
+            #{createBy},
+            #{createTime},
+            #{remark},
+            #{icon},
+            #{isFrame},
+            #{isCache},
+            #{visible},
+            #{component},
+            #{query}
+        )
+    </insert>
+
+    <!-- updatePermission -->
+    <update id="updatePermission" parameterType="SysPermission">
+        UPDATE sys_permission
+        <set>
+            <if test="permissionName != null and permissionName != ''">permission_name = #{permissionName},</if>
+            <if test="permissionCode != null and permissionCode != ''">permission_code = #{permissionCode},</if>
+            <if test="permissionType != null and permissionType != ''">permission_type = #{permissionType},</if>
+            <if test="resourceUrl != null">resource_url = #{resourceUrl},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="sortOrder != null">sort_order = #{sortOrder},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="isFrame != null">is_frame = #{isFrame},</if>
+            <if test="isCache != null">is_cache = #{isCache},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            <if test="component != null">component = #{component},</if>
+            <if test="query != null">query = #{query}</if>
+        </set>
+        WHERE permission_id = #{permissionId}
+    </update>
+
+    <!-- deletePermissionById -->
+    <delete id="deletePermissionById" parameterType="Long">
+        DELETE FROM sys_permission WHERE permission_id = #{permissionId}
+    </delete>
+
+    <!-- deletePermissionByIds -->
+    <delete id="deletePermissionByIds" parameterType="String">
+        DELETE FROM sys_permission WHERE permission_id IN
+        <foreach item="permissionId" collection="array" open="(" separator="," close=")">
+            #{permissionId}
+        </foreach>
+    </delete>
+
+    <!-- checkPermissionCodeUnique -->
+    <select id="checkPermissionCodeUnique" resultType="int">
+        SELECT COUNT(*) FROM sys_permission 
+        WHERE permission_code = #{permissionCode}
+        <if test="permissionId != null">
+            AND permission_id != #{permissionId}
+        </if>
+    </select>
+
+    <!-- countChildPermissions -->
+    <select id="countChildPermissions" resultType="int">
+        SELECT COUNT(*) FROM sys_permission WHERE parent_id = #{permissionId}
+    </select>
+
+    <!-- selectPermissionsByParentId -->
+    <select id="selectPermissionsByParentId" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE parent_id = #{parentId}
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectAllPermissions -->
+    <select id="selectAllPermissions" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE status = '0'
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectPermissionByCode -->
+    <select id="selectPermissionByCode" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_code = #{permissionCode}
+    </select>
+
+    <!-- selectPermissionsByTypeAndStatus -->
+    <select id="selectPermissionsByTypeAndStatus" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE 1=1
+        <if test="permissionType != null and permissionType != ''">
+            AND permission_type = #{permissionType}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectMenuPermissionsByUserId -->
+    <select id="selectMenuPermissionsByUserId" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'menu'
+        AND p.status = '0'
+        AND p.visible = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectButtonPermissionsByUserId -->
+    <select id="selectButtonPermissionsByUserId" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'button'
+        AND p.status = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectApiPermissionsByUserId -->
+    <select id="selectApiPermissionsByUserId" resultMap="SysPermissionResult">
+        SELECT DISTINCT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query
+        FROM sys_permission p
+        INNER JOIN sys_role_permission rp ON p.permission_id = rp.permission_id
+        INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND p.permission_type = 'api'
+        AND p.status = '0'
+        ORDER BY p.sort_order ASC, p.create_time ASC
+    </select>
+
+    <!-- selectPermissionsByResourceUrl -->
+    <select id="selectPermissionsByResourceUrl" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE resource_url = #{resourceUrl}
+        AND status = '0'
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- batchInsertPermissions -->
+    <insert id="batchInsertPermissions" parameterType="java.util.List">
+        INSERT INTO sys_permission (
+            permission_name, permission_code, permission_type, resource_url, parent_id, sort_order, status, create_by, create_time, remark, icon, is_frame, is_cache, visible, component, query
+        ) VALUES
+        <foreach collection="list" item="permission" separator=",">
+            (
+                #{permission.permissionName},
+                #{permission.permissionCode},
+                #{permission.permissionType},
+                #{permission.resourceUrl},
+                #{permission.parentId},
+                #{permission.sortOrder},
+                #{permission.status},
+                #{permission.createBy},
+                #{permission.createTime},
+                #{permission.remark},
+                #{permission.icon},
+                #{permission.isFrame},
+                #{permission.isCache},
+                #{permission.visible},
+                #{permission.component},
+                #{permission.query}
+            )
+        </foreach>
+    </insert>
+
+    <!-- batchUpdatePermissionStatus -->
+    <update id="batchUpdatePermissionStatus">
+        UPDATE sys_permission 
+        SET status = #{status}, update_by = #{updateBy}, update_time = #{updateTime}
+        WHERE permission_id IN
+        <foreach collection="permissionIds" item="permissionId" open="(" separator="," close=")">
+            #{permissionId}
+        </foreach>
+    </update>
+
+    <!-- selectPermissionStatistics -->
+    <select id="selectPermissionStatistics" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total,
+            COUNT(CASE WHEN status = '0' THEN 1 END) as enabled,
+            COUNT(CASE WHEN status = '1' THEN 1 END) as disabled,
+            COUNT(CASE WHEN permission_type = 'menu' THEN 1 END) as menuCount,
+            COUNT(CASE WHEN permission_type = 'button' THEN 1 END) as buttonCount,
+            COUNT(CASE WHEN permission_type = 'api' THEN 1 END) as apiCount,
+            COUNT(CASE WHEN permission_type = 'workflow' THEN 1 END) as workflowCount
+        FROM sys_permission
+    </select>
+
+    <!-- selectPermissionsByNameLike -->
+    <select id="selectPermissionsByNameLike" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_name LIKE CONCAT('%', #{permissionName}, '%')
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectPermissionsByCodeLike -->
+    <select id="selectPermissionsByCodeLike" resultMap="SysPermissionResult">
+        <include refid="selectSysPermissionVo"/>
+        WHERE permission_code LIKE CONCAT('%', #{permissionCode}, '%')
+        ORDER BY sort_order ASC, create_time ASC
+    </select>
+
+    <!-- selectMaxSortOrder -->
+    <select id="selectMaxSortOrder" resultType="java.lang.Integer">
+        SELECT COALESCE(MAX(sort_order), 0) as maxSortOrder
+        FROM sys_permission
+        WHERE parent_id = #{parentId}
+    </select>
+
+    <!-- updatePermissionSortOrder -->
+    <update id="updatePermissionSortOrder">
+        UPDATE sys_permission 
+        SET sort_order = #{sortOrder}, update_by = #{updateBy}, update_time = #{updateTime}
+        WHERE permission_id = #{permissionId}
+    </update>
+
+    <!-- selectPermissionPath -->
+    <select id="selectPermissionPath" resultMap="SysPermissionResult">
+        WITH RECURSIVE permission_path AS (
+            SELECT permission_id, permission_name, permission_code, permission_type, resource_url, parent_id, sort_order, status, create_by, create_time, update_by, update_time, remark, children, parent_name, level, icon, is_frame, is_cache, visible, component, query, 0 as depth
+            FROM sys_permission
+            WHERE permission_id = #{permissionId}
+            UNION ALL
+            SELECT p.permission_id, p.permission_name, p.permission_code, p.permission_type, p.resource_url, p.parent_id, p.sort_order, p.status, p.create_by, p.create_time, p.update_by, p.update_time, p.remark, p.children, p.parent_name, p.level, p.icon, p.is_frame, p.is_cache, p.visible, p.component, p.query, pp.depth + 1
+            FROM sys_permission p
+            INNER JOIN permission_path pp ON p.permission_id = pp.parent_id
+        )
+        SELECT * FROM permission_path
+        ORDER BY depth ASC
+    </select>
+
+</mapper>

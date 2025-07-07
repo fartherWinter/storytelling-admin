@@ -276,4 +276,166 @@ public interface WorkflowService {
      * @return 流程变量Map
      */
     java.util.Map<String, Object> getProcessVariables(String processInstanceId);
+    
+    // ========== 权限检查方法 ==========
+    
+    /**
+     * 检查任务是否分配给指定用户
+     * 
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return 是否分配给用户
+     */
+    boolean isTaskAssignedToUser(String taskId, String userId);
+    
+    /**
+     * 检查用户是否与流程实例相关
+     * 
+     * @param processInstanceId 流程实例ID
+     * @param userId 用户ID
+     * @return 是否相关
+     */
+    boolean isUserRelatedToProcess(String processInstanceId, String userId);
+    
+    /**
+     * 检查用户是否为流程发起人
+     * 
+     * @param processInstanceId 流程实例ID
+     * @param userId 用户ID
+     * @return 是否为发起人
+     */
+    boolean isProcessStarter(String processInstanceId, String userId);
+    
+    /**
+     * 检查用户是否为任务处理人或候选人
+     * 
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return 是否为处理人或候选人
+     */
+    boolean isTaskAssigneeOrCandidate(String taskId, String userId);
+    
+    /**
+     * 检查用户是否可以认领任务
+     * 
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return 是否可以认领
+     */
+    boolean canUserClaimTask(String taskId, String userId);
+    
+    /**
+     * 检查用户是否为任务处理人
+     * 
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return 是否为任务处理人
+     */
+    boolean isTaskAssignee(String taskId, String userId);
+    
+    /**
+     * 检查用户是否与任务相关
+     * 
+     * @param taskId 任务ID
+     * @param userId 用户ID
+     * @return 是否相关
+     */
+    boolean isUserRelatedToTask(String taskId, String userId);
+    
+    /**
+     * 检查用户是否与表单相关
+     * 
+     * @param formId 表单ID
+     * @param userId 用户ID
+     * @return 是否相关
+     */
+    boolean isUserRelatedToForm(String formId, String userId);
+    
+    // ========== 其他缺失的方法 ==========
+    
+    /**
+     * 搜索流程实例
+     * 
+     * @param searchParams 搜索参数
+     * @return 搜索结果
+     */
+    java.util.Map<String, Object> searchProcessInstances(java.util.Map<String, Object> searchParams);
+    
+    /**
+     * 获取流程实例基本信息
+     * 
+     * @param processInstanceId 流程实例ID
+     * @return 基本信息
+     */
+    java.util.Map<String, Object> getProcessInstanceBasicInfo(String processInstanceId);
+    
+    /**
+     * 部署流程（从文件）
+     * 
+     * @param file 文件
+     * @param name 流程名称
+     * @return 部署ID
+     */
+    String deployProcess(org.springframework.web.multipart.MultipartFile file, String name);
+    
+    /**
+     * 获取流程定义列表（分页）
+     * 
+     * @param page 页码
+     * @param size 页大小
+     * @param category 分类
+     * @return 分页结果
+     */
+    java.util.Map<String, Object> getProcessDefinitions(int page, int size, String category);
+    
+    /**
+     * 获取流程定义详情
+     * 
+     * @param processDefinitionId 流程定义ID
+     * @return 详情信息
+     */
+    java.util.Map<String, Object> getProcessDefinitionDetail(String processDefinitionId);
+    
+    /**
+     * 获取流程定义XML
+     * 
+     * @param processDefinitionId 流程定义ID
+     * @return XML字符串
+     */
+    String getProcessDefinitionXml(String processDefinitionId);
+    
+    /**
+     * 获取流程定义图片
+     * 
+     * @param processDefinitionId 流程定义ID
+     * @return 图片字节数组
+     */
+    byte[] getProcessDefinitionImage(String processDefinitionId);
+    
+    /**
+     * 获取部署列表
+     * 
+     * @param page 页码
+     * @param size 页大小
+     * @return 部署列表
+     */
+    java.util.Map<String, Object> getDeployments(int page, int size);
+    
+    /**
+     * 审批通过任务（带变量）
+     * 
+     * @param taskId 任务ID
+     * @param comment 审批意见
+     * @param variables 流程变量
+     */
+    void approveTask(String taskId, String comment, java.util.Map<String, Object> variables);
+    
+    /**
+     * 拒绝任务（带变量）
+     * 
+     * @param taskId 任务ID
+     * @param comment 审批意见
+     * @param variables 流程变量
+     */
+    void rejectTask(String taskId, String comment, java.util.Map<String, Object> variables);
 }

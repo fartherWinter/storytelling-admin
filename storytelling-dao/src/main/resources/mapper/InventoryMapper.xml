@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.InventoryMapper">
+
+    <!-- Inventory结果映射 -->
+    <resultMap id="InventoryResult" type="com.chennian.storytelling.bean.model.Inventory">
+        <id property="inventoryId" column="inventory_id" />
+        <result property="productId" column="product_id" />
+        <result property="warehouseId" column="warehouse_id" />
+        <result property="locationCode" column="location_code" />
+        <result property="quantity" column="quantity" />
+        <result property="lockedQuantity" column="locked_quantity" />
+        <result property="availableQuantity" column="available_quantity" />
+        <result property="unit" column="unit" />
+        <result property="cost" column="cost" />
+        <result property="batchNo" column="batch_no" />
+        <result property="productionDate" column="production_date" />
+        <result property="expiryDate" column="expiry_date" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="transferQuantity" column="transfer_quantity" />
+        <result property="targetWarehouseId" column="target_warehouse_id" />
+    </resultMap>
+
+    <!-- updateInventoryQuantityWithVersion -->
+    <update id="updateInventoryQuantityWithVersion">
+        UPDATE erp_inventory 
+        SET quantity = quantity + #{quantity},
+            available_quantity = available_quantity + #{quantity},
+            version = version + 1,
+            update_time = NOW()
+        WHERE product_id = #{productId} AND version = #{version}
+    </update>
+
+    <!-- lockInventory -->
+    <update id="lockInventory">
+        UPDATE erp_inventory 
+        SET locked_quantity = locked_quantity + #{quantity},
+            available_quantity = available_quantity - #{quantity},
+            update_time = NOW()
+        WHERE product_id = #{productId} 
+        AND available_quantity >= #{quantity}
+    </update>
+
+    <!-- unlockInventory -->
+    <update id="unlockInventory">
+        UPDATE erp_inventory 
+        SET locked_quantity = locked_quantity - IFNULL(
+            (SELECT SUM(quantity) FROM erp_inventory_lock WHERE order_id = #{orderId}), 0
+        ),
+        available_quantity = available_quantity + IFNULL(
+            (SELECT SUM(quantity) FROM erp_inventory_lock WHERE order_id = #{orderId}), 0
+        ),
+        update_time = NOW()
+        WHERE product_id IN (
+            SELECT DISTINCT product_id FROM erp_inventory_lock WHERE order_id = #{orderId}
+        );
+        DELETE FROM erp_inventory_lock WHERE order_id = #{orderId};
+    </update>
+
+    <!-- cleanExpiredLocks -->
+    <update id="cleanExpiredLocks">
+        UPDATE erp_inventory i
+        SET locked_quantity = locked_quantity - IFNULL(
+            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}), 0
+        ),
+        available_quantity = available_quantity + IFNULL(
+            (SELECT SUM(quantity) FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}), 0
+        ),
+        update_time = NOW()
+        WHERE EXISTS (
+            SELECT 1 FROM erp_inventory_lock l WHERE l.product_id = i.product_id AND l.expire_time < #{now}
+        );
+        DELETE FROM erp_inventory_lock WHERE expire_time < #{now};
+    </update>
+
+    <!-- getAvailableStock -->
+    <select id="getAvailableStock" resultType="java.lang.Integer">
+        SELECT available_quantity 
+        FROM erp_inventory 
+        WHERE product_id = #{productId}
+    </select>
+
+    <!-- batchUpdateInventory -->
+    <update id="batchUpdateInventory">
+        <foreach collection="items" item="item" separator=";">
+            UPDATE erp_inventory 
+            SET quantity = quantity + #{item.quantity},
+                available_quantity = available_quantity + #{item.quantity},
+                update_time = NOW()
+            WHERE product_id = #{item.productId}
+        </foreach>
+    </update>
+
+    <!-- selectWarningInventory -->
+    <select id="selectWarningInventory" resultMap="InventoryResult">
+        SELECT i.*, p.product_name, p.product_code, w.warehouse_name
+        FROM erp_inventory i
+        LEFT JOIN erp_product p ON i.product_id = p.product_id
+        LEFT JOIN erp_warehouse w ON i.warehouse_id = w.warehouse_id
+        WHERE i.available_quantity <= #{warningThreshold}
+        AND i.del_flag = '0'
+        ORDER BY i.available_quantity ASC
+    </select>
+
+    <!-- selectInventoryHistory -->
+    <select id="selectInventoryHistory" resultMap="InventoryResult">
+        SELECT * FROM erp_inventory_log
+        WHERE 1=1
+        <if test="productId != null">
+            AND product_id = #{productId}
+        </if>
+        <if test="startTime != null">
+            AND create_time >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            AND create_time <= #{endTime}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- insertInventoryRecord -->
+    <insert id="insertInventoryRecord">
+        INSERT INTO erp_inventory_log (
+            product_id, warehouse_id, operation_type, quantity_change, 
+            quantity_before, quantity_after, operator, operation_time, remark
+        ) VALUES (
+            #{productId}, #{warehouseId}, #{operationType}, #{quantityChange},
+            #{quantityBefore}, #{quantityAfter}, #{operator}, NOW(), #{remark}
+        )
+    </insert>
+
+    <!-- batchInsertInventoryRecords -->
+    <insert id="batchInsertInventoryRecords">
+        INSERT INTO erp_inventory_log (
+            product_id, warehouse_id, operation_type, quantity_change, 
+            quantity_before, quantity_after, operator, operation_time, remark
+        ) VALUES
+        <foreach collection="records" item="record" separator=",">
+            (
+                #{record.productId}, #{record.warehouseId}, #{record.operationType}, #{record.quantityChange},
+                #{record.quantityBefore}, #{record.quantityAfter}, #{record.operator}, NOW(), #{record.remark}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

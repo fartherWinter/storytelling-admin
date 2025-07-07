@@ -1,33 +1,32 @@
 package com.chennian.storytelling.service.impl;
 
 import com.chennian.storytelling.bean.model.ApiRequestLog;
+import com.chennian.storytelling.repository.ApiRequestLogRepository;
 import com.chennian.storytelling.service.ApiRequestLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * API请求日志服务实现类
- * 注：实际项目中应该使用数据库存储，这里使用内存存储作为示例
+ * 使用MongoDB持久化存储
  *
  * @author chennian
  */
+
 @Service
 public class ApiRequestLogServiceImpl implements ApiRequestLogService {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiRequestLogServiceImpl.class);
     
-    // 使用内存存储日志（实际项目中应该使用数据库）
-    private final ConcurrentMap<Long, ApiRequestLog> logMap = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
+    @Autowired
+    private ApiRequestLogRepository apiRequestLogRepository;
 
     @Override
     public int saveApiRequestLog(ApiRequestLog apiRequestLog) {
@@ -35,20 +34,22 @@ public class ApiRequestLogServiceImpl implements ApiRequestLogService {
             return 0;
         }
         
-        // 设置ID和请求时间（如果未设置）
-        if (apiRequestLog.getId() == null) {
-            apiRequestLog.setId(idGenerator.getAndIncrement());
+        try {
+            // 设置请求时间（如果未设置）
+            if (apiRequestLog.getRequestTime() == null) {
+                apiRequestLog.setRequestTime(new Date());
+            }
+            
+            // 保存到MongoDB
+            ApiRequestLog savedLog = apiRequestLogRepository.save(apiRequestLog);
+            logger.info("保存API请求日志到MongoDB: ID={}, URL={}, 用户ID={}", 
+                    savedLog.getId(), savedLog.getUrl(), savedLog.getUserId());
+            
+            return 1;
+        } catch (Exception e) {
+            logger.error("保存API请求日志失败: {}", e.getMessage(), e);
+            return 0;
         }
-        
-        if (apiRequestLog.getRequestTime() == null) {
-            apiRequestLog.setRequestTime(new Date());
-        }
-        
-        // 保存日志
-        logMap.put(apiRequestLog.getId(), apiRequestLog);
-        logger.info("保存API请求日志: {}", apiRequestLog);
-        
-        return 1;
     }
 
     @Override
@@ -56,7 +57,15 @@ public class ApiRequestLogServiceImpl implements ApiRequestLogService {
         if (id == null) {
             return null;
         }
-        return logMap.get(id);
+        
+        try {
+            // MongoDB使用String类型的ID，需要转换
+            Optional<ApiRequestLog> logOptional = apiRequestLogRepository.findById(String.valueOf(id));
+            return logOptional.orElse(null);
+        } catch (Exception e) {
+            logger.error("根据ID查询API请求日志失败: {}", e.getMessage(), e);
+            return null;
+        }
     }
 
     @Override
@@ -65,9 +74,12 @@ public class ApiRequestLogServiceImpl implements ApiRequestLogService {
             return new ArrayList<>();
         }
         
-        return logMap.values().stream()
-                .filter(log -> userId.equals(log.getUserId()))
-                .collect(Collectors.toList());
+        try {
+            return apiRequestLogRepository.findByUserId(userId);
+        } catch (Exception e) {
+            logger.error("根据用户ID查询API请求日志失败: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -76,14 +88,15 @@ public class ApiRequestLogServiceImpl implements ApiRequestLogService {
             return new ArrayList<>();
         }
         
-        Date start = new Date(startTime);
-        Date end = new Date(endTime);
-        
-        return logMap.values().stream()
-                .filter(log -> log.getRequestTime() != null && 
-                        !log.getRequestTime().before(start) && 
-                        !log.getRequestTime().after(end))
-                .collect(Collectors.toList());
+        try {
+            Date start = new Date(startTime);
+            Date end = new Date(endTime);
+            
+            return apiRequestLogRepository.findByRequestTimeBetween(start, end);
+        } catch (Exception e) {
+            logger.error("根据时间范围查询API请求日志失败: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -92,38 +105,39 @@ public class ApiRequestLogServiceImpl implements ApiRequestLogService {
             return new ArrayList<>();
         }
         
-        return logMap.values().stream()
-                .filter(log -> requestUrl.equals(log.getRequestUrl()))
-                .collect(Collectors.toList());
+        try {
+            return apiRequestLogRepository.findByUrl(requestUrl);
+        } catch (Exception e) {
+            logger.error("根据URL查询API请求日志失败: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public List<ApiRequestLog> getFailedApiRequestLogs() {
-        return logMap.values().stream()
-                .filter(log -> log.getSuccess() != null && !log.getSuccess())
-                .collect(Collectors.toList());
+        try {
+            return apiRequestLogRepository.findBySuccessStatusFalse();
+        } catch (Exception e) {
+            logger.error("查询失败的API请求日志失败: {}", e.getMessage(), e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
     public int deleteApiRequestLogsBefore(Long timestamp) {
-        if (timestamp == null) {
+        if (timestamp == null) {    
             return 0;
         }
         
-        Date thresholdDate = new Date(timestamp);
-        List<Long> idsToRemove = logMap.values().stream()
-                .filter(log -> log.getRequestTime() != null && log.getRequestTime().before(thresholdDate))
-                .map(ApiRequestLog::getId)
-                .collect(Collectors.toList());
-        
-        int count = 0;
-        for (Long id : idsToRemove) {
-            if (logMap.remove(id) != null) {
-                count++;
-            }
+        try {
+            Date thresholdDate = new Date(timestamp);
+            long deletedCount = apiRequestLogRepository.deleteByRequestTimeBefore(thresholdDate);
+            
+            logger.info("删除{}条过期的API请求日志", deletedCount);
+            return (int) deletedCount;
+        } catch (Exception e) {
+            logger.error("删除过期API请求日志失败: {}", e.getMessage(), e);
+            return 0;
         }
-        
-        logger.info("删除{}条过期API请求日志", count);
-        return count;
     }
 }

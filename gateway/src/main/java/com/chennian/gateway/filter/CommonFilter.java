@@ -6,12 +6,21 @@ import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.core.Ordered;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+
 @Component
-public class CommonFilter implements GlobalFilter {
+public class CommonFilter implements GlobalFilter, Ordered {
     private static final Logger log = LoggerFactory.getLogger(CommonFilter.class);
+
+    @Override
+    public int getOrder() {
+        // 设置为最高优先级（确保最先执行）
+        return -100;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -22,4 +31,5 @@ public class CommonFilter implements GlobalFilter {
         log.info(exchange.getRequest().getURI().toString());
         return chain.filter(exchange.mutate().request(request).build());
     }
+
 }

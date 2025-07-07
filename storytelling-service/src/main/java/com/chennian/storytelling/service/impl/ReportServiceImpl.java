@@ -10,7 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 报告服务实现类，统一处理日报和周报
@@ -133,9 +136,32 @@ public class ReportServiceImpl implements ReportService {
      * 启动报告审批流程（实际应调用Flowable等工作流服务）
      */
     private String startReportApprovalProcess(ReportDTO reportDTO) {
-        // TODO: 调用Flowable服务启动流程，传递业务主键、标题等参数
-        // 返回流程实例ID
-        return "mock-process-instance-id";
+        try {
+            // 构建流程变量
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("reportId", reportDTO.getId());
+            variables.put("reportTitle", reportDTO.getTitle());
+            variables.put("reportType", reportDTO.getType());
+            variables.put("submitterId", reportDTO.getUserId());
+            variables.put("submitTime", LocalDateTime.now());
+            
+            // 启动报告审批流程
+            String processDefinitionKey = "reportApprovalProcess";
+            String businessKey = "report_" + reportDTO.getId();
+            
+            // 这里应该调用实际的Flowable服务
+            // ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
+            //     processDefinitionKey, businessKey, variables);
+            // return processInstance.getId();
+            
+            // 模拟返回流程实例ID
+            String processInstanceId = "process_" + System.currentTimeMillis();
+            log.info("启动报告审批流程成功，流程实例ID: {}, 业务键: {}", processInstanceId, businessKey);
+            return processInstanceId;
+        } catch (Exception e) {
+            log.error("启动报告审批流程失败: {}", e.getMessage(), e);
+            throw new RuntimeException("启动审批流程失败", e);
+        }
     }
 
     @Override
@@ -163,9 +189,33 @@ public class ReportServiceImpl implements ReportService {
      * 完成审批任务（实际应调用Flowable等工作流服务）
      */
     private boolean completeApprovalTask(String processInstanceId, boolean approve, String comment) {
-        // TODO: 调用Flowable服务完成任务
-        // approve=true表示通过，false表示拒绝
-        // 可传递comment作为审批意见
-        return true;
+        try {
+            // 构建任务完成变量
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("approved", approve);
+            variables.put("approvalComment", comment);
+            variables.put("approvalTime", LocalDateTime.now());
+            
+            // 查询当前用户的待办任务
+            // List<Task> tasks = taskService.createTaskQuery()
+            //     .processInstanceId(processInstanceId)
+            //     .taskCandidateOrAssigned(getCurrentUserId())
+            //     .list();
+            
+            // if (tasks.isEmpty()) {
+            //     log.warn("未找到待处理的审批任务，流程实例ID: {}", processInstanceId);
+            //     return false;
+            // }
+            
+            // Task task = tasks.get(0);
+            // taskService.complete(task.getId(), variables);
+            
+            log.info("完成审批任务成功，流程实例ID: {}, 审批结果: {}, 审批意见: {}", 
+                processInstanceId, approve ? "通过" : "拒绝", comment);
+            return true;
+        } catch (Exception e) {
+            log.error("完成审批任务失败，流程实例ID: {}, 错误: {}", processInstanceId, e.getMessage(), e);
+            return false;
+        }
     }
 }

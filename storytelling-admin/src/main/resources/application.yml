@@ -10,6 +10,8 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+  main:
+    allow-bean-definition-overriding: true
   mvc:
     # 启用路径匹配
     pathmatch:
@@ -53,7 +55,7 @@ knife4j:
 sa-token:
   token-name: token
   timeout: 864000
-  token-style: random-32
+  token-style: jwt
   #jwt密钥
   jwt-secret-key: chennian
 
@@ -64,7 +66,7 @@ workflow:
     version: "v1"
     
     # 基础路径配置
-    base-path: "/api/workflow"
+    base-path: "/sys/workflow"
     
     # 路径验证配置
     validation:

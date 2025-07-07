@@ -4,6 +4,7 @@ import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
   plugins: [vue()],
   optimizeDeps: {
     include: ['vue-i18n']
@@ -27,8 +28,12 @@ export default defineConfig({
     }
   },
   build: {
+    assetsDir: 'assets',
     rollupOptions: {
-      input: path.resolve(__dirname, 'index.html')
+      input: path.resolve(__dirname, 'index.html'),
+      output: {
+        manualChunks: undefined
+      }
     }
   }
 })

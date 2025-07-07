@@ -10,6 +10,7 @@
         <module>storytelling-common</module>
         <module>storytelling-api</module>
         <module>storytelling-bean</module>
+        <module>storytelling-dao</module>
         <module>storytelling-security</module>
         <module>storytelling-service</module>
         <module>storytelling-admin</module>
@@ -44,6 +45,8 @@
         <log4j.version>2.17.2</log4j.version>
         <knife4j.version>4.4.0</knife4j.version>
         <easyexcel.version>3.2.1</easyexcel.version>
+        <pdfbox.version>3.0.5</pdfbox.version>
+        <mongodb.version>4.11.1</mongodb.version>
         <bboss.version>6.8.7</bboss.version>
         <xxl-job.version>2.3.1</xxl-job.version>
         <bitwalker.version>1.21</bitwalker.version>
@@ -61,6 +64,8 @@
         <zxing.javase.version>3.3.3</zxing.javase.version>
         <lingala.version>2.9.1</lingala.version>
         <flowable.version>6.8.0</flowable.version>
+        <brave.version>5.15.1</brave.version>
+        <zipkin-reporter.version>2.16.4</zipkin-reporter.version>
 
     </properties>
 
@@ -248,6 +253,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox</artifactId>
+                <version>${pdfbox.version}</version>
+            </dependency>
 
             <!--            <dependency>-->
             <!--                <groupId>org.openjfx</groupId>-->
@@ -342,6 +353,41 @@
                 <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
             </dependency>
+            
+            <!-- Brave 链路追踪核心库 -->
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave</artifactId>
+                <version>${brave.version}</version>
+            </dependency>
+            
+            <!-- Zipkin Reporter 核心 -->
+            <dependency>
+                <groupId>io.zipkin.reporter2</groupId>
+                <artifactId>zipkin-reporter</artifactId>
+                <version>${zipkin-reporter.version}</version>
+            </dependency>
+            
+            <!-- Zipkin OkHttp Sender -->
+            <dependency>
+                <groupId>io.zipkin.reporter2</groupId>
+                <artifactId>zipkin-sender-okhttp3</artifactId>
+                <version>${zipkin-reporter.version}</version>
+            </dependency>
+            
+            <!-- Spring Cloud Sleuth 链路追踪 -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-sleuth</artifactId>
+                <version>3.1.11</version>
+            </dependency>
+            
+            <!-- Spring Cloud Sleuth Zipkin -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+                <version>3.1.11</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -355,6 +401,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <!-- RabbitMQ 依赖 -->
         <dependency>
@@ -430,6 +480,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
                 <configuration>
                     <layers>
                         <enabled>true</enabled>

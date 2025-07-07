@@ -1,4 +1,4 @@
-package com.chennian.storytelling.service.mall.impl;
+package com.chennian.storytelling.service.mall.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.FinancialTransactionMapper">
+
+    <!-- FinancialTransaction结果映射 -->
+    <resultMap id="FinancialTransactionResult" type="com.chennian.storytelling.bean.model.FinancialTransaction">
+        <id property="transactionId" column="transaction_id" />
+        <result property="transactionNo" column="transaction_no" />
+        <result property="transactionType" column="transaction_type" />
+        <result property="documentType" column="document_type" />
+        <result property="documentId" column="document_id" />
+        <result property="documentNo" column="document_no" />
+        <result property="amount" column="amount" />
+        <result property="direction" column="direction" />
+        <result property="account" column="account" />
+        <result property="counterparty" column="counterparty" />
+        <result property="transactionDate" column="transaction_date" />
+        <result property="status" column="status" />
+        <result property="description" column="description" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectFinancialTransactionVo">
+        SELECT transaction_id, transaction_no, transaction_type, document_type, document_id, document_no, amount, direction, account, counterparty, transaction_date, status, description, create_by, create_time, update_by, update_time
+        FROM financial_transaction
+    </sql>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO financial_transaction (
+            transaction_no, transaction_type, document_type, document_id, document_no, 
+            amount, direction, account, counterparty, transaction_date, 
+            status, description, create_by, create_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.transactionNo}, #{item.transactionType}, #{item.documentType}, 
+                #{item.documentId}, #{item.documentNo}, #{item.amount}, #{item.direction}, 
+                #{item.account}, #{item.counterparty}, #{item.transactionDate}, 
+                #{item.status}, #{item.description}, #{item.createBy}, #{item.createTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- batchUpdate -->
+    <update id="batchUpdate">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE financial_transaction
+            <set>
+                <if test="item.transactionNo != null">transaction_no = #{item.transactionNo},</if>
+                <if test="item.transactionType != null">transaction_type = #{item.transactionType},</if>
+                <if test="item.documentType != null">document_type = #{item.documentType},</if>
+                <if test="item.documentId != null">document_id = #{item.documentId},</if>
+                <if test="item.documentNo != null">document_no = #{item.documentNo},</if>
+                <if test="item.amount != null">amount = #{item.amount},</if>
+                <if test="item.direction != null">direction = #{item.direction},</if>
+                <if test="item.account != null">account = #{item.account},</if>
+                <if test="item.counterparty != null">counterparty = #{item.counterparty},</if>
+                <if test="item.transactionDate != null">transaction_date = #{item.transactionDate},</if>
+                <if test="item.status != null">status = #{item.status},</if>
+                <if test="item.description != null">description = #{item.description},</if>
+                <if test="item.updateBy != null">update_by = #{item.updateBy},</if>
+                <if test="item.updateTime != null">update_time = #{item.updateTime}</if>
+            </set>
+            WHERE transaction_id = #{item.transactionId}
+        </foreach>
+    </update>
+
+</mapper>

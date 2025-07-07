@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.chennian.storytelling.bean.dto.*;
+import com.chennian.storytelling.common.enums.WorkflowResponseEnum;
 import com.chennian.storytelling.common.response.ResponseEnum;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import jakarta.validation.Valid;
@@ -30,17 +31,24 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static com.chennian.storytelling.admin.controller.workflow.WorkflowResponse.*;
 
 
 /**
- * 工作流控制器 - 基础工作流操作
- * 提供流程部署、启动、任务处理等基础功能
+ * 工作流核心控制器
+ * 提供任务处理和基础工作流操作接口
+ * 注意：流程部署功能已迁移至 WorkflowDeploymentController
+ * 注意：流程实例管理功能已迁移至 WorkflowInstanceController
  * 
  * @author chennian
  */
-@Api(tags = "工作流基础操作")
+@Api(tags = "工作流核心管理")
 @Slf4j
 @Validated
 @RestController
@@ -58,96 +66,53 @@ public class WorkflowController {
         this.runtimeService = runtimeService;
     }
     
-    /**
-     * 部署流程定义
-     */
-    @ApiOperation(value = "部署流程定义", notes = "上传并部署新的流程定义")
-    @PostMapping(WorkflowApiPaths.CorePaths.DEPLOY)
-    public ServerResponseEntity<Map<String, Object>> deployProcess(
-            @ApiParam(value = "流程定义信息", required = true) 
-            @Valid @RequestBody ProcessDefinitionDTO processDefinition) {
-        try {
-            String deploymentId = workflowService.deployProcess(
-                    processDefinition.getName(),
-                    processDefinition.getCategory(),
-                    processDefinition.getResourceName(),
-                    processDefinition.getDeploymentFile());
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("deploymentId", deploymentId);
-            result.put("processName", processDefinition.getName());
-            
-            log.info("流程部署成功: {}, deploymentId: {}", processDefinition.getName(), deploymentId);
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("流程部署失败: {}", processDefinition.getName(), e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_DEPLOY_FAILED);
-        }
-    }
+    // 流程部署功能已迁移至 WorkflowDeploymentController
     
-    /**
-     * 启动流程实例
-     */
-    @ApiOperation(value = "启动流程实例", notes = "根据流程定义启动新的流程实例")
-    @PostMapping(WorkflowApiPaths.CorePaths.START)
-    public ServerResponseEntity<Map<String, Object>> startProcess(
-            @ApiParam(value = "流程定义Key", required = true) 
-            @NotBlank @RequestParam("processKey") String processKey,
-            @ApiParam(value = "业务Key", required = true) 
-            @NotBlank @RequestParam("businessKey") String businessKey,
-            @ApiParam(value = "业务类型", required = true) 
-            @NotBlank @RequestParam("businessType") String businessType,
-            @ApiParam(value = "流程标题", required = true) 
-            @NotBlank @RequestParam("title") String title,
-            @ApiParam(value = "流程变量") 
-            @RequestBody(required = false) Map<String, Object> variables) {
-        try {
-            ProcessInstance processInstance = workflowService.startProcess(
-                processKey, businessKey, businessType, title, variables);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("processInstanceId", processInstance.getId());
-            result.put("processDefinitionId", processInstance.getProcessDefinitionId());
-            result.put("businessKey", processInstance.getBusinessKey());
-            result.put("processKey", processKey);
-            result.put("title", title);
-            
-            log.info("流程启动成功: processKey={}, businessKey={}, instanceId={}", 
-                processKey, businessKey, processInstance.getId());
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("流程启动失败: processKey={}, businessKey={}", processKey, businessKey, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_START_FAILED);
-        }
-    }
+    // 流程启动功能已迁移至 WorkflowInstanceController
     
     /**
      * 查询待办任务
      */
-    @ApiOperation(value = "查询待办任务", notes = "查询指定用户的待办任务列表")
+    @ApiOperation(value = "查询待办任务", notes = "获取当前用户或指定用户的待办任务列表")
     @GetMapping(WorkflowApiPaths.TaskPaths.TODO)
+    @PreAuthorize("hasAuthority('workflow:task:read')")
+    @Cacheable(value = "workflow:tasks", key = "'todo:' + (#assignee != null ? #assignee : authentication.name)", 
+               condition = "#assignee == null or @workflowPermissionEvaluator.hasPermission(authentication, #assignee, 'USER', 'READ')")
     public ServerResponseEntity<Map<String, Object>> findTodoTasks(
-            @ApiParam(value = "任务处理人", required = true) 
-            @NotBlank @RequestParam("assignee") String assignee,
+            @ApiParam(value = "任务处理人", required = false) 
+            @RequestParam(value = "assignee", required = false) String assignee,
             @ApiParam(value = "页码", defaultValue = "0") 
             @RequestParam(value = "page", defaultValue = "0") int page,
             @ApiParam(value = "每页大小", defaultValue = "20") 
             @RequestParam(value = "size", defaultValue = "20") int size) {
         try {
-            List<Task> tasks = workflowService.findTodoTasks(assignee);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String currentUser = auth.getName();
+            
+            // 如果没有指定assignee，使用当前用户
+            String targetAssignee = assignee != null ? assignee : currentUser;
+            
+            // 权限检查：只能查询自己的任务，除非有管理权限
+            if (!targetAssignee.equals(currentUser) && 
+                !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("workflow:task:manage"))) {
+                log.warn("用户 {} 尝试查询其他用户 {} 的待办任务", currentUser, targetAssignee);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+            }
+            
+            List<Task> tasks = workflowService.findTodoTasks(targetAssignee);
             
             Map<String, Object> result = new HashMap<>();
             result.put("tasks", tasks);
             result.put("total", tasks.size());
-            result.put("assignee", assignee);
+            result.put("assignee", targetAssignee);
             result.put("page", page);
             result.put("size", size);
             
-            log.debug("查询待办任务成功: assignee={}, count={}", assignee, tasks.size());
+            log.debug("查询待办任务成功: assignee={}, count={}", targetAssignee, tasks.size());
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("查询待办任务失败: assignee={}", assignee, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
         }
     }
     
@@ -171,7 +136,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("查询流程任务失败: processInstanceId={}", processInstanceId, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
         }
     }
     
@@ -180,11 +145,16 @@ public class WorkflowController {
      */
     @ApiOperation(value = "完成任务", notes = "完成指定的工作流任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.COMPLETE)
+    @PreAuthorize("hasAuthority('workflow:task:write') and @workflowPermissionEvaluator.hasPermission(authentication, #taskId, 'TASK', 'WRITE')")
+    @CacheEvict(value = {"workflow:tasks", "workflow:instances"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> completeTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
             @ApiParam("审批意见") @RequestParam(value = "comment", required = false) String comment,
             @ApiParam("流程变量") @RequestBody(required = false) Map<String, Object> variables) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
         
         try {
             // 验证任务ID
@@ -192,17 +162,24 @@ public class WorkflowController {
                 return ServerResponseEntity.showFailMsg("无效的任务ID格式");
             }
             
+            // 验证任务是否属于当前用户
+            if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                log.warn("用户 {} 尝试完成不属于自己的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+            }
+            
             workflowService.completeTask(taskId, variables, comment);
             
             Map<String, Object> result = new HashMap<>();
             result.put("taskId", taskId);
             result.put("comment", comment);
+            result.put("completedBy", currentUser);
             
-            log.info("任务完成成功: taskId={}, comment={}", taskId, comment);
+            log.info("任务完成成功: taskId={}, comment={}, user={}", taskId, comment, currentUser);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务完成失败: taskId={}", taskId, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务完成失败: taskId={}, user={}", taskId, currentUser, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_COMPLETE_FAILED);
         }
     }
     
@@ -211,23 +188,36 @@ public class WorkflowController {
      */
     @ApiOperation(value = "审批通过任务", notes = "审批通过指定的工作流任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.APPROVE)
+    @PreAuthorize("hasAuthority('workflow:task:approve') and @workflowPermissionEvaluator.hasPermission(authentication, #taskId, 'TASK', 'WRITE')")
+    @CacheEvict(value = {"workflow:tasks", "workflow:instances"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> approveTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
-            @ApiParam("审批意见") @RequestParam(value = "comment", required = false) String comment) {
+            @ApiParam("审批意见") @RequestParam(value = "comment", required = false) String comment,
+            @ApiParam("流程变量") @RequestBody(required = false) Map<String, Object> variables) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
         
         try {
-            workflowService.approveTask(taskId, comment);
+            // 验证任务是否属于当前用户
+            if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                log.warn("用户 {} 尝试审批不属于自己的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+            }
+            
+            workflowService.approveTask(taskId, comment, variables);
             
             Map<String, Object> result = new HashMap<>();
             result.put("taskId", taskId);
             result.put("comment", comment);
+            result.put("approvedBy", currentUser);
             
-            log.info("任务审批通过: taskId={}, comment={}", taskId, comment);
+            log.info("任务审批通过: taskId={}, comment={}, user={}", taskId, comment, currentUser);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务审批失败: taskId={}", taskId, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务审批失败: taskId={}, user={}", taskId, currentUser, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_COMPLETE_FAILED);
         }
     }
     
@@ -236,187 +226,46 @@ public class WorkflowController {
      */
     @ApiOperation(value = "拒绝任务", notes = "拒绝指定的工作流任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.REJECT)
+    @PreAuthorize("hasAuthority('workflow:task:reject') and @workflowPermissionEvaluator.hasPermission(authentication, #taskId, 'TASK', 'WRITE')")
+    @CacheEvict(value = {"workflow:tasks", "workflow:instances"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> rejectTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
-            @ApiParam("拒绝原因") @RequestParam(value = "comment", required = false) String comment) {
+            @ApiParam("拒绝原因") @RequestParam(value = "comment", required = false) String comment,
+            @ApiParam("流程变量") @RequestBody(required = false) Map<String, Object> variables) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
         
         try {
-            workflowService.rejectTask(taskId, comment);
+            // 验证任务是否属于当前用户
+            if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                log.warn("用户 {} 尝试拒绝不属于自己的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+            }
+            
+            workflowService.rejectTask(taskId, comment, variables);
             
             Map<String, Object> result = new HashMap<>();
             result.put("taskId", taskId);
             result.put("comment", comment);
+            result.put("rejectedBy", currentUser);
             
-            log.info("任务已拒绝: taskId={}, comment={}", taskId, comment);
+            log.info("任务已拒绝: taskId={}, comment={}, user={}", taskId, comment, currentUser);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务拒绝失败: taskId={}", taskId, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务拒绝失败: taskId={}, user={}", taskId, currentUser, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_COMPLETE_FAILED);
         }
     }
     
-    /**
-     * 获取流程图
-     */
-    @ApiOperation(value = "获取流程图", notes = "获取指定流程实例的流程图")
-    @GetMapping(WorkflowApiPaths.ProcessPaths.DIAGRAM)
-    public ResponseEntity<byte[]> getProcessDiagram(
-            @ApiParam(value = "流程实例ID", required = true) 
-            @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
-        
-        try {
-            byte[] bytes = workflowService.getProcessDiagram(processInstanceId);
-            if (bytes == null) {
-                log.warn("流程图不存在: processInstanceId={}", processInstanceId);
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_PNG);
-            headers.setContentDispositionFormData("attachment", "process_diagram.png");
-            
-            log.debug("获取流程图成功: processInstanceId={}, size={}", processInstanceId, bytes.length);
-            return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
-            
-        } catch (Exception e) {
-            log.error("获取流程图失败: processInstanceId={}", processInstanceId, e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    // 流程图获取功能已迁移至 WorkflowInstanceController
     
-    /**
-     * 终止流程实例
-     */
-    @ApiOperation(value = "终止流程实例", notes = "终止指定的流程实例")
-    @DeleteMapping(WorkflowApiPaths.ProcessPaths.TERMINATE)
-    public ServerResponseEntity<Map<String, Object>> terminateProcessInstance(
-            @ApiParam(value = "流程实例ID", required = true) 
-            @NotBlank @PathVariable("processInstanceId") String processInstanceId,
-            @ApiParam(value = "终止原因", required = true) 
-            @NotBlank @RequestParam("reason") String reason) {
-        
-        try {
-            workflowService.terminateProcessInstance(processInstanceId, reason);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("processInstanceId", processInstanceId);
-            result.put("reason", reason);
-            
-            log.info("流程实例终止成功: processInstanceId={}, reason={}", processInstanceId, reason);
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("流程实例终止失败: processInstanceId={}", processInstanceId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
-        }
-    }
+    // 流程实例终止功能已迁移至 WorkflowInstanceController
     
-    /**
-     * 获取流程变量
-     */
-    @ApiOperation(value = "获取流程变量", notes = "获取指定流程实例的变量值")
-    @GetMapping(WorkflowApiPaths.ProcessPaths.VARIABLE_GET)
-    public ServerResponseEntity<Map<String, Object>> getProcessVariable(
-            @ApiParam(value = "流程实例ID", required = true) 
-            @NotBlank @PathVariable("processInstanceId") String processInstanceId,
-            @ApiParam(value = "变量名", required = true) 
-            @NotBlank @PathVariable("variableName") String variableName) {
-        
-        try {
-            Object value = workflowService.getProcessVariable(processInstanceId, variableName);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("processInstanceId", processInstanceId);
-            result.put("variableName", variableName);
-            result.put("value", value);
-            
-            log.debug("获取流程变量成功: processInstanceId={}, variableName={}", processInstanceId, variableName);
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("获取流程变量失败: processInstanceId={}, variableName={}", processInstanceId, variableName, e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_VARIABLE_FAILED);
-        }
-    }
+    // 流程变量相关功能已迁移至 WorkflowInstanceController
     
-    /**
-     * 设置流程变量
-     */
-    @ApiOperation(value = "设置流程变量", notes = "设置指定流程实例的变量值")
-    @PostMapping(WorkflowApiPaths.ProcessPaths.VARIABLE_SET)
-    public ServerResponseEntity<Map<String, Object>> setProcessVariable(
-            @ApiParam(value = "流程实例ID", required = true) 
-            @NotBlank @PathVariable("processInstanceId") String processInstanceId,
-            @ApiParam(value = "变量名", required = true) 
-            @NotBlank @PathVariable("variableName") String variableName,
-            @ApiParam(value = "变量值", required = true) @RequestBody Object value) {
-        
-        try {
-            workflowService.setProcessVariable(processInstanceId, variableName, value);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("processInstanceId", processInstanceId);
-            result.put("variableName", variableName);
-            result.put("value", value);
-            
-            log.info("流程变量设置成功: processInstanceId={}, variableName={}", processInstanceId, variableName);
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("流程变量设置失败: processInstanceId={}, variableName={}", processInstanceId, variableName, e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_VARIABLE_FAILED);
-        }
-    }
-    
-    /**
-     * 获取流程定义列表
-     */
-    @ApiOperation(value = "获取流程定义列表", notes = "获取系统中的流程定义列表")
-    @GetMapping(WorkflowApiPaths.DefinitionPaths.LIST)
-    public ServerResponseEntity<Map<String, Object>> getProcessDefinitions(
-            @ApiParam("流程定义Key") @RequestParam(value = "key", required = false) String key,
-            @ApiParam("流程分类") @RequestParam(value = "category", required = false) String category,
-            @ApiParam("是否只查询最新版本") @RequestParam(value = "latest", required = false, defaultValue = "true") boolean latest,
-            @ApiParam("页码") @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-            @ApiParam("每页大小") @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
-        
-        try {
-            // 构建查询条件
-            org.flowable.engine.repository.ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
-            
-            if (key != null && !key.isEmpty()) {
-                query.processDefinitionKeyLike("%" + key + "%");
-            }
-            
-            if (category != null && !category.isEmpty()) {
-                query.processDefinitionCategoryLike("%" + category + "%");
-            }
-            
-            // 是否只查询最新版本
-            if (latest) {
-                query.latestVersion();
-            }
-            
-            // 按版本降序排列
-            query.orderByProcessDefinitionVersion().desc();
-            
-            // 分页查询
-            long total = query.count();
-            List<ProcessDefinition> definitions = query
-                    .listPage((page - 1) * size, size);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("definitions", definitions);
-            result.put("total", total);
-            result.put("page", page);
-            result.put("size", size);
-            result.put("totalPages", (total + size - 1) / size);
-            
-            log.debug("获取流程定义列表成功: count={}, page={}, size={}", definitions.size(), page, size);
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("获取流程定义列表失败", e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
-        }
-    }
+    // 流程定义相关功能已迁移至 WorkflowDeploymentController
     
     /**
      * 获取流程定义详情
@@ -433,7 +282,7 @@ public class WorkflowController {
                     .singleResult();
             
             if (definition == null) {
-                return ServerResponseEntity.showFailMsg("流程定义不存在");
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
             }
             
             Map<String, Object> result = new HashMap<>();
@@ -449,7 +298,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("获取流程定义详情失败: processDefinitionId={}", processDefinitionId, e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
         }
     }
     
@@ -549,6 +398,8 @@ public class WorkflowController {
      */
     @ApiOperation(value = "获取工作流统计信息", notes = "获取指定时间范围内的工作流统计数据")
     @GetMapping(WorkflowApiPaths.MonitorPaths.STATISTICS)
+    @PreAuthorize("hasAuthority('workflow:statistics:read')")
+    @Cacheable(value = "workflow:statistics", key = "'global:' + (#startTime != null ? #startTime.toString() : 'null') + ':' + (#endTime != null ? #endTime.toString() : 'null')", unless = "#result == null")
     public ServerResponseEntity<Map<String, Object>> getWorkflowStatistics(
             @ApiParam("开始时间") @RequestParam(value = "startTime", required = false) 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
@@ -567,7 +418,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("获取工作流统计信息失败: startTime={}, endTime={}", startTime, endTime, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -576,11 +427,24 @@ public class WorkflowController {
      */
     @ApiOperation(value = "批量操作任务", notes = "批量完成、审批或拒绝任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.BATCH)
+    @PreAuthorize("hasAuthority('workflow:task:batch')")
+    @CacheEvict(value = {"workflow:tasks", "workflow:instances"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> batchOperateTasks(
             @ApiParam(value = "批量操作参数", required = true) 
             @Valid @RequestBody WorkflowBatchOperationDTO batchOperation) {
         
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+        
         try {
+            // 验证批量操作的权限
+            for (String taskId : batchOperation.getTaskIds()) {
+                if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                    log.warn("用户 {} 尝试批量操作不属于自己的任务: {}", currentUser, taskId);
+                    return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+                }
+            }
+            
             WorkflowBatchOperationDTO.BatchOperationResult operationResult =
                     workflowService.batchOperateTasks(batchOperation);
             
@@ -594,49 +458,27 @@ public class WorkflowController {
             result.put("successCount", successCount);
             result.put("failureCount", failureCount);
             result.put("result", operationResult);
+            result.put("operatedBy", currentUser);
             
-            log.info("批量操作任务完成: operation={}, total={}, success={}, failure={}", 
-                    batchOperation.getOperationType().name(), totalCount, successCount, failureCount);
+            log.info("批量操作任务完成: operation={}, total={}, success={}, failure={}, user={}", 
+                    batchOperation.getOperationType().name(), totalCount, successCount, failureCount, currentUser);
             
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("批量操作任务失败: operation={}", batchOperation.getOperationType().name(), e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("批量操作任务失败: operation={}, user={}", batchOperation.getOperationType().name(), currentUser, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_COMPLETE_FAILED);
         }
     }
     
-    /**
-     * 批量操作流程实例
-     */
-    @ApiOperation(value = "批量操作流程实例", notes = "批量终止、挂起或激活流程实例")
-    @PostMapping(WorkflowApiPaths.ProcessPaths.BATCH)
-    public ServerResponseEntity<Map<String, Object>> batchOperateProcessInstances(
-            @ApiParam(value = "批量操作参数", required = true) 
-            @Valid @RequestBody WorkflowBatchOperationDTO batchOperation) {
-        
-        try {
-            WorkflowBatchOperationDTO.BatchOperationResult operationResult = 
-                    workflowService.batchOperateProcessInstances(batchOperation);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("result", operationResult);
-            result.put("operation", batchOperation.getOperationType().name());
-            result.put("instanceCount", batchOperation.getProcessInstanceIds().size());
-            
-            log.info("批量操作流程实例成功: operation={}, instanceCount={}", 
-                    batchOperation.getOperationType().name(), batchOperation.getProcessInstanceIds().size());
-            return ServerResponseEntity.success(result);
-        } catch (Exception e) {
-            log.error("批量操作流程实例失败: operation={}", batchOperation.getOperationType().name(), e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_INSTANCE_NOT_FOUND);
-        }
-    }
+    // 批量操作流程实例功能已迁移至 WorkflowInstanceController
     
     /**
      * 获取流程历史记录
      */
-    @ApiOperation(value = "获取流程历史记录", notes = "获取指定流程实例的完整历史记录")
+    @ApiOperation(value = "获取流程历史记录", notes = "获取指定流程实例的历史记录")
     @GetMapping(WorkflowApiPaths.ProcessPaths.HISTORY)
+    @PreAuthorize("hasAuthority('workflow:history:read') and @workflowPermissionEvaluator.hasPermission(authentication, #processInstanceId, 'PROCESS_INSTANCE', 'READ')")
+    @Cacheable(value = "workflow:history", key = "#processInstanceId", unless = "#result == null")
     public ServerResponseEntity<Map<String, Object>> getProcessHistory(
             @ApiParam(value = "流程实例ID", required = true) 
             @NotBlank @PathVariable("processInstanceId") String processInstanceId) {
@@ -648,11 +490,11 @@ public class WorkflowController {
             result.put("history", history);
             result.put("processInstanceId", processInstanceId);
             
-            log.debug("获取流程历史记录成功: processInstanceId={}", processInstanceId);
+            log.debug("获取流程历史记录成功: processInstanceId={}, count={}", processInstanceId, history != null ? 1 : 0);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("获取流程历史记录失败: processInstanceId={}", processInstanceId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.PROCESS_HISTORY_ERROR);
         }
     }
     
@@ -661,6 +503,8 @@ public class WorkflowController {
      */
     @ApiOperation(value = "查询用户历史任务", notes = "查询指定用户在指定时间范围内的历史任务")
     @GetMapping(WorkflowApiPaths.TaskPaths.HISTORY)
+    @PreAuthorize("hasAuthority('workflow:task:read')")
+    @Cacheable(value = "workflow:history:tasks", key = "'user:' + #assignee + ':' + (#startTime != null ? #startTime.toString() : 'null') + ':' + (#endTime != null ? #endTime.toString() : 'null')", unless = "#result == null")
     public ServerResponseEntity<Map<String, Object>> findHistoryTasks(
             @ApiParam(value = "任务处理人", required = true) 
             @NotBlank @RequestParam("assignee") String assignee,
@@ -670,6 +514,16 @@ public class WorkflowController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
             @ApiParam("页码") @RequestParam(value = "page", required = false, defaultValue = "1") int page,
             @ApiParam("每页大小") @RequestParam(value = "size", required = false, defaultValue = "20") int size) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+        
+        // 权限检查：只能查询自己的历史任务，除非有管理权限
+        if (!assignee.equals(currentUser) && 
+            !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("workflow:task:manage"))) {
+            log.warn("用户 {} 尝试查询其他用户 {} 的历史任务", currentUser, assignee);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+        }
         
         try {
             List<TaskDTO> tasks = workflowService.findHistoryTasks(assignee, startTime, endTime);
@@ -692,15 +546,17 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("查询用户历史任务失败: assignee={}", assignee, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
         }
     }
     
     /**
      * 任务委派
      */
-    @ApiOperation(value = "任务委派", notes = "将任务委派给其他用户处理")
+    @ApiOperation(value = "任务委派", notes = "将任务委派给其他用户")
     @PostMapping(WorkflowApiPaths.TaskPaths.DELEGATE)
+    @PreAuthorize("hasAuthority('workflow:task:delegate') and @workflowPermissionEvaluator.hasPermission(authentication, #taskId, 'TASK', 'WRITE')")
+    @CacheEvict(value = {"workflow:tasks"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> delegateTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -708,10 +564,19 @@ public class WorkflowController {
             @NotBlank @RequestParam("assignee") String assignee,
             @ApiParam("委派说明") @RequestParam(value = "comment", required = false) String comment) {
         
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+        
         try {
             // 验证任务ID
             if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
-                return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
+            }
+            
+            // 验证任务是否属于当前用户
+            if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                log.warn("用户 {} 尝试委派不属于自己的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
             }
             
             workflowService.delegateTask(taskId, assignee, comment);
@@ -721,12 +586,13 @@ public class WorkflowController {
             result.put("taskId", taskId);
             result.put("assignee", assignee);
             result.put("comment", comment);
+            result.put("delegatedBy", currentUser);
             
-            log.info("任务委派成功: taskId={}, assignee={}", taskId, assignee);
+            log.info("任务委派成功: taskId={}, from={}, to={}", taskId, currentUser, assignee);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务委派失败: taskId={}, assignee={}", taskId, assignee, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务委派失败: taskId={}, from={}, to={}", taskId, currentUser, assignee, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_DELEGATE_FAILED);
         }
     }
     
@@ -735,30 +601,39 @@ public class WorkflowController {
      */
     @ApiOperation(value = "任务认领", notes = "认领候选任务")
     @PostMapping(WorkflowApiPaths.TaskPaths.CLAIM)
+    @PreAuthorize("hasAuthority('workflow:task:claim')")
+    @CacheEvict(value = {"workflow:tasks"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> claimTask(
             @ApiParam(value = "任务ID", required = true) 
-            @NotBlank @PathVariable("taskId") String taskId,
-            @ApiParam(value = "认领人", required = true) 
-            @NotBlank @RequestParam("assignee") String assignee) {
+            @NotBlank @PathVariable("taskId") String taskId) {
+        
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
         
         try {
             // 验证任务ID
             if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
-                return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
             }
             
-            workflowService.claimTask(taskId, assignee);
+            // 验证任务是否可以被当前用户认领
+            if (!workflowService.canUserClaimTask(taskId, currentUser)) {
+                log.warn("用户 {} 尝试认领无权限的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
+            }
+            
+            workflowService.claimTask(taskId, currentUser);
             
             Map<String, Object> result = new HashMap<>();
             result.put("message", "任务认领成功");
             result.put("taskId", taskId);
-            result.put("assignee", assignee);
+            result.put("claimedBy", currentUser);
             
-            log.info("任务认领成功: taskId={}, assignee={}", taskId, assignee);
+            log.info("任务认领成功: taskId={}, user={}", taskId, currentUser);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务认领失败: taskId={}, assignee={}", taskId, assignee, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务认领失败: taskId={}, user={}", taskId, currentUser, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_CLAIM_FAILED);
         }
     }
     
@@ -767,6 +642,8 @@ public class WorkflowController {
      */
     @ApiOperation(value = "任务转办", notes = "将任务转办给其他用户")
     @PostMapping(WorkflowApiPaths.TaskPaths.TRANSFER)
+    @PreAuthorize("hasAuthority('workflow:task:transfer') and @workflowPermissionEvaluator.hasPermission(authentication, #taskId, 'TASK', 'WRITE')")
+    @CacheEvict(value = {"workflow:tasks"}, allEntries = true)
     public ServerResponseEntity<Map<String, Object>> transferTask(
             @ApiParam(value = "任务ID", required = true) 
             @NotBlank @PathVariable("taskId") String taskId,
@@ -774,10 +651,19 @@ public class WorkflowController {
             @NotBlank @RequestParam("assignee") String assignee,
             @ApiParam("转办说明") @RequestParam(value = "comment", required = false) String comment) {
         
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
+        
         try {
             // 验证任务ID
             if (!WorkflowApiPaths.Validator.isValidTaskId(taskId)) {
-                return ServerResponseEntity.fail(ResponseEnum.TASK_NOT_FOUND);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_NOT_FOUND);
+            }
+            
+            // 验证任务是否属于当前用户
+            if (!workflowService.isTaskAssignedToUser(taskId, currentUser)) {
+                log.warn("用户 {} 尝试转办不属于自己的任务: {}", currentUser, taskId);
+                return ServerResponseEntity.fail(WorkflowResponseEnum.PERMISSION_DENIED);
             }
             
             workflowService.transferTask(taskId, assignee, comment);
@@ -787,12 +673,13 @@ public class WorkflowController {
             result.put("taskId", taskId);
             result.put("assignee", assignee);
             result.put("comment", comment);
+            result.put("transferredBy", currentUser);
             
-            log.info("任务转办成功: taskId={}, assignee={}", taskId, assignee);
+            log.info("任务转办成功: taskId={}, from={}, to={}", taskId, currentUser, assignee);
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
-            log.error("任务转办失败: taskId={}, assignee={}", taskId, assignee, e);
-            return ServerResponseEntity.fail(ResponseEnum.TASK_COMPLETE_FAILED);
+            log.error("任务转办失败: taskId={}, from={}, to={}", taskId, currentUser, assignee, e);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.TASK_TRANSFER_FAILED);
         }
     }
     
@@ -832,7 +719,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("获取流程定义列表失败: category={}, key={}, name={}", category, key, name, e);
-            return ServerResponseEntity.fail(ResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.PROCESS_DEFINITION_NOT_FOUND);
         }
     }
     
@@ -856,7 +743,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程定义挂起失败: processDefinitionId={}", processDefinitionId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -880,7 +767,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程定义激活失败: processDefinitionId={}", processDefinitionId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -904,7 +791,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程实例挂起失败: processInstanceId={}", processInstanceId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
     
@@ -928,7 +815,7 @@ public class WorkflowController {
             return ServerResponseEntity.success(result);
         } catch (Exception e) {
             log.error("流程实例激活失败: processInstanceId={}", processInstanceId, e);
-            return ServerResponseEntity.fail(ResponseEnum.WORKFLOW_ERROR);
+            return ServerResponseEntity.fail(WorkflowResponseEnum.WORKFLOW_ERROR);
         }
     }
 }

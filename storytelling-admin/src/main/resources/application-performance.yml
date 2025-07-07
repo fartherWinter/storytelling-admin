@@ -1,0 +1,212 @@
+# 性能监控和优化配置
+performance:
+  # 线程池配置
+  thread-pool:
+    core-size: 10
+    max-size: 50
+    queue-capacity: 200
+    keep-alive: 60
+    
+  # 监控配置
+  monitoring:
+    enabled: true
+    metrics-interval: 30000  # 30秒
+    
+  # GC监控配置
+  gc:
+    monitoring:
+      enabled: true
+      warning-threshold: 0.8  # 内存使用率警告阈值
+      
+  # 压力测试配置
+  stress-test:
+    default-concurrency: 10
+    default-requests: 1000
+    max-duration: 300000  # 5分钟
+    warmup-requests: 50
+    
+# Spring Boot Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,prometheus,performance,stress-test,test-coverage
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        stress.test.request.time: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+        stress.test.request.time: 0.5,0.95,0.99
+        
+# 链路追踪配置
+spring:
+  sleuth:
+    sampler:
+      probability: 1.0  # 采样率100%（生产环境建议降低）
+    zipkin:
+      base-url: http://localhost:9411
+      sender:
+        type: web
+    web:
+      client:
+        enabled: true
+      servlet:
+        enabled: true
+        
+# 异步处理配置
+async:
+  executor:
+    core-pool-size: 5
+    max-pool-size: 20
+    queue-capacity: 100
+    thread-name-prefix: "Async-"
+    keep-alive-seconds: 60
+    
+# 缓存配置优化
+spring:
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000  # 10分钟
+      cache-null-values: false
+      use-key-prefix: true
+      
+# Redis连接池优化
+spring:
+  redis:
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 2000
+    timeout: 3000
+    
+# 数据库连接池优化
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+      
+# JVM性能监控配置
+jvm:
+  performance:
+    # 启用JVM性能监控
+    monitoring:
+      enabled: true
+      collection-interval: 30000  # 30秒收集一次
+      
+    # 内存监控配置
+    memory:
+      # 内存使用率监控
+      usage-ratio:
+        enabled: true
+        warning-threshold: 0.8   # 80%警告阈值
+        critical-threshold: 0.9  # 90%严重阈值
+        
+      # 堆内存配置
+      heap:
+        initial-size: "2g"       # 初始堆大小
+        max-size: "4g"           # 最大堆大小
+        
+      # 非堆内存配置
+      non-heap:
+        max-metaspace: "512m"    # 最大元空间
+        
+    # GC配置
+    gc:
+      # GC算法选择
+      algorithm: "G1"           # G1GC
+      
+      # G1GC特定配置
+      g1:
+        max-pause-millis: 200    # 最大暂停时间200ms
+        heap-region-size: "16m"  # 堆区域大小
+        
+      # GC监控
+      monitoring:
+        enabled: true
+        log-gc: true
+        gc-time-threshold: 100   # GC时间阈值(ms)
+        
+    # 线程监控配置
+    threads:
+      monitoring:
+        enabled: true
+        max-thread-count: 200    # 最大线程数警告阈值
+        deadlock-detection: true # 死锁检测
+        
+    # CPU监控配置
+    cpu:
+      monitoring:
+        enabled: true
+        usage-threshold: 0.8     # CPU使用率阈值
+        
+    # 编译器配置
+    compiler:
+      tiered-compilation: true  # 分层编译
+      
+    # 诊断配置
+    diagnostics:
+      flight-recorder: true     # 启用JFR
+      heap-dump-on-oom: true   # OOM时生成堆转储
+      heap-dump-path: "logs/heapdump.hprof"
+      
+# JVM启动参数配置（通过环境变量或启动参数设置）
+# JAVA_OPTS: >
+#   -Xms2g -Xmx4g
+#   -XX:+UseG1GC
+#   -XX:MaxGCPauseMillis=200
+#   -XX:G1HeapRegionSize=16m
+#   -XX:+TieredCompilation
+#   -XX:+FlightRecorder
+#   -Xss256k
+#   -XX:MaxMetaspaceSize=512m
+#   -XX:+HeapDumpOnOutOfMemoryError
+#   -XX:HeapDumpPath=logs/heapdump.hprof
+#   -XX:+PrintGC
+#   -XX:+PrintGCDetails
+#   -XX:+PrintGCTimeStamps
+#   -Xloggc:logs/gc.log
+
+# 测试覆盖率配置
+test:
+  coverage:
+    source-path: "src/main/java"
+    test-path: "src/test/java"
+    exclude-patterns:
+      - "**/config/**"
+      - "**/dto/**"
+      - "**/entity/**"
+    target-coverage: 80.0
+    
+# 日志配置优化
+logging:
+  level:
+    com.chennian.storytelling: INFO
+    org.springframework.cache: DEBUG
+    io.micrometer: INFO
+    brave: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+  file:
+    name: logs/storytelling-performance.log
+    max-size: 100MB
+    max-history: 30

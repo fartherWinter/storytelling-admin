@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetDepreciationMapper">
+
+    <!-- AssetDepreciation结果映射 -->
+    <resultMap id="AssetDepreciationResult" type="com.chennian.storytelling.bean.model.AssetDepreciation">
+        <id property="id" column="id" />
+        <result property="assetId" column="asset_id" />
+        <result property="assetCode" column="asset_code" />
+        <result property="assetName" column="asset_name" />
+        <result property="depreciationMonth" column="depreciation_month" />
+        <result property="depreciationMethod" column="depreciation_method" />
+        <result property="originalValue" column="original_value" />
+        <result property="accumulatedDepreciation" column="accumulated_depreciation" />
+        <result property="currentDepreciation" column="current_depreciation" />
+        <result property="netValue" column="net_value" />
+        <result property="usefulLife" column="useful_life" />
+        <result property="usedMonths" column="used_months" />
+        <result property="remainingMonths" column="remaining_months" />
+        <result property="depreciationRate" column="depreciation_rate" />
+        <result property="residualRate" column="residual_rate" />
+        <result property="residualValue" column="residual_value" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectAssetDepreciationVo">
+        SELECT id, asset_id, asset_code, asset_name, depreciation_month, depreciation_method, original_value, accumulated_depreciation, current_depreciation, net_value, useful_life, used_months, remaining_months, depreciation_rate, residual_rate, residual_value, status, remark, create_time, update_time, create_by, update_by
+        FROM asset_depreciation
+    </sql>
+
+    <!-- selectDepreciationPage -->
+    <select id="selectDepreciationPage" resultMap="AssetDepreciationResult">
+        <include refid="selectAssetDepreciationVo"/>
+        WHERE del_flag = '0'
+        <if test="depreciation != null">
+            <if test="depreciation.assetId != null">
+                AND asset_id = #{depreciation.assetId}
+            </if>
+            <if test="depreciation.assetCode != null and depreciation.assetCode != ''">
+                AND asset_code LIKE CONCAT('%', #{depreciation.assetCode}, '%')
+            </if>
+            <if test="depreciation.assetName != null and depreciation.assetName != ''">
+                AND asset_name LIKE CONCAT('%', #{depreciation.assetName}, '%')
+            </if>
+            <if test="depreciation.depreciationMonth != null and depreciation.depreciationMonth != ''">
+                AND depreciation_month = #{depreciation.depreciationMonth}
+            </if>
+            <if test="depreciation.depreciationMethod != null">
+                AND depreciation_method = #{depreciation.depreciationMethod}
+            </if>
+            <if test="depreciation.status != null">
+                AND status = #{depreciation.status}
+            </if>
+        </if>
+        ORDER BY depreciation_month DESC, asset_code ASC
+    </select>
+
+    <!-- selectLatestByAssetId -->
+    <select id="selectLatestByAssetId" resultMap="AssetDepreciationResult">
+        <include refid="selectAssetDepreciationVo"/>
+        WHERE del_flag = '0' AND asset_id = #{assetId}
+        ORDER BY depreciation_month DESC
+        LIMIT 1
+    </select>
+
+    <!-- selectByDepreciationMonth -->
+    <select id="selectByDepreciationMonth" resultMap="AssetDepreciationResult">
+        <include refid="selectAssetDepreciationVo"/>
+        WHERE del_flag = '0' AND depreciation_month = #{depreciationMonth}
+        ORDER BY asset_code ASC
+    </select>
+
+    <!-- batchInsert -->
+    <insert id="batchInsert">
+        INSERT INTO asset_depreciation (
+            asset_id, asset_code, asset_name, depreciation_month, depreciation_method,
+            original_value, accumulated_depreciation, current_depreciation, net_value,
+            useful_life, used_months, remaining_months, depreciation_rate,
+            residual_rate, residual_value, status, remark,
+            create_time, update_time, create_by, update_by, del_flag
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.assetId}, #{item.assetCode}, #{item.assetName}, #{item.depreciationMonth}, #{item.depreciationMethod},
+                #{item.originalValue}, #{item.accumulatedDepreciation}, #{item.currentDepreciation}, #{item.netValue},
+                #{item.usefulLife}, #{item.usedMonths}, #{item.remainingMonths}, #{item.depreciationRate},
+                #{item.residualRate}, #{item.residualValue}, #{item.status}, #{item.remark},
+                #{item.createTime}, #{item.updateTime}, #{item.createBy}, #{item.updateBy}, '0'
+            )
+        </foreach>
+    </insert>
+
+    <!-- selectByAssetIdAndMonth -->
+    <select id="selectByAssetIdAndMonth" resultMap="AssetDepreciationResult">
+        <include refid="selectAssetDepreciationVo"/>
+        WHERE del_flag = '0' AND asset_id = #{assetId} AND depreciation_month = #{depreciationMonth}
+    </select>
+
+    <!-- selectDepreciationStatistics -->
+    <select id="selectDepreciationStatistics" resultType="java.util.Map">
+        SELECT 
+            depreciation_month,
+            COUNT(*) as asset_count,
+            SUM(current_depreciation) as total_current_depreciation,
+            SUM(accumulated_depreciation) as total_accumulated_depreciation,
+            SUM(net_value) as total_net_value,
+            AVG(current_depreciation) as avg_current_depreciation
+        FROM asset_depreciation
+        WHERE del_flag = '0'
+        <if test="startMonth != null and startMonth != ''">
+            AND depreciation_month >= #{startMonth}
+        </if>
+        <if test="endMonth != null and endMonth != ''">
+            AND depreciation_month <= #{endMonth}
+        </if>
+        GROUP BY depreciation_month
+        ORDER BY depreciation_month DESC
+    </select>
+
+    <!-- selectByAssetIds -->
+    <select id="selectByAssetIds" resultMap="AssetDepreciationResult">
+        <include refid="selectAssetDepreciationVo"/>
+        WHERE del_flag = '0'
+        <if test="assetIds != null and assetIds.length > 0">
+            AND asset_id IN
+            <foreach collection="assetIds" item="assetId" open="(" separator="," close=")">
+                #{assetId}
+            </foreach>
+        </if>
+        <if test="depreciationMonth != null and depreciationMonth != ''">
+            AND depreciation_month = #{depreciationMonth}
+        </if>
+        ORDER BY asset_code ASC, depreciation_month DESC
+    </select>
+
+    <!-- updateDepreciationStatus -->
+    <update id="updateDepreciationStatus">
+        UPDATE asset_depreciation 
+        SET status = #{status}, update_time = NOW()
+        WHERE id = #{id} AND del_flag = '0'
+    </update>
+
+    <!-- selectAssetsForDepreciation -->
+    <select id="selectAssetsForDepreciation" resultType="java.util.Map">
+        SELECT 
+            ai.id as asset_id,
+            ai.asset_code,
+            ai.asset_name,
+            ai.purchase_price as original_value,
+            ai.depreciation_method,
+            ai.useful_life,
+            ai.residual_rate,
+            ai.purchase_date,
+            COALESCE(ad.accumulated_depreciation, 0) as accumulated_depreciation,
+            COALESCE(ad.used_months, 0) as used_months
+        FROM asset_info ai
+        LEFT JOIN (
+            SELECT asset_id, 
+                   MAX(accumulated_depreciation) as accumulated_depreciation,
+                   MAX(used_months) as used_months
+            FROM asset_depreciation 
+            WHERE del_flag = '0'
+            <if test="depreciationMonth != null and depreciationMonth != ''">
+                AND depreciation_month < #{depreciationMonth}
+            </if>
+            GROUP BY asset_id
+        ) ad ON ai.id = ad.asset_id
+        WHERE ai.del_flag = '0' 
+        AND ai.status = 1 
+        AND ai.depreciation_method IS NOT NULL
+        AND ai.useful_life > 0
+        AND ai.purchase_price > 0
+        ORDER BY ai.asset_code ASC
+    </select>
+
+</mapper>

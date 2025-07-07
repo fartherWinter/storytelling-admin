@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.asset.AssetInfoMapper">
+
+    <!-- AssetInfo结果映射 -->
+    <resultMap id="AssetInfoResult" type="com.chennian.storytelling.bean.model.AssetInfo">
+        <id property="id" column="id" />
+        <result property="assetNo" column="asset_no" />
+        <result property="assetName" column="asset_name" />
+        <result property="categoryId" column="category_id" />
+        <result property="categoryName" column="category_name" />
+        <result property="model" column="model" />
+        <result property="specification" column="specification" />
+        <result property="brand" column="brand" />
+        <result property="supplierId" column="supplier_id" />
+        <result property="supplierName" column="supplier_name" />
+        <result property="purchaseDate" column="purchase_date" />
+        <result property="purchasePrice" column="purchase_price" />
+        <result property="currentValue" column="current_value" />
+        <result property="depreciationMethod" column="depreciation_method" />
+        <result property="usefulLife" column="useful_life" />
+        <result property="residualRate" column="residual_rate" />
+        <result property="accumulatedDepreciation" column="accumulated_depreciation" />
+        <result property="location" column="location" />
+        <result property="departmentId" column="department_id" />
+        <result property="departmentName" column="department_name" />
+        <result property="responsiblePersonId" column="responsible_person_id" />
+        <result property="responsiblePersonName" column="responsible_person_name" />
+        <result property="status" column="status" />
+        <result property="remark" column="remark" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectAssetInfoVo">
+        SELECT id, asset_no, asset_name, category_id, category_name, model, specification, brand, supplier_id, supplier_name, purchase_date, purchase_price, current_value, depreciation_method, useful_life, residual_rate, accumulated_depreciation, location, department_id, department_name, responsible_person_id, responsible_person_name, status, remark, create_time, update_time, create_by, update_by
+        FROM asset_info
+    </sql>
+
+    <!-- selectByAssetNo -->
+    <select id="selectByAssetNo" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE asset_no = #{assetNo} AND del_flag = '0'
+    </select>
+
+    <!-- selectByCategoryId -->
+    <select id="selectByCategoryId" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE category_id = #{categoryId} AND del_flag = '0'
+        ORDER BY asset_no ASC
+    </select>
+
+    <!-- selectByDepartmentId -->
+    <select id="selectByDepartmentId" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE department_id = #{departmentId} AND del_flag = '0'
+        ORDER BY asset_no ASC
+    </select>
+
+    <!-- selectByResponsiblePersonId -->
+    <select id="selectByResponsiblePersonId" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE responsible_person_id = #{responsiblePersonId} AND del_flag = '0'
+        ORDER BY asset_no ASC
+    </select>
+
+    <!-- selectByStatus -->
+    <select id="selectByStatus" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE status = #{status} AND del_flag = '0'
+        ORDER BY asset_no ASC
+    </select>
+
+    <!-- selectExpiringAssets -->
+    <select id="selectExpiringAssets" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE del_flag = '0'
+        AND useful_life IS NOT NULL
+        AND DATE_ADD(purchase_date, INTERVAL (useful_life * 12 - #{months}) MONTH) <= CURDATE()
+        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) > CURDATE()
+        ORDER BY purchase_date ASC
+    </select>
+
+    <!-- selectAssetStatistics -->
+    <select id="selectAssetStatistics" resultType="java.util.Map">
+        SELECT 
+            c.category_name,
+            COUNT(a.id) as asset_count,
+            SUM(a.purchase_price) as total_purchase_value,
+            SUM(a.current_value) as total_current_value,
+            SUM(a.accumulated_depreciation) as total_depreciation,
+            AVG(a.current_value) as avg_current_value
+        FROM asset_info a
+        LEFT JOIN asset_category c ON a.category_id = c.id
+        WHERE a.del_flag = '0'
+        GROUP BY a.category_id, c.category_name
+        ORDER BY c.category_name
+    </select>
+
+    <!-- selectAssetValueStatistics -->
+    <select id="selectAssetValueStatistics" resultType="java.util.Map">
+        SELECT 
+            d.department_name,
+            COUNT(a.id) as asset_count,
+            SUM(a.purchase_price) as total_purchase_value,
+            SUM(a.current_value) as total_current_value,
+            SUM(a.accumulated_depreciation) as total_depreciation,
+            AVG(a.current_value) as avg_current_value
+        FROM asset_info a
+        LEFT JOIN hrm_department d ON a.department_id = d.id
+        WHERE a.del_flag = '0'
+        GROUP BY a.department_id, d.department_name
+        ORDER BY d.department_name
+    </select>
+
+    <!-- selectByPurchaseDateRange -->
+    <select id="selectByPurchaseDateRange" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE purchase_date BETWEEN #{startDate} AND #{endDate} AND del_flag = '0'
+        ORDER BY purchase_date DESC
+    </select>
+
+    <!-- selectAssetsForDepreciation -->
+    <select id="selectAssetsForDepreciation" resultMap="AssetInfoResult">
+        <include refid="selectAssetInfoVo"/>
+        WHERE del_flag = '0'
+        AND depreciation_method IS NOT NULL
+        AND useful_life IS NOT NULL
+        AND useful_life > 0
+        AND status = 1
+        AND DATE_ADD(purchase_date, INTERVAL useful_life * 12 MONTH) > CURDATE()
+        ORDER BY purchase_date ASC
+    </select>
+
+    <!-- batchUpdateDepreciation -->
+    <update id="batchUpdateDepreciation">
+        <foreach collection="assets" item="asset" separator=";">
+            UPDATE asset_info 
+            SET accumulated_depreciation = #{asset.accumulatedDepreciation},
+                current_value = #{asset.currentValue},
+                update_time = NOW()
+            WHERE id = #{asset.id}
+        </foreach>
+    </update>
+
+</mapper>

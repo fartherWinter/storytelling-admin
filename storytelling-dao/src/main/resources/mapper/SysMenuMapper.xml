@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.SysMenuMapper">
+
+    <!-- SysMenu结果映射 -->
+    <resultMap id="SysMenuResult" type="com.chennian.storytelling.bean.model.SysMenu">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="permission" column="permission" />
+        <result property="type" column="type" />
+        <result property="sort" column="sort" />
+        <result property="parentId" column="parent_id" />
+        <result property="path" column="path" />
+        <result property="icon" column="icon" />
+        <result property="component" column="component" />
+        <result property="componentName" column="component_name" />
+        <result property="status" column="status" />
+        <result property="visible" column="visible" />
+        <result property="keepAlive" column="keep_alive" />
+        <result property="alwaysShow" column="always_show" />
+        <result property="creator" column="creator" />
+        <result property="createTime" column="create_time" />
+        <result property="updater" column="updater" />
+        <result property="updateTime" column="update_time" />
+        <result property="deleted" column="deleted" />
+        <result property="params" column="params" />
+    </resultMap>
+
+    <sql id="selectSysMenuVo">
+        select id, name, permission, type, sort, parent_id, path, icon, component, component_name, 
+               status, visible, keep_alive, always_show, creator, create_time, updater, update_time, deleted
+        from sys_menu
+    </sql>
+
+    <!-- selectMenuList -->
+    <select id="selectMenuList" parameterType="com.chennian.storytelling.bean.model.SysMenu" resultMap="SysMenuResult">
+        <include refid="selectSysMenuVo"/>
+        <where>
+            <if test="name != null and name != ''">
+                AND name like concat('%', #{name}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="visible != null">
+                AND visible = #{visible}
+            </if>
+            AND deleted = 0
+        </where>
+        order by parent_id, sort
+    </select>
+
+    <!-- selectMenuPerms -->
+    <select id="selectMenuPerms" resultType="String">
+        select distinct permission
+        from sys_menu
+        where status = 1 and deleted = 0 and permission is not null and permission != ''
+    </select>
+
+    <!-- selectMenuListByUserId -->
+    <select id="selectMenuListByUserId" parameterType="com.chennian.storytelling.bean.model.SysMenu" resultMap="SysMenuResult">
+        select distinct m.id, m.name, m.permission, m.type, m.sort, m.parent_id, m.path, m.icon, 
+               m.component, m.component_name, m.status, m.visible, m.keep_alive, m.always_show, 
+               m.creator, m.create_time, m.updater, m.update_time, m.deleted
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        left join sys_user_role ur on rm.role_id = ur.role_id
+        left join sys_role r on ur.role_id = r.role_id
+        <where>
+            <if test="name != null and name != ''">
+                AND m.name like concat('%', #{name}, '%')
+            </if>
+            <if test="status != null">
+                AND m.status = #{status}
+            </if>
+            <if test="visible != null">
+                AND m.visible = #{visible}
+            </if>
+            AND m.deleted = 0
+            AND r.status = 1
+            AND ur.user_id = #{params.userId}
+        </where>
+        order by m.parent_id, m.sort
+    </select>
+
+    <!-- selectMenuPermsByRoleId -->
+    <select id="selectMenuPermsByRoleId" parameterType="Long" resultType="String">
+        select distinct m.permission
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        where rm.role_id = #{roleId} and m.status = 1 and m.deleted = 0 and m.permission is not null and m.permission != ''
+    </select>
+
+    <!-- selectMenuPermsByUserId -->
+    <select id="selectMenuPermsByUserId" parameterType="Long" resultType="String">
+        select distinct m.permission
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        left join sys_user_role ur on rm.role_id = ur.role_id
+        left join sys_role r on ur.role_id = r.role_id
+        where ur.user_id = #{userId} and m.status = 1 and m.deleted = 0 and r.status = 1 
+              and m.permission is not null and m.permission != ''
+    </select>
+
+    <!-- selectMenuTreeAll -->
+    <select id="selectMenuTreeAll" resultMap="SysMenuResult">
+        <include refid="selectSysMenuVo"/>
+        where status = 1 and deleted = 0
+        order by parent_id, sort
+    </select>
+
+    <!-- selectMenuTreeByUserId -->
+    <select id="selectMenuTreeByUserId" parameterType="Long" resultMap="SysMenuResult">
+        select distinct m.id, m.name, m.permission, m.type, m.sort, m.parent_id, m.path, m.icon, 
+               m.component, m.component_name, m.status, m.visible, m.keep_alive, m.always_show, 
+               m.creator, m.create_time, m.updater, m.update_time, m.deleted
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        left join sys_user_role ur on rm.role_id = ur.role_id
+        left join sys_role r on ur.role_id = r.role_id
+        where ur.user_id = #{userId} and m.status = 1 and m.deleted = 0 and r.status = 1
+        order by m.parent_id, m.sort
+    </select>
+
+    <!-- selectMenuListByPartitionId -->
+    <select id="selectMenuListByPartitionId" resultMap="SysMenuResult">
+        <include refid="selectSysMenuVo"/>
+        where status = 1 and deleted = 0
+        <!-- 分区相关逻辑可根据具体业务需求调整 -->
+        order by parent_id, sort
+    </select>
+
+    <!-- selectMenuListByRoleId -->
+    <select id="selectMenuListByRoleId" resultMap="SysMenuResult">
+        select m.id, m.name, m.permission, m.type, m.sort, m.parent_id, m.path, m.icon, 
+               m.component, m.component_name, m.status, m.visible, m.keep_alive, m.always_show, 
+               m.creator, m.create_time, m.updater, m.update_time, m.deleted
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        where (rm.role_id = #{roleId} or #{menuCheckStrictly} = false) and m.status = 1 and m.deleted = 0
+        order by m.parent_id, m.sort
+    </select>
+
+    <!-- selectMenuById -->
+    <select id="selectMenuById" parameterType="Long" resultMap="SysMenuResult">
+        <include refid="selectSysMenuVo"/>
+        where id = #{menuId} and deleted = 0
+    </select>
+
+    <!-- hasChildByMenuId -->
+    <select id="hasChildByMenuId" parameterType="Long" resultType="int">
+        select count(1) from sys_menu where parent_id = #{menuId} and deleted = 0
+    </select>
+
+    <!-- insertMenu -->
+    <insert id="insertMenu" parameterType="SysMenu" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_menu
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">name,</if>
+            <if test="permission != null and permission != ''">permission,</if>
+            <if test="type != null">type,</if>
+            <if test="sort != null">sort,</if>
+            <if test="parentId != null">parent_id,</if>
+            <if test="path != null and path != ''">path,</if>
+            <if test="icon != null and icon != ''">icon,</if>
+            <if test="component != null and component != ''">component,</if>
+            <if test="componentName != null and componentName != ''">component_name,</if>
+            <if test="status != null">status,</if>
+            <if test="visible != null">visible,</if>
+            <if test="keepAlive != null">keep_alive,</if>
+            <if test="alwaysShow != null">always_show,</if>
+            <if test="creator != null and creator != ''">creator,</if>
+            create_time,
+            deleted
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="name != null and name != ''">#{name},</if>
+            <if test="permission != null and permission != ''">#{permission},</if>
+            <if test="type != null">#{type},</if>
+            <if test="sort != null">#{sort},</if>
+            <if test="parentId != null">#{parentId},</if>
+            <if test="path != null and path != ''">#{path},</if>
+            <if test="icon != null and icon != ''">#{icon},</if>
+            <if test="component != null and component != ''">#{component},</if>
+            <if test="componentName != null and componentName != ''">#{componentName},</if>
+            <if test="status != null">#{status},</if>
+            <if test="visible != null">#{visible},</if>
+            <if test="keepAlive != null">#{keepAlive},</if>
+            <if test="alwaysShow != null">#{alwaysShow},</if>
+            <if test="creator != null and creator != ''">#{creator},</if>
+            sysdate(),
+            0
+        </trim>
+    </insert>
+
+    <!-- updateMenu -->
+    <update id="updateMenu" parameterType="SysMenu">
+        update sys_menu
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="permission != null">permission = #{permission},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="parentId != null">parent_id = #{parentId},</if>
+            <if test="path != null">path = #{path},</if>
+            <if test="icon != null">icon = #{icon},</if>
+            <if test="component != null">component = #{component},</if>
+            <if test="componentName != null">component_name = #{componentName},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="visible != null">visible = #{visible},</if>
+            <if test="keepAlive != null">keep_alive = #{keepAlive},</if>
+            <if test="alwaysShow != null">always_show = #{alwaysShow},</if>
+            <if test="updater != null and updater != ''">updater = #{updater},</if>
+            update_time = sysdate()
+        </trim>
+        where id = #{id}
+    </update>
+
+    <!-- deleteMenuById -->
+    <delete id="deleteMenuById" parameterType="Long">
+        update sys_menu set deleted = 1 where id = #{menuId}
+    </delete>
+
+    <!-- checkMenuNameUnique -->
+    <select id="checkMenuNameUnique" resultMap="SysMenuResult">
+        <include refid="selectSysMenuVo"/>
+        where name = #{menuName} and parent_id = #{parentId} and deleted = 0 limit 1
+    </select>
+
+    <!-- getPermissionList -->
+    <select id="getPermissionList" resultType="String">
+        select distinct m.permission
+        from sys_menu m
+        left join sys_role_menu rm on m.id = rm.menu_id
+        left join sys_user_role ur on rm.role_id = ur.role_id
+        left join sys_role r on ur.role_id = r.role_id
+        where ur.user_id = #{userId} and m.status = 1 and m.deleted = 0 and r.status = 1 
+              and m.permission is not null and m.permission != ''
+    </select>
+
+</mapper>

@@ -48,9 +48,9 @@ public class AdminCreationDelegate implements JavaDelegate {
             sysUser.setDeptId(deptId);
             sysUser.setEmail(email);
             sysUser.setPhoneNumber(phoneNumber);
-            sysUser.setSex(sex);
+            sysUser.setSex(Integer.parseInt(sex));
             sysUser.setPassword(password); // 实际应用中应该加密处理
-            sysUser.setStatus("0"); // 正常状态
+            sysUser.setStatus(0); // 正常状态
             sysUser.setRemark(remark);
             
             // 调用用户服务创建管理员

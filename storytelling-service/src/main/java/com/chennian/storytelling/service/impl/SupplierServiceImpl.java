@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chennian.storytelling.bean.model.Supplier;
-import com.chennian.storytelling.bean.vo.SupplierCollaborationMessageVO;
-import com.chennian.storytelling.bean.vo.SupplierPerformanceVO;
+import com.chennian.storytelling.bean.vo.mall.SupplierCollaborationMessageVO;
+import com.chennian.storytelling.bean.vo.mall.SupplierPerformanceVO;
 import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.dao.SupplierMapper;
 import com.chennian.storytelling.service.SupplierService;
@@ -102,7 +102,7 @@ public class SupplierServiceImpl extends ServiceImpl<SupplierMapper, Supplier> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int deleteSupplierByIds(Long[] supplierIds) {
-        return supplierMapper.deleteBatchIds(Arrays.asList(supplierIds));
+        return supplierMapper.deleteByIds(Arrays.asList(supplierIds));
     }
 
     /**

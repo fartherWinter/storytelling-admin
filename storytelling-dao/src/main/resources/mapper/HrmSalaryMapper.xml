@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.hrm.HrmSalaryMapper">
+
+    <!-- HrmSalary结果映射 -->
+    <resultMap id="HrmSalaryResult" type="com.chennian.storytelling.bean.model.HrmSalary">
+        <result property="id" column="id" />
+        <result property="employeeId" column="employee_id" />
+        <result property="employeeName" column="employee_name" />
+        <result property="employeeNo" column="employee_no" />
+        <result property="departmentId" column="department_id" />
+        <result property="departmentName" column="department_name" />
+        <result property="salaryMonth" column="salary_month" />
+        <result property="baseSalary" column="base_salary" />
+        <result property="positionSalary" column="position_salary" />
+        <result property="performanceSalary" column="performance_salary" />
+        <result property="overtimeSalary" column="overtime_salary" />
+        <result property="allowance" column="allowance" />
+        <result property="bonus" column="bonus" />
+        <result property="grossSalary" column="gross_salary" />
+        <result property="socialInsurance" column="social_insurance" />
+        <result property="housingFund" column="housing_fund" />
+        <result property="incomeTax" column="income_tax" />
+        <result property="otherDeduction" column="other_deduction" />
+        <result property="totalDeduction" column="total_deduction" />
+        <result property="netSalary" column="net_salary" />
+        <result property="workDays" column="work_days" />
+        <result property="attendanceDays" column="attendance_days" />
+        <result property="overtimeHours" column="overtime_hours" />
+        <result property="payStatus" column="pay_status" />
+        <result property="payTime" column="pay_time" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectHrmSalaryVo">
+        SELECT 
+            id, employee_id, employee_name, employee_no, department_id, department_name, 
+            salary_month, base_salary, position_salary, performance_salary, overtime_salary, 
+            allowance, bonus, gross_salary, social_insurance, housing_fund, income_tax, 
+            other_deduction, total_deduction, net_salary, work_days, attendance_days, 
+            overtime_hours, pay_status, pay_time, create_by, create_time, update_by, 
+            update_time, del_flag
+        FROM hrm_salary
+    </sql>
+
+    <!-- selectByEmployeeId -->
+    <select id="selectByEmployeeId" resultMap="HrmSalaryResult">
+        <include refid="selectHrmSalaryVo"/>
+        WHERE employee_id = #{employeeId}
+        AND del_flag = '0'
+        ORDER BY salary_month DESC
+    </select>
+
+    <!-- selectByEmployeeIdAndMonth -->
+    <select id="selectByEmployeeIdAndMonth" resultMap="HrmSalaryResult">
+        <include refid="selectHrmSalaryVo"/>
+        WHERE employee_id = #{employeeId}
+        AND salary_month = #{salaryMonth}
+        AND del_flag = '0'
+    </select>
+
+    <!-- selectByDepartmentId -->
+    <select id="selectByDepartmentId" resultMap="HrmSalaryResult">
+        <include refid="selectHrmSalaryVo"/>
+        WHERE department_id = #{departmentId}
+        AND del_flag = '0'
+        ORDER BY salary_month DESC, employee_name
+    </select>
+
+    <!-- selectBySalaryMonth -->
+    <select id="selectBySalaryMonth" resultMap="HrmSalaryResult">
+        <include refid="selectHrmSalaryVo"/>
+        WHERE salary_month = #{salaryMonth}
+        AND del_flag = '0'
+        ORDER BY department_name, employee_name
+    </select>
+
+    <!-- selectByPayStatus -->
+    <select id="selectByPayStatus" resultMap="HrmSalaryResult">
+        <include refid="selectHrmSalaryVo"/>
+        WHERE pay_status = #{payStatus}
+        AND del_flag = '0'
+        ORDER BY salary_month DESC, department_name, employee_name
+    </select>
+
+    <!-- selectSalaryStatistics -->
+    <select id="selectSalaryStatistics" resultType="java.util.Map">
+        SELECT 
+            department_name,
+            COUNT(*) as employee_count,
+            SUM(gross_salary) as total_gross_salary,
+            AVG(gross_salary) as avg_gross_salary,
+            SUM(net_salary) as total_net_salary,
+            AVG(net_salary) as avg_net_salary,
+            SUM(total_deduction) as total_deduction_amount,
+            AVG(total_deduction) as avg_deduction_amount
+        FROM hrm_salary
+        WHERE salary_month = #{salaryMonth}
+        AND del_flag = '0'
+        GROUP BY department_name
+        ORDER BY department_name
+    </select>
+
+    <!-- selectYearlySalaryByEmployee -->
+    <select id="selectYearlySalaryByEmployee" resultType="java.util.Map">
+        SELECT 
+            salary_month,
+            base_salary,
+            position_salary,
+            performance_salary,
+            overtime_salary,
+            allowance,
+            bonus,
+            gross_salary,
+            total_deduction,
+            net_salary,
+            work_days,
+            attendance_days,
+            overtime_hours
+        FROM hrm_salary
+        WHERE employee_id = #{employeeId}
+        AND salary_month LIKE CONCAT(#{year}, '%')
+        AND del_flag = '0'
+        ORDER BY salary_month
+    </select>
+
+    <!-- selectDepartmentSalaryStatistics -->
+    <select id="selectDepartmentSalaryStatistics" resultType="java.util.Map">
+        SELECT 
+            department_id,
+            department_name,
+            salary_month,
+            COUNT(*) as employee_count,
+            SUM(gross_salary) as total_gross_salary,
+            AVG(gross_salary) as avg_gross_salary,
+            SUM(net_salary) as total_net_salary,
+            AVG(net_salary) as avg_net_salary,
+            SUM(base_salary) as total_base_salary,
+            AVG(base_salary) as avg_base_salary,
+            SUM(performance_salary) as total_performance_salary,
+            AVG(performance_salary) as avg_performance_salary,
+            SUM(overtime_salary) as total_overtime_salary,
+            AVG(overtime_salary) as avg_overtime_salary,
+            SUM(total_deduction) as total_deduction_amount,
+            AVG(total_deduction) as avg_deduction_amount
+        FROM hrm_salary
+        WHERE department_id = #{departmentId}
+        AND salary_month = #{salaryMonth}
+        AND del_flag = '0'
+        GROUP BY department_id, department_name, salary_month
+    </select>
+
+</mapper>

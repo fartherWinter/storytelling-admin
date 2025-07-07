@@ -630,4 +630,353 @@ public class WorkflowServiceImpl implements WorkflowService {
             throw new RuntimeException("获取流程变量失败", e);
         }
     }
+    
+    // ========== 权限检查方法实现 ==========
+    
+    @Override
+    public boolean isTaskAssignedToUser(String taskId, String userId) {
+        try {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            return task != null && userId.equals(task.getAssignee());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isUserRelatedToProcess(String processInstanceId, String userId) {
+        try {
+            // 检查是否为流程发起人
+            if (isProcessStarter(processInstanceId, userId)) {
+                return true;
+            }
+            
+            // 检查是否有相关任务
+            List<Task> tasks = taskService.createTaskQuery()
+                    .processInstanceId(processInstanceId)
+                    .taskAssignee(userId)
+                    .list();
+            if (!tasks.isEmpty()) {
+                return true;
+            }
+            
+            // 检查是否为候选人
+            List<Task> candidateTasks = taskService.createTaskQuery()
+                    .processInstanceId(processInstanceId)
+                    .taskCandidateUser(userId)
+                    .list();
+            return !candidateTasks.isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isProcessStarter(String processInstanceId, String userId) {
+        try {
+            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .startedBy(userId)
+                    .singleResult();
+            return processInstance != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isTaskAssigneeOrCandidate(String taskId, String userId) {
+        try {
+            // 检查是否为任务处理人
+            if (isTaskAssignee(taskId, userId)) {
+                return true;
+            }
+            
+            // 检查是否为候选人
+            Task task = taskService.createTaskQuery()
+                    .taskId(taskId)
+                    .taskCandidateUser(userId)
+                    .singleResult();
+            return task != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean canUserClaimTask(String taskId, String userId) {
+        try {
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if (task == null) {
+                return false;
+            }
+            
+            // 如果任务已分配给其他人，不能认领
+            if (task.getAssignee() != null && !userId.equals(task.getAssignee())) {
+                return false;
+            }
+            
+            // 如果任务未分配，检查是否为候选人
+            if (task.getAssignee() == null) {
+                Task candidateTask = taskService.createTaskQuery()
+                        .taskId(taskId)
+                        .taskCandidateUser(userId)
+                        .singleResult();
+                return candidateTask != null;
+            }
+            
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isTaskAssignee(String taskId, String userId) {
+        try {
+            Task task = taskService.createTaskQuery()
+                    .taskId(taskId)
+                    .taskAssignee(userId)
+                    .singleResult();
+            return task != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isUserRelatedToTask(String taskId, String userId) {
+        try {
+            // 检查是否为任务处理人或候选人
+            if (isTaskAssigneeOrCandidate(taskId, userId)) {
+                return true;
+            }
+            
+            // 检查是否为流程发起人
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if (task != null) {
+                return isProcessStarter(task.getProcessInstanceId(), userId);
+            }
+            
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean isUserRelatedToForm(String formId, String userId) {
+        // 这里需要根据具体的表单权限逻辑实现
+        // 暂时返回true，具体实现需要根据业务需求
+        return true;
+    }
+    
+    // ========== 其他缺失方法的实现 ==========
+    
+    @Override
+    public Map<String, Object> searchProcessInstances(Map<String, Object> searchParams) {
+        // 实现流程实例搜索逻辑
+        Map<String, Object> result = new HashMap<>();
+        // 这里需要根据具体的搜索需求实现
+        result.put("total", 0);
+        result.put("list", new ArrayList<>());
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> getProcessInstanceBasicInfo(String processInstanceId) {
+        try {
+            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+            
+            Map<String, Object> info = new HashMap<>();
+            if (processInstance != null) {
+                info.put("id", processInstance.getId());
+                info.put("processDefinitionId", processInstance.getProcessDefinitionId());
+                info.put("processDefinitionKey", processInstance.getProcessDefinitionKey());
+                info.put("businessKey", processInstance.getBusinessKey());
+                info.put("startUserId", processInstance.getStartUserId());
+                info.put("startTime", processInstance.getStartTime());
+            }
+            return info;
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程实例基本信息失败", e);
+        }
+    }
+    
+    @Override
+    public String deployProcess(org.springframework.web.multipart.MultipartFile file, String name) {
+        try {
+            Deployment deployment = repositoryService.createDeployment()
+                    .name(name)
+                    .addInputStream(file.getOriginalFilename(), file.getInputStream())
+                    .deploy();
+            return deployment.getId();
+        } catch (Exception e) {
+            throw new RuntimeException("部署流程失败", e);
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getProcessDefinitions(int page, int size, String category) {
+        org.flowable.engine.repository.ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery()
+                .latestVersion()
+                .orderByProcessDefinitionName()
+                .asc();
+        
+        if (category != null && !category.isEmpty()) {
+            query.processDefinitionCategory(category);
+        }
+        
+        long total = query.count();
+        List<ProcessDefinition> processDefinitions = query
+                .listPage((page - 1) * size, size);
+        
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (ProcessDefinition pd : processDefinitions) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", pd.getId());
+            item.put("key", pd.getKey());
+            item.put("name", pd.getName());
+            item.put("category", pd.getCategory());
+            item.put("version", pd.getVersion());
+            item.put("resourceName", pd.getResourceName());
+            item.put("deploymentId", pd.getDeploymentId());
+            item.put("description", pd.getDescription());
+            item.put("suspended", pd.isSuspended());
+            list.add(item);
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("list", list);
+        return result;
+    }
+    
+    @Override
+    public Map<String, Object> getProcessDefinitionDetail(String processDefinitionId) {
+        try {
+            ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionId(processDefinitionId)
+                    .singleResult();
+            
+            Map<String, Object> detail = new HashMap<>();
+            if (processDefinition != null) {
+                detail.put("id", processDefinition.getId());
+                detail.put("key", processDefinition.getKey());
+                detail.put("name", processDefinition.getName());
+                detail.put("category", processDefinition.getCategory());
+                detail.put("version", processDefinition.getVersion());
+                detail.put("resourceName", processDefinition.getResourceName());
+                detail.put("deploymentId", processDefinition.getDeploymentId());
+                detail.put("description", processDefinition.getDescription());
+                detail.put("suspended", processDefinition.isSuspended());
+            }
+            return detail;
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程定义详情失败", e);
+        }
+    }
+    
+    @Override
+    public String getProcessDefinitionXml(String processDefinitionId) {
+        try {
+            ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionId(processDefinitionId)
+                    .singleResult();
+            
+            InputStream inputStream = repositoryService.getResourceAsStream(
+                    processDefinition.getDeploymentId(),
+                    processDefinition.getResourceName());
+            
+            return new String(inputStream.readAllBytes(), "UTF-8");
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程定义XML失败", e);
+        }
+    }
+    
+    @Override
+    public byte[] getProcessDefinitionImage(String processDefinitionId) {
+        try {
+            ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
+                    .processDefinitionId(processDefinitionId)
+                    .singleResult();
+            
+            String diagramResourceName = processDefinition.getDiagramResourceName();
+            if (diagramResourceName != null) {
+                InputStream inputStream = repositoryService.getResourceAsStream(
+                        processDefinition.getDeploymentId(),
+                        diagramResourceName);
+                return inputStream.readAllBytes();
+            }
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException("获取流程定义图片失败", e);
+        }
+    }
+    
+    @Override
+    public Map<String, Object> getDeployments(int page, int size) {
+        org.flowable.engine.repository.DeploymentQuery query = repositoryService.createDeploymentQuery()
+                .orderByDeploymentTime()
+                .desc();
+        
+        long total = query.count();
+        List<Deployment> deployments = query.listPage((page - 1) * size, size);
+        
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Deployment deployment : deployments) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", deployment.getId());
+            item.put("name", deployment.getName());
+            item.put("category", deployment.getCategory());
+            item.put("deploymentTime", deployment.getDeploymentTime());
+            item.put("tenantId", deployment.getTenantId());
+            list.add(item);
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", total);
+        result.put("list", list);
+        return result;
+    }
+    
+    @Override
+    public void approveTask(String taskId, String comment, Map<String, Object> variables) {
+        try {
+            if (comment != null && !comment.isEmpty()) {
+                Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+                taskService.addComment(taskId, task.getProcessInstanceId(), comment);
+            }
+            
+            if (variables == null) {
+                variables = new HashMap<>();
+            }
+            variables.put("approved", true);
+            
+            taskService.complete(taskId, variables);
+        } catch (Exception e) {
+            throw new RuntimeException("审批通过任务失败", e);
+        }
+    }
+    
+    @Override
+    public void rejectTask(String taskId, String comment, Map<String, Object> variables) {
+        try {
+            if (comment != null && !comment.isEmpty()) {
+                Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+                taskService.addComment(taskId, task.getProcessInstanceId(), comment);
+            }
+            
+            if (variables == null) {
+                variables = new HashMap<>();
+            }
+            variables.put("approved", false);
+            
+            taskService.complete(taskId, variables);
+        } catch (Exception e) {
+            throw new RuntimeException("拒绝任务失败", e);
+        }
+    }
 }

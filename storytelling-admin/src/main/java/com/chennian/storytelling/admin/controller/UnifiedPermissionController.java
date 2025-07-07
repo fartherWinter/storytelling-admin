@@ -255,23 +255,38 @@ public class UnifiedPermissionController {
     @GetMapping("/statistics")
     @PreAuthorize("hasAuthority('system:permission:statistics')")
     public ServerResponseEntity<Object> getPermissionStatistics() {
-        // TODO: 实现权限统计功能
-        return ServerResponseEntity.success("权限统计功能待实现");
+        // 实现权限统计功能
+        return unifiedPermissionService.getPermissionStatistics();
     }
 
     @ApiOperation("导出权限配置")
     @GetMapping("/export")
     @PreAuthorize("hasAuthority('system:permission:export')")
     public ServerResponseEntity<Object> exportPermissionConfig() {
-        // TODO: 实现权限配置导出功能
-        return ServerResponseEntity.success("权限配置导出功能待实现");
+        // 实现权限配置导出功能
+        try {
+            String exportData = unifiedPermissionService.exportPermissionConfig();
+            return ServerResponseEntity.success(exportData);
+        } catch (Exception e) {
+            return ServerResponseEntity.showFailMsg("权限配置导出失败: " + e.getMessage());
+        }
     }
 
     @ApiOperation("导入权限配置")
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('system:permission:import')")
-    public ServerResponseEntity<Object> importPermissionConfig() {
-        // TODO: 实现权限配置导入功能
-        return ServerResponseEntity.success("权限配置导入功能待实现");
+    public ServerResponseEntity<Object> importPermissionConfig(@RequestParam("configData") String configData) {
+        // 实现权限配置导入功能
+        try {
+            SysUser sysUser = sysUserService.selectUserById(SecurityUtils.getUserId());
+            boolean result = unifiedPermissionService.importPermissionConfig(configData, sysUser.getUserName());
+            if (result) {
+                return ServerResponseEntity.success("权限配置导入成功");
+            } else {
+                return ServerResponseEntity.showFailMsg("权限配置导入失败");
+            }
+        } catch (Exception e) {
+            return ServerResponseEntity.showFailMsg("权限配置导入失败: " + e.getMessage());
+        }
     }
 }

@@ -1,6 +1,6 @@
 package com.chennian.storytelling.common.utils;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * IP帮助工具

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chennian.storytelling.dao.MallCouponMapper">
+
+    <!-- MallCoupon结果映射 -->
+    <resultMap id="MallCouponResult" type="com.chennian.storytelling.bean.model.MallCoupon">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="description" column="description" />
+        <result property="type" column="type" />
+        <result property="discountAmount" column="discount_amount" />
+        <result property="discountRate" column="discount_rate" />
+        <result property="minAmount" column="min_amount" />
+        <result property="maxDiscountAmount" column="max_discount_amount" />
+        <result property="totalCount" column="total_count" />
+        <result property="receivedCount" column="received_count" />
+        <result property="usedCount" column="used_count" />
+        <result property="limitPerUser" column="limit_per_user" />
+        <result property="validStartTime" column="valid_start_time" />
+        <result property="validEndTime" column="valid_end_time" />
+        <result property="status" column="status" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="createBy" column="create_by" />
+        <result property="updateBy" column="update_by" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="selectMallCouponVo">
+        SELECT id, name, description, type, discount_amount, discount_rate, min_amount, max_discount_amount, total_count, received_count, used_count, limit_per_user, valid_start_time, valid_end_time, status, create_time, update_time, create_by, update_by
+        FROM mall_coupon
+    </sql>
+
+    <!-- selectCouponPage -->
+    <select id="selectCouponPage" resultType="com.chennian.storytelling.bean.vo.MallCouponVO">
+        <include refid="selectMallCouponVo"/>
+        WHERE del_flag = '0'
+        <if test="searchBo.name != null and searchBo.name != ''">
+            AND name LIKE CONCAT('%', #{searchBo.name}, '%')
+        </if>
+        <if test="searchBo.type != null">
+            AND type = #{searchBo.type}
+        </if>
+        <if test="searchBo.status != null">
+            AND status = #{searchBo.status}
+        </if>
+        <if test="searchBo.startTime != null">
+            AND create_time >= #{searchBo.startTime}
+        </if>
+        <if test="searchBo.endTime != null">
+            AND create_time <= #{searchBo.endTime}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- selectCouponById -->
+    <select id="selectCouponById" resultType="com.chennian.storytelling.bean.vo.MallCouponVO">
+        <include refid="selectMallCouponVo"/>
+        WHERE id = #{couponId}
+        AND del_flag = '0'
+    </select>
+
+    <!-- selectAvailableCoupons -->
+    <select id="selectAvailableCoupons" resultType="com.chennian.storytelling.bean.vo.MallCouponVO">
+        SELECT c.*, 
+               COALESCE(uc.received_count, 0) as user_received_count
+        FROM mall_coupon c
+        LEFT JOIN (
+            SELECT coupon_id, COUNT(*) as received_count
+            FROM mall_user_coupon
+            WHERE user_id = #{userId}
+            AND del_flag = '0'
+            GROUP BY coupon_id
+        ) uc ON c.id = uc.coupon_id
+        WHERE c.status = 1
+        AND c.valid_start_time <= NOW()
+        AND c.valid_end_time >= NOW()
+        AND c.received_count < c.total_count
+        AND (c.limit_per_user = 0 OR COALESCE(uc.received_count, 0) < c.limit_per_user)
+        AND c.del_flag = '0'
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- selectUsableCouponsForOrder -->
+    <select id="selectUsableCouponsForOrder" resultType="com.chennian.storytelling.bean.vo.MallCouponVO">
+        SELECT c.*
+        FROM mall_coupon c
+        INNER JOIN mall_user_coupon uc ON c.id = uc.coupon_id
+        WHERE uc.user_id = #{userId}
+        AND uc.status = 0
+        AND c.status = 1
+        AND c.valid_start_time <= NOW()
+        AND c.valid_end_time >= NOW()
+        AND c.min_amount <= #{orderAmount}
+        AND c.del_flag = '0'
+        AND uc.del_flag = '0'
+        ORDER BY 
+            CASE 
+                WHEN c.type = 1 THEN c.discount_amount
+                WHEN c.type = 2 THEN LEAST(#{orderAmount} * c.discount_rate / 100, c.max_discount_amount)
+                ELSE 0
+            END DESC
+    </select>
+
+    <!-- getCouponStatistics -->
+    <select id="getCouponStatistics" resultType="com.chennian.storytelling.bean.vo.MallCouponStatisticsVO">
+        SELECT 
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active_count,
+            SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactive_count,
+            SUM(CASE WHEN valid_end_time < NOW() THEN 1 ELSE 0 END) as expired_count,
+            SUM(total_count) as total_issued,
+            SUM(received_count) as total_received,
+            SUM(used_count) as total_used,
+            ROUND(SUM(used_count) * 100.0 / NULLIF(SUM(received_count), 0), 2) as usage_rate
+        FROM mall_coupon
+        WHERE del_flag = '0'
+    </select>
+
+    <!-- updateCouponStock -->
+    <update id="updateCouponStock">
+        UPDATE mall_coupon
+        SET received_count = received_count + #{quantity},
+            update_time = NOW()
+        WHERE id = #{couponId}
+        AND received_count + #{quantity} <= total_count
+        AND del_flag = '0'
+    </update>
+
+    <!-- selectExpiredCouponIds -->
+    <select id="selectExpiredCouponIds" resultType="java.lang.Long">
+        SELECT id
+        FROM mall_coupon
+        WHERE valid_end_time < NOW()
+        AND status = 1
+        AND del_flag = '0'
+    </select>
+
+</mapper>
