@@ -3,7 +3,7 @@
 <mapper namespace="com.chennian.storytelling.dao.manufacturing.BOMItemMapper">
 
     <!-- BOMItem结果映射 -->
-    <resultMap id="BOMItemResult" type="com.chennian.storytelling.bean.model.BOMItem">
+    <resultMap id="BOMItemResult" type="com.chennian.storytelling.bean.model.manufacturing.BOMItem">
         <id property="bomItemId" column="bom_item_id" />
         <result property="bomId" column="bom_id" />
         <result property="materialId" column="material_id" />
