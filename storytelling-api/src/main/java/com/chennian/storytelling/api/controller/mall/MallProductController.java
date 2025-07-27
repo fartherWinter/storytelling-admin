@@ -1,11 +1,10 @@
 package com.chennian.storytelling.api.controller.mall;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.chennian.storytelling.api.feign.ProductServiceClient;
 import com.chennian.storytelling.bean.model.mall.MallProduct;
-import com.chennian.storytelling.common.enums.MallResponseEnum;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
 import com.chennian.storytelling.common.utils.PageParam;
-import com.chennian.storytelling.service.mall.MallProductService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -15,7 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 商城商品Controller
+ * 商城商品API网关Controller
+ * 通过Feign客户端调用商品微服务
  * 
  * @author chennian
  * @date 2025-01-27
@@ -25,11 +25,8 @@ import java.util.List;
 @RequestMapping("/mall/product")
 public class MallProductController {
 
-    private final MallProductService mallProductService;
-
-    public MallProductController(MallProductService mallProductService) {
-        this.mallProductService = mallProductService;
-    }
+    @Autowired
+    private ProductServiceClient productServiceClient;
 
     /**
      * 分页查询商品列表
@@ -39,8 +36,7 @@ public class MallProductController {
     public ServerResponseEntity<IPage<MallProduct>> getProductPage(
             @RequestBody PageParam<MallProduct> page,
             @ApiParam("查询条件") MallProduct mallProduct) {
-        IPage<MallProduct> result = mallProductService.findByPage(page, mallProduct);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.getProductPage(page, mallProduct);
     }
     
     /**
@@ -51,9 +47,8 @@ public class MallProductController {
     public ServerResponseEntity<MallProduct> getProductById(
             @ApiParam("商品ID") @PathVariable Long productId) {
         // 增加浏览量
-        mallProductService.increaseViews(productId);
-        MallProduct product = mallProductService.selectProductById(productId);
-        return ServerResponseEntity.success(product);
+        productServiceClient.increaseViews(productId);
+        return productServiceClient.getProductById(productId);
     }
     
     /**
@@ -64,8 +59,7 @@ public class MallProductController {
     public ServerResponseEntity<IPage<MallProduct>> getProductsByCategoryId(
             @ApiParam("分类ID") @PathVariable Long categoryId,
             @RequestBody PageParam<MallProduct> page) {
-        IPage<MallProduct> result = mallProductService.selectProductsByCategoryId(categoryId, page);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.getProductsByCategoryId(categoryId, page);
     }
     
     /**
@@ -76,8 +70,7 @@ public class MallProductController {
     public ServerResponseEntity<IPage<MallProduct>> searchProducts(
             @ApiParam("搜索关键词") @RequestParam String keyword,
             @RequestBody PageParam<MallProduct> page) {
-        IPage<MallProduct> result = mallProductService.searchProducts(keyword, page);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.searchProducts(keyword, page);
     }
     
     /**
@@ -87,8 +80,7 @@ public class MallProductController {
     @GetMapping("/recommend")
     public ServerResponseEntity<List<MallProduct>> getRecommendProducts(
             @ApiParam("限制数量") @RequestParam(defaultValue = "10") Integer limit) {
-        List<MallProduct> result = mallProductService.getRecommendProducts(limit);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.getRecommendProducts(limit);
     }
     
     /**
@@ -98,8 +90,7 @@ public class MallProductController {
     @GetMapping("/hot")
     public ServerResponseEntity<List<MallProduct>> getHotProducts(
             @ApiParam("限制数量") @RequestParam(defaultValue = "10") Integer limit) {
-        List<MallProduct> result = mallProductService.getHotProducts(limit);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.getHotProducts(limit);
     }
     
     /**
@@ -109,8 +100,7 @@ public class MallProductController {
     @GetMapping("/new")
     public ServerResponseEntity<List<MallProduct>> getNewProducts(
             @ApiParam("限制数量") @RequestParam(defaultValue = "10") Integer limit) {
-        List<MallProduct> result = mallProductService.getNewProducts(limit);
-        return ServerResponseEntity.success(result);
+        return productServiceClient.getNewProducts(limit);
     }
     
     /**
@@ -119,11 +109,7 @@ public class MallProductController {
     @ApiOperation("创建商品")
     @PostMapping
     public ServerResponseEntity<String> createProduct(@RequestBody MallProduct mallProduct) {
-        int result = mallProductService.createProduct(mallProduct);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_CREATE_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_CREATE_FAIL.getCode(), MallResponseEnum.PRODUCT_CREATE_FAIL.getMessage());
+        return productServiceClient.createProduct(mallProduct);
     }
     
     /**
@@ -132,11 +118,7 @@ public class MallProductController {
     @ApiOperation("更新商品")
     @PutMapping
     public ServerResponseEntity<String> updateProduct(@RequestBody MallProduct mallProduct) {
-        int result = mallProductService.updateProduct(mallProduct);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_UPDATE_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_UPDATE_FAIL.getCode(), MallResponseEnum.PRODUCT_UPDATE_FAIL.getMessage());
+        return productServiceClient.updateProduct(mallProduct);
     }
     
     /**
@@ -146,11 +128,7 @@ public class MallProductController {
     @DeleteMapping("/{productId}")
     public ServerResponseEntity<String> deleteProduct(
             @ApiParam("商品ID") @PathVariable Long productId) {
-        int result = mallProductService.deleteProduct(productId);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_DELETE_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_DELETE_FAIL.getCode(), MallResponseEnum.PRODUCT_DELETE_FAIL.getMessage());
+        return productServiceClient.deleteProduct(productId);
     }
     
     /**
@@ -160,11 +138,7 @@ public class MallProductController {
     @PutMapping("/{productId}/on-shelf")
     public ServerResponseEntity<String> onShelf(
             @ApiParam("商品ID") @PathVariable Long productId) {
-        int result = mallProductService.onShelf(productId);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_ON_SHELF_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_ON_SHELF_FAIL.getCode(), MallResponseEnum.PRODUCT_ON_SHELF_FAIL.getMessage());
+        return productServiceClient.onShelf(productId);
     }
     
     /**
@@ -174,11 +148,7 @@ public class MallProductController {
     @PutMapping("/{productId}/off-shelf")
     public ServerResponseEntity<String> offShelf(
             @ApiParam("商品ID") @PathVariable Long productId) {
-        int result = mallProductService.offShelf(productId);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_OFF_SHELF_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_OFF_SHELF_FAIL.getCode(), MallResponseEnum.PRODUCT_OFF_SHELF_FAIL.getMessage());
+        return productServiceClient.offShelf(productId);
     }
     
     /**
@@ -189,11 +159,7 @@ public class MallProductController {
     public ServerResponseEntity<String> updateStock(
             @ApiParam("商品ID") @PathVariable Long productId,
             @ApiParam("库存变化量") @RequestParam Integer quantity) {
-        int result = mallProductService.updateStock(productId, quantity);
-        if (result > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.PRODUCT_STOCK_UPDATE_SUCCESS.getMessage());
-        }
-        return ServerResponseEntity.fail(MallResponseEnum.PRODUCT_STOCK_UPDATE_FAIL.getCode(), MallResponseEnum.PRODUCT_STOCK_UPDATE_FAIL.getMessage());
+        return productServiceClient.updateStock(productId, quantity);
     }
 
 }

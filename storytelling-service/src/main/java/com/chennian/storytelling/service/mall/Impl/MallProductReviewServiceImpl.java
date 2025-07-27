@@ -1,4 +1,4 @@
-package com.chennian.storytelling.service.mall.impl;
+package com.chennian.storytelling.service.mall.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -38,7 +38,7 @@ public class MallProductReviewServiceImpl extends ServiceImpl<MallProductReviewM
     @Override
     public IPage<MallProductReview> findByPage(PageParam<MallProductReview> page, MallProductReview review) {
         try {
-            Page<MallProductReview> pageParam = new Page<>(page.getPageNum(), page.getPageSize());
+            Page<MallProductReview> pageParam = new Page<>(page.getCurrent(), page.getSize());
             return mallProductReviewMapper.selectReviewPage(pageParam, review);
         } catch (Exception e) {
             log.error("分页查询评价列表失败", e);

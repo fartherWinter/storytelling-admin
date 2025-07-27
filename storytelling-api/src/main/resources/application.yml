@@ -15,6 +15,34 @@ spring:
   messages:
     #国际化资源文件信息
     basename: i18n/messages
+  # 链路追踪配置
+  sleuth:
+    sampler:
+      probability: 1.0  # 采样率，开发环境设置为100%
+    zipkin:
+      base-url: http://localhost:9411  # Zipkin服务地址
+      sender:
+        type: web  # 发送方式：web(HTTP) 或 kafka
+    web:
+      client:
+        enabled: true  # 启用WebClient追踪
+    http:
+      legacy:
+        enabled: true  # 启用HTTP追踪
+    jdbc:
+      enabled: true  # 启用JDBC追踪
+      includes:
+        - CONNECTION  # 追踪 SQL 执行
+        - QUERY     # 追踪查询
+        - FETCH     # 追踪结果获取
+    redis:
+      enabled: true  # 启用Redis追踪
+    mongodb:
+      enabled: true  # 启用MongoDB追踪
+  zipkin:
+    base-url: http://localhost:9411
+    sender:
+      type: web
 # mybaits-plus配置
 mybatis-plus:
   # MyBatis Mapper所对应的XML文件位置
@@ -82,3 +110,6 @@ app:
       # authentication-database: admin # Or the database where the user is defined, if different from 'database'
       # Enable auto-index creation (useful for development, consider disabling in production for performance)
       auto-index-creation: true
+
+
+

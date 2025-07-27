@@ -1,9 +1,8 @@
 package com.chennian.storytelling.api.controller.mall;
 
+import com.chennian.storytelling.api.feign.CartServiceClient;
 import com.chennian.storytelling.bean.model.mall.MallCart;
-import com.chennian.storytelling.common.enums.MallResponseEnum;
 import com.chennian.storytelling.common.response.ServerResponseEntity;
-import com.chennian.storytelling.service.mall.MallCartService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -13,7 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 商城购物车Controller
+ * 商城购物车Controller - API网关
+ * 通过Feign客户端调用购物车微服务
  *
  * @author chennian
  * @date 2025-01-27
@@ -24,7 +24,7 @@ import java.util.List;
 public class MallCartController {
 
     @Autowired
-    private MallCartService mallCartService;
+    private CartServiceClient cartServiceClient;
 
     /**
      * 根据用户ID查询购物车列表
@@ -33,8 +33,7 @@ public class MallCartController {
     @GetMapping("/user/{userId}")
     public ServerResponseEntity<List<MallCart>> getCartByUserId(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        List<MallCart> result = mallCartService.selectCartByUserId(userId);
-        return ServerResponseEntity.success(result);
+        return cartServiceClient.getCartByUserId(userId);
     }
 
     /**
@@ -44,8 +43,7 @@ public class MallCartController {
     @GetMapping("/user/{userId}/selected")
     public ServerResponseEntity<List<MallCart>> getSelectedCartByUserId(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        List<MallCart> result = mallCartService.selectSelectedCartByUserId(userId);
-        return ServerResponseEntity.success(result);
+        return cartServiceClient.getSelectedCartByUserId(userId);
     }
 
     /**
@@ -54,12 +52,7 @@ public class MallCartController {
     @ApiOperation("添加商品到购物车")
     @PostMapping
     public ServerResponseEntity<String> addToCart(@RequestBody MallCart mallCart) {
-        boolean success = mallCartService.addToCart(mallCart);
-        if (success) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_ADD_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_ADD_FAIL.getCode(), MallResponseEnum.CART_ADD_FAIL.getMessage());
-        }
+        return cartServiceClient.addToCart(mallCart);
     }
 
     /**
@@ -70,16 +63,7 @@ public class MallCartController {
     public ServerResponseEntity<String> updateCartQuantity(
             @ApiParam("购物车ID") @PathVariable Long cartId,
             @ApiParam("商品数量") @RequestParam Integer quantity) {
-        if (quantity <= 0) {
-            return ServerResponseEntity.fail(MallResponseEnum.QUANTITY_INVALID.getCode(), MallResponseEnum.QUANTITY_INVALID.getMessage());
-        }
-
-        int success = mallCartService.updateCartQuantity(cartId, quantity);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_UPDATE_QUANTITY_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_UPDATE_QUANTITY_FAIL.getCode(), MallResponseEnum.CART_UPDATE_QUANTITY_FAIL.getMessage());
-        }
+        return cartServiceClient.updateCartQuantity(cartId, quantity);
     }
 
     /**
@@ -90,12 +74,7 @@ public class MallCartController {
     public ServerResponseEntity<String> updateCartSelected(
             @ApiParam("购物车ID") @PathVariable Long cartId,
             @ApiParam("是否选中") @RequestParam Integer isSelected) {
-        int success = mallCartService.updateCartSelected(cartId, isSelected);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_UPDATE_SELECTED_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_UPDATE_SELECTED_FAIL.getCode(), MallResponseEnum.CART_UPDATE_SELECTED_FAIL.getMessage());
-        }
+        return cartServiceClient.updateCartSelected(cartId, isSelected);
     }
 
     /**
@@ -107,12 +86,7 @@ public class MallCartController {
             @ApiParam("用户ID") @RequestParam Long userId,
             @ApiParam("购物车ID列表") @RequestBody List<Long> cartIds,
             @ApiParam("是否选中") @RequestParam Integer isSelected) {
-        int success = mallCartService.batchUpdateCartSelected(userId, cartIds, isSelected);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_BATCH_UPDATE_SELECTED_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_BATCH_UPDATE_SELECTED_FAIL.getCode(), MallResponseEnum.CART_BATCH_UPDATE_SELECTED_FAIL.getMessage());
-        }
+        return cartServiceClient.batchUpdateCartSelected(userId, cartIds, isSelected);
     }
 
     /**
@@ -122,13 +96,8 @@ public class MallCartController {
     @PutMapping("/user/{userId}/select-all")
     public ServerResponseEntity<String> selectAllCart(
             @ApiParam("用户ID") @PathVariable Long userId,
-            @ApiParam("是否选中") @RequestParam Integer isSelected) {
-        int success = mallCartService.selectAllCart(userId, isSelected);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_SELECT_ALL_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_SELECT_ALL_FAIL.getCode(), MallResponseEnum.CART_SELECT_ALL_FAIL.getMessage());
-        }
+            @ApiParam("是否选中") @RequestParam Boolean isSelected) {
+        return cartServiceClient.selectAllCart(userId, isSelected);
     }
 
     /**
@@ -138,12 +107,7 @@ public class MallCartController {
     @DeleteMapping("/{cartId}")
     public ServerResponseEntity<String> deleteCartItem(
             @ApiParam("购物车ID") @PathVariable Long cartId) {
-        int success = mallCartService.deleteCartItem(cartId);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_DELETE_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_DELETE_FAIL.getCode(), MallResponseEnum.CART_DELETE_FAIL.getMessage());
-        }
+        return cartServiceClient.deleteCartItem(cartId);
     }
 
     /**
@@ -154,12 +118,7 @@ public class MallCartController {
     public ServerResponseEntity<String> batchDeleteCartItems(
             @ApiParam("用户ID") @RequestParam Long userId,
             @ApiParam("购物车ID列表") @RequestBody List<Long> cartIds) {
-        int success = mallCartService.batchDeleteCartItems(userId, cartIds);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_BATCH_DELETE_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_BATCH_DELETE_FAIL.getCode(), MallResponseEnum.CART_BATCH_DELETE_FAIL.getMessage());
-        }
+        return cartServiceClient.batchDeleteCartItems(userId, cartIds);
     }
 
     /**
@@ -169,12 +128,7 @@ public class MallCartController {
     @DeleteMapping("/user/{userId}/clear")
     public ServerResponseEntity<String> clearCart(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        int success = mallCartService.clearCart(userId);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_CLEAR_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_CLEAR_FAIL.getCode(), MallResponseEnum.CART_CLEAR_FAIL.getMessage());
-        }
+        return cartServiceClient.clearCart(userId);
     }
 
     /**
@@ -184,12 +138,7 @@ public class MallCartController {
     @DeleteMapping("/user/{userId}/clear-selected")
     public ServerResponseEntity<String> clearSelectedCart(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        int success = mallCartService.clearSelectedCart(userId);
-        if (success > 0) {
-            return ServerResponseEntity.success(MallResponseEnum.CART_CLEAR_SELECTED_SUCCESS.getMessage());
-        } else {
-            return ServerResponseEntity.fail(MallResponseEnum.CART_CLEAR_SELECTED_FAIL.getCode(), MallResponseEnum.CART_CLEAR_SELECTED_FAIL.getMessage());
-        }
+        return cartServiceClient.clearSelectedCart(userId);
     }
 
     /**
@@ -201,8 +150,7 @@ public class MallCartController {
             @ApiParam("用户ID") @RequestParam Long userId,
             @ApiParam("商品ID") @RequestParam Long productId,
             @ApiParam("商品规格") @RequestParam(required = false) String specification) {
-        MallCart result = mallCartService.checkProductInCart(userId, productId, specification);
-        return ServerResponseEntity.success(result);
+        return cartServiceClient.checkProductInCart(userId, productId, specification);
     }
 
     /**
@@ -212,8 +160,7 @@ public class MallCartController {
     @GetMapping("/user/{userId}/count")
     public ServerResponseEntity<Integer> getCartItemCount(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        Integer count = mallCartService.getCartItemCount(userId);
-        return ServerResponseEntity.success(count);
+        return cartServiceClient.getCartItemCount(userId);
     }
 
     /**
@@ -223,7 +170,6 @@ public class MallCartController {
     @GetMapping("/user/{userId}/selected-count")
     public ServerResponseEntity<Integer> getSelectedCartItemCount(
             @ApiParam("用户ID") @PathVariable Long userId) {
-        Integer count = mallCartService.getSelectedCartItemCount(userId);
-        return ServerResponseEntity.success(count);
+        return cartServiceClient.getSelectedCartItemCount(userId);
     }
 }

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chennian.storytelling.bean.model.mall.MallBrand;
 import com.chennian.storytelling.bean.model.mall.MallProduct;
-import com.chennian.storytelling.bean.param.PageParam;
+import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.dao.MallBrandMapper;
 import com.chennian.storytelling.dao.MallProductMapper;
 import com.chennian.storytelling.service.mall.MallBrandService;
@@ -97,12 +97,12 @@ public class MallBrandServiceImpl extends ServiceImpl<MallBrandMapper, MallBrand
     }
     
     @Override
-    public IPage<com.chennian.storytelling.bean.model.mall.MallProduct> getProductsByBrand(Long brandId, PageParam<com.chennian.storytelling.bean.model.mall.MallProduct> page) {
-        Page<com.chennian.storytelling.bean.model.mall.MallProduct> pageInfo = new Page<>(page.getCurrent(), page.getSize());
-        LambdaQueryWrapper<com.chennian.storytelling.bean.model.mall.MallProduct> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(com.chennian.storytelling.bean.model.mall.MallProduct::getBrandId, brandId)
-                   .eq(com.chennian.storytelling.bean.model.mall.MallProduct::getStatus, 1)
-                   .orderByDesc(com.chennian.storytelling.bean.model.mall.MallProduct::getCreateTime);
+    public IPage<MallProduct> getProductsByBrand(Long brandId, PageParam<MallProduct> page) {
+        Page<MallProduct> pageInfo = new Page<>(page.getCurrent(), page.getSize());
+        LambdaQueryWrapper<MallProduct> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(MallProduct::getBrandId, brandId)
+                   .eq(MallProduct::getStatus, 1)
+                   .orderByDesc(MallProduct::getCreateTime);
         
         return mallProductMapper.selectPage(pageInfo, queryWrapper);
     }

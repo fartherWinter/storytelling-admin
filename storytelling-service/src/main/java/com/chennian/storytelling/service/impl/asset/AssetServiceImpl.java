@@ -11,7 +11,6 @@ import com.chennian.storytelling.bean.model.asset.AssetMaintenance;
 import com.chennian.storytelling.common.utils.PageParam;
 import com.chennian.storytelling.dao.asset.*;
 import com.chennian.storytelling.service.AssetService;
-import com.storytelling.common.core.page.TableDataInfo;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,0 +1,246 @@
+# 库存服务配置
+server:
+  port: 8083
+  servlet:
+    context-path: /inventory
+
+spring:
+  application:
+    name: storytelling-inventory
+  profiles:
+    active: dev
+  
+  # 数据源配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/storytelling_inventory?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1 FROM DUAL
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      filters: stat,wall,slf4j
+      connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        reset-enable: false
+        login-username: admin
+        login-password: admin
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 2
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  
+  # RabbitMQ配置
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 15000
+    publisher-confirms: true
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 5
+        max-concurrency: 10
+        retry:
+          enabled: true
+          initial-interval: 1000
+          max-attempts: 3
+          max-interval: 10000
+          multiplier: 1.0
+  
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+      config:
+        server-addr: localhost:8848
+        namespace: dev
+        group: DEFAULT_GROUP
+        file-extension: yml
+        refresh-enabled: true
+
+# MyBatis Plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.chennian.storytelling.inventory.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+      update-strategy: NOT_NULL
+      insert-strategy: NOT_NULL
+      select-strategy: NOT_EMPTY
+
+# Sa-Token配置
+sa-token:
+  token-name: Authorization
+  token-prefix: Bearer
+  timeout: 2592000
+  activity-timeout: -1
+  is-concurrent: true
+  is-share: true
+  token-style: uuid
+  is-log: false
+
+# Redisson配置
+redisson:
+  config: |
+    singleServerConfig:
+      address: redis://localhost:6379
+      database: 2
+      connectionMinimumIdleSize: 8
+      connectionPoolSize: 32
+      idleConnectionTimeout: 10000
+      connectTimeout: 10000
+      timeout: 3000
+      retryAttempts: 3
+      retryInterval: 1500
+
+# 日志配置
+logging:
+  level:
+    com.chennian.storytelling.inventory: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'
+  file:
+    name: logs/storytelling-inventory.log
+    max-size: 100MB
+    max-history: 30
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# OpenAPI文档配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  info:
+    title: 库存服务API
+    description: 故事叙述系统库存管理服务接口文档
+    version: 1.0.0
+    contact:
+      name: chennian
+      email: chennian@example.com
+
+# 业务配置
+inventory:
+  # 库存配置
+  stock:
+    # 默认低库存阈值
+    low-threshold: 10
+    # 默认库存预警阈值
+    warning-threshold: 20
+    # 库存锁定超时时间（分钟）
+    lock-timeout: 30
+    # 预占库存超时时间（分钟）
+    reserve-timeout: 60
+  
+  # 仓库配置
+  warehouse:
+    # 默认仓库容量
+    default-capacity: 10000
+    # 容量预警阈值（百分比）
+    capacity-warning-threshold: 80
+  
+  # 任务配置
+  task:
+    # 清理过期日志任务cron表达式（每天凌晨2点执行）
+    clean-expired-logs: '0 0 2 * * ?'
+    # 库存预警检查任务cron表达式（每小时执行）
+    inventory-warning-check: '0 0 * * * ?'
+    # 释放过期锁定库存任务cron表达式（每10分钟执行）
+    release-expired-locks: '0 */10 * * * ?'
+  
+  # 缓存配置
+  cache:
+    # 缓存过期时间（秒）
+    expire-time: 3600
+    # 库存缓存前缀
+    inventory-prefix: 'inventory:'
+    # 仓库缓存前缀
+    warehouse-prefix: 'warehouse:'
+  
+  # 消息队列配置
+  mq:
+    # 库存变动消息交换机
+    inventory-exchange: inventory.exchange
+    # 库存变动消息队列
+    inventory-queue: inventory.change.queue
+    # 库存预警消息队列
+    warning-queue: inventory.warning.queue
+    # 死信队列
+    dead-letter-queue: inventory.dead.letter.queue

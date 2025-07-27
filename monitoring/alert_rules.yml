@@ -1,0 +1,144 @@
+groups:
+  - name: tracing_alerts
+    rules:
+      # Zipkin 服务可用性告警
+      - alert: ZipkinDown
+        expr: up{job="zipkin"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Zipkin service is down"
+          description: "Zipkin service has been down for more than 1 minute."
+
+      # 链路追踪数据丢失告警
+      - alert: TracingDataLoss
+        expr: rate(zipkin_collector_spans_dropped_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High tracing data loss rate"
+          description: "Zipkin is dropping spans at a rate of {{ $value }} spans/sec for more than 2 minutes."
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) by (service)
+            /
+            sum(rate(http_server_requests_seconds_count[5m])) by (service)
+          ) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Service {{ $labels.service }} has an error rate of {{ $value | humanizePercentage }} for more than 3 minutes."
+
+      # 慢请求告警
+      - alert: SlowRequests
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_server_requests_seconds_bucket[5m])) by (service, le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow requests detected"
+          description: "95th percentile latency for service {{ $labels.service }} is {{ $value }}s for more than 5 minutes."
+
+      # Elasticsearch 存储告警
+      - alert: ElasticsearchDown
+        expr: up{job="elasticsearch"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elasticsearch is down"
+          description: "Elasticsearch service has been down for more than 1 minute."
+
+      # Elasticsearch 磁盘空间告警
+      - alert: ElasticsearchDiskSpaceHigh
+        expr: |
+          (
+            elasticsearch_filesystem_data_size_bytes - elasticsearch_filesystem_data_free_bytes
+          ) / elasticsearch_filesystem_data_size_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch disk space usage high"
+          description: "Elasticsearch disk usage is above 85% for more than 5 minutes."
+
+      # 服务可用性告警
+      - alert: ServiceDown
+        expr: up{job=~"gateway|storytelling-api|storytelling-admin"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+
+      # JVM 内存使用率告警
+      - alert: HighJVMMemoryUsage
+        expr: |
+          (
+            jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM memory usage"
+          description: "JVM heap memory usage for {{ $labels.job }} is above 85% for more than 5 minutes."
+
+      # GC 频率告警
+      - alert: HighGCRate
+        expr: rate(jvm_gc_collection_seconds_count[5m]) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High GC rate detected"
+          description: "GC rate for {{ $labels.job }} is {{ $value }} collections/sec for more than 3 minutes."
+
+  - name: performance_alerts
+    rules:
+      # 高 CPU 使用率告警
+      - alert: HighCPUUsage
+        expr: process_cpu_usage > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage for {{ $labels.job }} is above 80% for more than 5 minutes."
+
+      # 数据库连接池告警
+      - alert: DatabaseConnectionPoolHigh
+        expr: |
+          (
+            hikaricp_connections_active / hikaricp_connections_max
+          ) > 0.8
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool usage high"
+          description: "Database connection pool usage for {{ $labels.job }} is above 80% for more than 3 minutes."
+
+      # 线程池告警
+      - alert: ThreadPoolExhaustion
+        expr: |
+          (
+            executor_active_threads / executor_pool_max_threads
+          ) > 0.9
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Thread pool near exhaustion"
+          description: "Thread pool usage for {{ $labels.job }} is above 90% for more than 2 minutes."

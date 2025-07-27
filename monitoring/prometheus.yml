@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+scrape_configs:
+  # Prometheus 自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Zipkin 服务监控
+  - job_name: 'zipkin'
+    static_configs:
+      - targets: ['zipkin:9411']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+
+  # Elasticsearch 监控
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+    metrics_path: '/_prometheus/metrics'
+    scrape_interval: 30s
+
+  # Gateway 服务监控
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['host.docker.internal:8080']  # 假设 Gateway 运行在 8080 端口
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # API 服务监控
+  - job_name: 'storytelling-api'
+    static_configs:
+      - targets: ['host.docker.internal:8081']  # 假设 API 服务运行在 8081 端口
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # Admin 服务监控
+  - job_name: 'storytelling-admin'
+    static_configs:
+      - targets: ['host.docker.internal:8082']  # 假设 Admin 服务运行在 8082 端口
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # JVM 监控
+  - job_name: 'jvm-metrics'
+    static_configs:
+      - targets: 
+        - 'host.docker.internal:8080'
+        - 'host.docker.internal:8081'
+        - 'host.docker.internal:8082'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
