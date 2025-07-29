@@ -1,12 +1,12 @@
 package com.chennian.storytelling.common.mq;
 
+import jakarta.annotation.PostConstruct;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

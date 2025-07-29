@@ -77,7 +77,11 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-client</artifactId>
+            <version>4.9.3</version>
+        </dependency>
         <dependency>
             <groupId>com.qiniu</groupId>
             <artifactId>qiniu-java-sdk</artifactId>
